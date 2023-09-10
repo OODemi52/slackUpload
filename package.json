@@ -7,8 +7,8 @@
     "test": "test"
   },
   "repository": {
-    "type": "git",
-    "url": "git init"
+    "type": "github",
+    "url": "https://github.com/OODemi52/slackUpload"
   },
   "keywords": [
     "file",
