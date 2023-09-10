@@ -1,0 +1,25 @@
+{
+  "name": "slackupload",
+  "version": "1.0.0",
+  "description": "Automatically uploads jpg images to Slack.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git init"
+  },
+  "keywords": [
+    "file",
+    "upload",
+    "slack"
+  ],
+  "author": "Oluwademilade Daniel-Akanle",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/web-api": "^6.9.0",
+    "dotenv": "^16.3.1",
+    "path": "^0.12.7"
+  }
+}
