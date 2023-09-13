@@ -2,12 +2,94 @@ const { WebClient, ErrorCode } = require('@slack/web-api');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-
-
+const express = require('express');
+const bodyParser = require('body-parser');
+const helmet = require('helmet')
 dotenv.config(); // Load environment variables from .env file
-
 const client = new WebClient(process.env.SLACK_TOKEN);
 const sdCardPath = process.env.SD_CARD_PATH;
+const app = express();
+const port = 3000;
+
+
+// Initiaize Server
+app.listen(port, () => console.log(`Running on port ${port}`));
+
+//Set Headers
+app.use((request, response, next) => {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
+  );
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+  );
+  next();
+});
+
+//Body Parser (Gets content from response body)
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+//Helmet (Protect responses by setting specific headers)
+app.use(helmet());
+
+/*
+function channelIter () {
+  let allChannels = result.channels
+  const ids = names = {};
+
+  for (let i=0; i<length(allChannels); i++) {
+    ids[`id${i}`] = result.channels[i].id
+    names[`name${i}`] = result.channels[i].name
+  }
+}
+*/
+
+
+
+
+app.get("/api", (request, response) => {
+  response.json({ message: "Server online!" });
+  // http://localhost:3000 to check if server is responding
+});
+
+
+
+app.get("/api/getChannels", (request, response) => {
+  client.conversations.list()
+  .then((result) => {
+    let allChannels = result.channels
+    const obj = {}
+    const arr = []
+    for (let i=0; i<allChannels.length; i++) {
+      //ids[`id${i}`] = result.channels[i].id
+      //names[result.channels[i].id] = result.channels[i].name
+      //let idTemp = {i}
+      //let objTemp = obj[result.channels[i].id] = result.channels[i].name
+      arr[i] = [result.channels[i].id, result.channels[i].name]
+    }
+    console.log(arr)
+    response.json(arr)
+  })
+  .catch((error) => {
+    console.error(error);
+  })
+})
+
+    
+
+app.post("/api/uploadFiles", (request, response) => {
+  console.log(request.headers);
+  console.log(request.body);
+  response.send('Data Received:' +  JSON.stringify(request.body));
+});
+
+
+
+/*-----------------
 
 client.auth.test()
   .then((response) => {
@@ -50,6 +132,8 @@ fs.readdir(sdCardPath, (err, files) => {
     }
   });
 });
+
+------------------------*/
 
 
 
