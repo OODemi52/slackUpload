@@ -65,10 +65,6 @@ app.get("/api/getChannels", (request, response) => {
     const obj = {}
     const arr = []
     for (let i=0; i<allChannels.length; i++) {
-      //ids[`id${i}`] = result.channels[i].id
-      //names[result.channels[i].id] = result.channels[i].name
-      //let idTemp = {i}
-      //let objTemp = obj[result.channels[i].id] = result.channels[i].name
       arr[i] = [result.channels[i].id, result.channels[i].name]
     }
     console.log(arr)
@@ -82,16 +78,9 @@ app.get("/api/getChannels", (request, response) => {
     
 
 app.post("/api/uploadFiles", (request, response) => {
-  console.log(request.headers);
-  console.log(request.body);
-  response.send('Data Received:' +  JSON.stringify(request.body));
-});
-
-
-
-/*-----------------
-
-client.auth.test()
+  let { channel, dir } = request.body
+  
+  client.auth.test()
   .then((response) => {
     console.log(`App's bot user: ${response.user_id}`);
   })
@@ -114,7 +103,7 @@ fs.readdir(sdCardPath, (err, files) => {
       const filePath = path.join(sdCardPath, file);
 
       client.files.uploadV2({
-        channel_id: process.env.CHANNEL_ID,
+        channel_id: channel,
         initial_comment: "File Upload Test",
         file: fs.createReadStream(filePath),
         filename: file,
@@ -132,8 +121,9 @@ fs.readdir(sdCardPath, (err, files) => {
     }
   });
 });
+});
 
-------------------------*/
+
 
 
 
