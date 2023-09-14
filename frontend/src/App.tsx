@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { ChangeEvent, useState } from 'react'
 import './App.css'
 import Link from './components/Link'
 import Logo from './components/Logo'
@@ -9,33 +9,35 @@ declare module 'react' {
   interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
     directory?: string;
     webkitdirectory?: string;
-    event?: string
+    e?: string
   }
 }
 
+interface AppState {
+  dir: string;
+  channel: string;
+}
+
 function App() {
-  const [state, setState] = useState({
+  const [state, setState] = useState<AppState>({
     dir:'',
     channel:''
   })
   
-  const handleFolderChange = (e) => {
+  const handleFolderChange = (e: ChangeEvent<HTMLInputElement>): void => {
     e.preventDefault()
   
-    const folderPath = e.target.files[0].webkitRelativePath;
-    const folderDir = folderPath.split('/');
-    setState(prevState => { 
-        return { ...prevState, dir: folderDir[0]}
-    });
+    const folderPath = e.target.files?.[0]?.webkitRelativePath;
+    const folderDir = folderPath?.split('/');
+    setState(prevState => ({ ...prevState, dir: folderDir?[0].toString(): '' }));
   }
-  const handleChannelChange = (e) => {
+  const handleChannelChange = (e: ChangeEvent<HTMLInputElement>): void => {
     e.preventDefault()
     const channel = e.target.value;
-    setState((prevState) => ({ ...prevState, channel: channel}));
+    setState(prevState => ({ ...prevState, channel: channel}));
     };
   
-    const handleFileUpload = async () => {
-      console.log(JSON.stringify(state) +"hi :)")
+    const handleFileUpload = async (): Promise<void> => {
        try {
             if (state.dir && state.channel) {
               const response = await fetch("http://localhost:3000/api/uploadFiles", {
@@ -62,6 +64,8 @@ function App() {
             console.log("Error uploading file:", error);
           }
         };
+
+
 
   return (
     <>
