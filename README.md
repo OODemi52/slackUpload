@@ -1,11 +1,11 @@
-# Project Name: Slack File Uploader
+# Project Name: Slack Image Uploader
 
 ## Description
-The Slack Upload project is an application that allows users to upload files in a specified directory to a specified Slack channel.
+The Slack Upload project is an application that allows users to upload images in a specified directory to a specified Slack channel.
 
 ## Features
-- File Upload: Users can select a folder from their local machine and upload th files in it to a Slack channel.
-- Channel Selection: Users can specify the target Slack channel where the file should be uploaded.
+- Image Upload: Users can select a folder from their local machine and upload the images in it to a Slack channel.
+- Channel Selection: Users can specify the target Slack channel where the images should be uploaded.
 
 ## Technologies Used
 ### Node.js - As the Javascript runtime.
@@ -25,18 +25,25 @@ The Slack Upload project is an application that allows users to upload files in 
 ## Configuration
 ### 1. Create a Slack App:
 - Go to the Slack API website: https://api.slack.com/.
-- Create a new app and configure it with the necessary permissions. Make sure to enable the app in the channels that you want to upload files to.
+- Create a new app and configure it with the necessary permissions. Make sure to enable the app in the channels that you want to upload the images to.
 - Note down the Slack App Token, it will be needed to use the SLACK API.
 
-## 2. Set up environment variables:
+### 2. Set up environment variables:
 - Create a .env file in the project root directory.
 - Add the following environment variables to the .env file:
 
 ```
 SLACK_TOKEN = "Paste your Slack Token here"
 ```
-## 3. Change Front End Assets
+### 3. Change Front End Assets
 - This app was designed for the use of RCCG Christ Chapel MD's Photography Team, so there are various front end elements that reflect the organization, feel free to change them to your liking.
+
+### 4. Image Regex
+-In the index.ts file, there is a regular expression (regex) used to filter the files in a folder that are uploaded. For CCMD, we only upload JPEG images so the regex filters for files the begin with "IMG" and ends with ".JPG": 
+```
+const pattern: RegExp = new RegExp('^IMG_.+\\.JPG$');
+```
+If you need to upload files that do not follow this structure, feel free to change the regex, or remove it entirely if you need to upload all files in said folder.
 
 ## Usage
 ### Start API Server
@@ -52,7 +59,7 @@ SLACK_TOKEN = "Paste your Slack Token here"
 ### Uploading Flies
 3. Select a directory using the "Choose File" input field.
 4. Choose the target Slack channel from the dropdown menu.
-6. Click the "Upload" button to upload the file to Slack.
+6. Click the "Upload" button to upload the images to Slack.
 7. Check the console logs for the upload status.
 
 ## Current Roadblocks
@@ -61,11 +68,11 @@ SLACK_TOKEN = "Paste your Slack Token here"
 SD_CARD_PATH = "/Volumes/EOS_DIGITAL/DCIM"
 ```
 the ```102CANON``` folder would be selected throgh the web pages file selection. Workarounds for selecting the folder path are being explored. This might involve porting the application to a desktop application using something like Electron. If you have any feedback or ides, feel free to share or fork this repository.
-- When using the Slack app, you can upload photos up to 10 at a time, but through the API you can only upload 1 file at a time. Uploading the images 10 at a time is more beneficial because it groups the photos together and makes it easier to go through them. A workaround using permalinks to group the files together and upload them is being worked on.
+- When using the Slack app, you can upload photos up to 10 at a time, but through the API you can only upload 1 image at a time. Uploading the images 10 at a time is more beneficial because it groups the photos together and makes it easier to go through them. A workaround using permalinks to group the images together and upload them is being worked on.
 
 ## Coming Features
 - Selecting absolute file path.
-- Uploading File 10 at a time.
+- Uploading images 10 at a time.
 - A UI feature that will display the uploaded photos in a grid as they are uploaded, and allow users to view details, download specific images, and delete images from a channel.
 
 ## Contributing
