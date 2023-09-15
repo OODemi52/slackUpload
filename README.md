@@ -55,6 +55,19 @@ SLACK_TOKEN = "Paste your Slack Token here"
 6. Click the "Upload" button to upload the file to Slack.
 7. Check the console logs for the upload status.
 
+## Current Roadblocks
+- Due to Javascript security protocols for working with the browser, choosing the directory on the web page does not retrive the absolute file path of the folder, which is needed on the backend to determine where to check to upload files. To work around this, the root of the file path you plan to use needs to be set in the .env file. For example if the absolute path of your file is ```"/Volumes/EOS_DIGITAL/DCIM/102CANON"``` your .env variable would be:
+```
+SD_CARD_PATH = "/Volumes/EOS_DIGITAL/DCIM"
+```
+the ```102CANON``` folder would be selected throgh the web pages file selection. Workarounds for selecting the folder path are being explored. This might involve porting the application to a desktop application using something like Electron. If you have any feedback or ides, feel free to share or fork this repository.
+- When using the Slack app, you can upload photos up to 10 at a time, but through the API you can only upload 1 file at a time. Uploading the images 10 at a time is more beneficial because it groups the photos together and makes it easier to go through them. A workaround using permalinks to group the files together and upload them is being worked on.
+
+## Coming Features
+- Selecting absolute file path.
+- Uploading File 10 at a time.
+- A UI feature that will display the uploaded photos in a grid as they are uploaded, and allow users to view details, download specific images, and delete images from a channel.
+
 ## Contributing
 Contributions are welcome! If you would like to contribute to this project, please follow these steps:
 1. Fork the repository.
