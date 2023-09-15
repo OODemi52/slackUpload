@@ -4,7 +4,8 @@
   "description": "Automatically uploads jpg images to Slack.",
   "main": "index.ts",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "start": "npx nodemon index"
   },
   "repository": {
     "type": "git",
