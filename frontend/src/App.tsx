@@ -3,6 +3,7 @@ import './App.css'
 import Link from './components/Link'
 import Logo from './components/Logo'
 import Clickable from './components/Clickable'
+import Spacer from './components/Spacer'
 
 
 declare module 'react' {
@@ -28,9 +29,12 @@ function App() {
     e.preventDefault()
   
     const folderPath = e.target.files?.[0]?.webkitRelativePath;
-    const folderDir = folderPath?.split('/');
-    setState(prevState => ({ ...prevState, dir: folderDir?[0].toString(): '' }));
+    const folderDir = folderPath?.split('/');   
+    console.log(folderPath);
+    console.log(folderDir[0]);
+    setState(prevState => ({ ...prevState, dir: folderDir?.[0]?.toString() ?? '' }));
   }
+
   const handleChannelChange = (e: ChangeEvent<HTMLInputElement>): void => {
     e.preventDefault()
     const channel = e.target.value;
@@ -73,22 +77,27 @@ function App() {
         <Link org={"ccmd"} componentToBePassed={<Logo org={"ccmd"}/>}/>
         <Link org={"slack"} componentToBePassed={<Logo org={"slack"}/>}/>
       </div>
-      <h1>Christ Chapel Slack <br /> File Uploader</h1>
+      <h1>Christ Chapel <br /> Slack Image Uploader</h1>
       <div className="card">
         <p>
           Took 100+ pictures today and don't feel like uploading them to Slack 10 pictures at a time? This app will automatically upload them for you! Just choose the folder you're uploading from and the channel your uploading to and the bot will take care of the rest!
         </p>
       </div>
-      <p className="read-the-docs">
-        Folder:
-      </p>
-      <Clickable type='path' handleFolderChange={handleFolderChange} state={state} />
-      <p className="read-the-docs">
-        Channel:
-      </p>
-      <Clickable type='channel' handleChannelChange={handleChannelChange} state={state} />
-      <br />
-      <br />
+      
+      <span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className='' style={{}}>
+            <p className="read-the-docs">Folder:</p>
+            <Clickable type='path' handleFolderChange={handleFolderChange} state={state} />
+          </div>
+          <Spacer size={2} />
+          <div style={{}}>
+            <p className="read-the-docs">Channel:</p>
+            <Clickable type='channel' handleChannelChange={handleChannelChange} state={state} />
+          </div>
+        </div>
+      </span>
+      <Spacer size={1.5} />
       <Clickable type='upload' handleFileUpload={handleFileUpload} state={state} />
 
     </>

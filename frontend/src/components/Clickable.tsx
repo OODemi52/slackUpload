@@ -25,10 +25,13 @@ export default function Clickable ({ type, handleFolderChange, handleChannelChan
         setOptions(data);
     }
    
+    console.log(state)
 
 
     if (type === 'path') {
         return (
+            <>
+            <label htmlFor="dir" className="custom-file-upload">{state.dir === ""? "Choose Folder": state.dir}</label>
             <input
                 type="file"
                 id="dir"
@@ -36,6 +39,7 @@ export default function Clickable ({ type, handleFolderChange, handleChannelChan
                 directory=''
                 onChange={handleFolderChange} 
             />
+            </>
         )
     }
 
@@ -46,8 +50,9 @@ export default function Clickable ({ type, handleFolderChange, handleChannelChan
                     id="channels"
                     onChange={handleChannelChange}
                     defaultValue="default"
+                    className="custom-select"
                 >
-                <option value="default" disabled>Select Channel</option>
+                <option value="default" disabled>Choose Channel</option>
                 {options.map((option) => (<option key={option[0]} value={option[0]}>{option[1]}</option>))}
                 </select>
         )

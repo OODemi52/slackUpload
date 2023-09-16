@@ -36,7 +36,7 @@ h1 {
   line-height: 1.1;
 }
 
-button, input, select {
+button, input, select, .custom-file-upload {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -47,17 +47,17 @@ button, input, select {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover, input:hover, select:hover {
+button:hover, input:hover, select:hover, .custom-file-upload:hover {
   border-color: #646cff;
 }
 
-button:focus, input:focus, select:focus
-button:focus-visible, input:focus-visible, select:focus-visible {
+button:focus, input:focus, select:focus, .custom-file-upload:focus,
+button:focus-visible, input:focus-visible, select:focus-visible, .custom-file-upload:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-input[type='file'] {
-  color: transparent;
+input[type="file"] {
+  display: none;
 }
 
 @media (prefers-color-scheme: light) {
@@ -71,4 +71,28 @@ input[type='file'] {
   button {
     background-color: #f9f9f9;
   }
+}
+
+button {
+  padding: ;
+}
+
+.custom-select {
+  -moz-appearance:none; /* Firefox */
+  -webkit-appearance:none; /* Safari and Chrome */
+  appearance:none;
+}
+
+select{
+  text-align: center;
+  text-align-last: center;
+  -moz-text-align-last: center;
+}
+
+option {
+  text-align-last: center;
+}
+
+button {
+  padding: 0.8em 8em;
 }
