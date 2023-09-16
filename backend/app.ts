@@ -9,13 +9,10 @@ import helmet from 'helmet';
 // Load environment variables from .env file
 dotenv.config();
 
+export const app: express.Application = express();
 const client: WebClient = new WebClient(process.env.SLACK_TOKEN);
 const sdCardPath: string = process.env.SD_CARD_PATH ?? '';
-const app: express.Application = express();
 const port: number = 3000;
-
-// Initiaize Server
-app.listen(port, () => console.log(`Running on port ${port}`));
 
 //Set Headers
 app.use((request: express.Request, response: express.Response, next) => {
@@ -107,8 +104,3 @@ app.post("/api/uploadFiles", (request: express.Request, response: express.Respon
     });
   });
 });
-
-
-
-
-
