@@ -6,7 +6,7 @@ interface ClickableProps {
     handleChannelChange: () => void;
     handleFileUpload?: () => void;
     state: {
-      dir: string;
+      dirName: string;
       channel: string;
     };
   }
@@ -31,7 +31,7 @@ export default function Clickable ({ type, handleFolderChange, handleChannelChan
     if (type === 'path') {
         return (
             <>
-            <label htmlFor="dir" className="custom-file-upload">{state.dir === ""? "Choose Folder": state.dir}</label>
+            <label htmlFor="dir" className="custom-file-upload">{state.dirName === ""? "Choose Folder": state.dirName}</label>
             <input
                 type="file"
                 id="dir"
@@ -60,7 +60,7 @@ export default function Clickable ({ type, handleFolderChange, handleChannelChan
     
     if (type === 'upload') {
             return (
-                <button onClick={handleFileUpload} disabled={!state.dir || !state.channel}>Upload</button>
+                <button onClick={handleFileUpload} disabled={!state.dirName || !state.channel}>Upload</button>
             )
         }
 }

@@ -75,6 +75,7 @@ the ```102CANON``` folder would be selected throgh the web pages file selection.
 - Uploading images 10 at a time.
 - A UI feature that will display the uploaded photos in a grid as they are uploaded, and allow users to view details, download specific images, and delete images from a channel.
 - Optional authentification to limit use to those within organization.
+- Authentication method to prevent abuse from client side.
 
 ## Contributing
 Contributions are welcome! If you would like to contribute to this project, please follow these steps:

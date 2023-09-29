@@ -15,13 +15,13 @@ declare module 'react' {
 }
 
 interface AppState {
-  dir: string;
+  dirName: string;
   channel: string;
 }
 
 function App() {
   const [state, setState] = useState<AppState>({
-    dir:'',
+    dirName:'',
     channel:''
   })
   
@@ -32,7 +32,7 @@ function App() {
     const folderDir = folderPath?.split('/');   
     console.log(folderPath);
     console.log(folderDir[0]);
-    setState(prevState => ({ ...prevState, dir: folderDir?.[0]?.toString() ?? '' }));
+    setState(prevState => ({ ...prevState, dirName: folderDir?.[0]?.toString() ?? '' }));
   }
 
   const handleChannelChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -43,7 +43,7 @@ function App() {
   
     const handleFileUpload = async (): Promise<void> => {
        try {
-            if (state.dir && state.channel) {
+            if (state.dirName && state.channel) {
               const response = await fetch("http://localhost:3000/api/uploadFiles", {
                 method: "POST",
                 headers: {
@@ -51,7 +51,7 @@ function App() {
                 },
                 body: JSON.stringify({
                   channel: state.channel,
-                  dir: state.dir,
+                  dirName: state.dirName,
                 }),
               });
       
