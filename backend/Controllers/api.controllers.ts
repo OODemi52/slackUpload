@@ -1,8 +1,6 @@
 import express from 'express';
 import SlackBot from '../Models/slackbot';
 
-
-
 export const getChannels = async (request: express.Request, response: express.Response) => {
     try {
         const slackbot = new SlackBot();
@@ -25,7 +23,7 @@ export const getChannels = async (request: express.Request, response: express.Re
 
     const slackbot = new SlackBot(dirName, channel);
     try {
-         await slackbot.processFilesAndUpload();
+         await slackbot.processFilesAndUpload(14); // Arg is max amount of images to send in one message (Slack currently uploads 14 max)
         response.status(200).json({ message: 'Files Uploaded Successfully!' });
     } catch (error) {
         console.error(`Error uploading files: ${error}`);
