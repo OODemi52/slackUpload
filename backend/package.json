@@ -5,7 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "test": "test",
-    "start": "npx nodemon server"
+    "start": "node server",
+    "dev": "nodemon server"
   },
   "repository": {
     "type": "git",
