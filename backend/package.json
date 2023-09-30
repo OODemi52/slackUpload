@@ -5,9 +5,10 @@
   "main": "server.ts",
   "scripts": {
     "test": "test",
-    "start": "node server.ts",
-    "dev": "nodemon server",
-    "build": "tsc server"
+    "start": "node server",
+    "dev": "nodemon src/server",
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
   },
   "repository": {
     "type": "git",
