@@ -14,7 +14,7 @@ export default class SlackBot {
   constructor(dirName?: string, channel?: string) {  // 'dirName' and 'channel' passed in from front end
     this.client = new WebClient(process.env.SLACK_TOKEN);
     this.sdCardPath = process.env.SD_CARD_PATH ?? '';
-    this.dirName = dirName || ''; // Makes it optional to pass args in for class methods that dont require it.
+    this.dirName = dirName || '';
     this.channel = channel || '';
     this.absDir = path.join(this.sdCardPath, this.dirName);
   }
@@ -28,14 +28,22 @@ export default class SlackBot {
     }
   }
 
-  async processFilesAndUpload(): Promise<void> {
+  async processFilesAndUpload(message_length: number): Promise<void> {
     const files: string[] = await this.readFilesFromDirectory();
     const sortedFiles: string[] = this.filterAndSortFiles(files);
-  
-    for (const fileName of sortedFiles) {
-      await this.uploadFileToSlackChannel(fileName, this.absDir);
-      // Introduce a delay of, for example, 2.5 second between uploads
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+
+    const files_upload: {filename: string, file: string}[] = [];
+
+    for(let i=0; i <sortedFiles.length; i++) {
+      const filename: string = sortedFiles[i];
+      const file: string = path.join(this.absDir, filename);
+      files_upload.push({file, filename});
+      console.log(files_upload)
+
+      if ((i + 1) % message_length === 0 || i === sortedFiles.length - 1) {
+        await this.uploadFileToSlackChannel(files_upload);
+        files_upload.length = 0;
+      }
     }
   }
 
@@ -54,22 +62,30 @@ export default class SlackBot {
     return filteredFiles.sort();
   }
 
-  private async uploadFileToSlackChannel(fileName: string, filePath:string): Promise<void> {
+  private async uploadFileToSlackChannel(file_uploads:object[]): Promise<void> {
     try {
-     await this.client.files.uploadV2({
-       channel_id: this.channel,
-       initial_comment: "Sunday September 17, 2023",
-       file: fs.createReadStream(path.join(filePath, fileName)),
-       filename: fileName,
-     });
-     console.log(`Uploaded ${fileName} to Slack`);
-   } catch (error: any) {
-     if (error.code === 'slack_error_code') {
-       console.error(`Error uploading ${fileName} to Slack: ${error.message}`);
-     } else {
-       console.error(`Unexpected error: ${error}`);
-     }
-     throw error;
-   } 
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      await this.client.files.uploadV2({
+        channel_id: this.channel,
+        initial_comment: currentDate,
+        file_uploads : file_uploads,
+      });
+
+      console.log(`Uploaded files to Slack`);
+
+    } catch (error: any) {
+      if (error.code === 'slack_error_code') {
+        console.error(`Error uploading files to Slack: ${error.message}`);
+      } else {
+        console.error(`Unexpected error: ${error}`);
+      }
+      throw error;
+    } 
  }
 }
