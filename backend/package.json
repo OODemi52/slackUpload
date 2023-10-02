@@ -2,7 +2,7 @@
   "name": "slackupload",
   "version": "1.0.0",
   "description": "Automatically uploads jpg images to Slack.",
-  "main": "server.ts",
+  "main": "./dist/server",
   "scripts": {
     "test": "test",
     "start": "node dist/server",
