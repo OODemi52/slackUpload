@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "test": "test",
-    "start": "node server",
+    "start": "node dist/server",
     "dev": "nodemon src/server",
     "build": "tsc --build",
     "clean": "tsc --build --clean"

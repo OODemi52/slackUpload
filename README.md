@@ -77,6 +77,7 @@ the ```102CANON``` folder would be selected throgh the web pages file selection.
 - Optional authentification to limit use to those within organization.
 - Authentication method to prevent abuse from client side.
 - Option to decide what comment will accompany each message.
+- Make it so the upload button can't be pressed again until all files upload.
 
 ## Contributing
 Contributions are welcome! If you would like to contribute to this project, please follow these steps:
