@@ -2,12 +2,12 @@
   "name": "slackupload",
   "version": "1.0.0",
   "description": "Automatically uploads jpg images to Slack.",
-  "main": "./dist/server",
+  "main": "dist/server",
   "scripts": {
     "test": "test",
     "start": "node dist/server",
     "dev": "nodemon src/server",
-    "build": "tsc --build",
+    "build": "tsc",
     "clean": "tsc --build --clean"
   },
   "repository": {
