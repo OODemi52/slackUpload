@@ -5,7 +5,7 @@
   "main": "dist/server",
   "scripts": {
     "test": "test",
-    "start": "node dist/server.js",
+    "start": "node server.js",
     "postinstall": "tsc",
     "prepare": "cp ./package.json ./dist",
     "dev": "nodemon src/server.ts"
