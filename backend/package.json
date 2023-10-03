@@ -6,6 +6,7 @@
   "scripts": {
     "test": "test",
     "start": "node dist/server.js",
+    "postinstall": "tsc",
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "clean": "tsc --build --clean"
