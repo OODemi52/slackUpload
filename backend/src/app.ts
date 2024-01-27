@@ -20,11 +20,11 @@ app.use((request: express.Request, response: express.Response, next) => {
 });
 
 //Body Parser (Gets content from response body)
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb'}));
+app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 
 //Helmet (Protect responses by setting specific headers)
-app.use(helmet());
+//app.use(helmet());
 
 // API Routes
 app.use('/api', apiRouter);

@@ -1,22 +1,33 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as dotenv from 'dotenv'
+import * as dotenv from 'dotenv';
 import { WebClient } from '@slack/web-api';
+import fs from 'fs';
+import path from 'path';
+
 dotenv.config();
+
+interface FormidableFile {
+  size: number;
+  path: string;
+  name: string;
+  type: string;
+  lastModifiedDate?: Date;
+}
+
+interface UploadedFile {
+  size: number;
+  path: string;
+  name: string;
+  type: string;
+  lastModifiedDate?: Date;
+};
 
 export default class SlackBot {
   private client: WebClient;
-  private sdCardPath: string;
-  private dirName: string;
   private channel: string;
-  private absDir: string;
 
-  constructor(dirName?: string, channel?: string) {  // 'dirName' and 'channel' passed in from front end
+  constructor(channel?: string) {
     this.client = new WebClient(process.env.SLACK_TOKEN);
-    this.sdCardPath = process.env.SD_CARD_PATH ?? '';
-    this.dirName = dirName || '';
-    this.channel = channel || '';
-    this.absDir = path.join(this.sdCardPath, this.dirName);
+    this.channel = 'C04N4GHP6JW'//channel || ''; Need to fix this
   }
 
   async getChannels() {
@@ -24,45 +35,31 @@ export default class SlackBot {
       const result = await this.client.conversations.list();
       return result.channels?.map((channel) => [`${channel.id}`, `${channel.name}`]) ?? [];
     } catch (error) {
-      console.error(error);
+      console.error(`Error fetching channels: ${error}`);
+      return [];
     }
   }
 
-  async processFilesAndUpload(message_length: number): Promise<void> {
-    const files: string[] = await this.readFilesFromDirectory();
-    const sortedFiles: string[] = this.filterAndSortFiles(files);
+  async batchAndUploadFiles(uploadedFiles: UploadedFile[], message_length: number): Promise<void> {
+    console.log(uploadedFiles)
+    const files_upload: { filename: string, file: string }[] = [];
 
-    const files_upload: {filename: string, file: string}[] = [];
+    for (let i = 0; i < uploadedFiles.length; i++) {
 
-    for(let i=0; i <sortedFiles.length; i++) {
-      const filename: string = sortedFiles[i];
-      const file: string = path.join(this.absDir, filename);
+      const filename: string = uploadedFiles[i].name;
+      const file: string = uploadedFiles[i].path;
+      
       files_upload.push({file, filename});
-      console.log(files_upload)
+      console.log('Files to upload:', files_upload);
 
-      if ((i + 1) % message_length === 0 || i === sortedFiles.length - 1) {
-        await this.uploadFileToSlackChannel(files_upload);
+      if ((i + 1) % message_length === 0 || i === uploadedFiles.length - 1) {
+        await this.uploadFilesToSlackChannel(files_upload);
         files_upload.length = 0;
       }
     }
   }
-
-  private async readFilesFromDirectory(): Promise<string[]> {
-    try {
-      return await fs.promises.readdir(this.absDir);
-    } catch (err) {
-      console.error(`Error reading directory: ${err}`);
-      throw err;
-    }
-  }
-
-  private filterAndSortFiles(files: string[]): string[] {
-    const pattern: RegExp = /^IMG_.+\.JPG$/;
-    const filteredFiles: string[] = files.filter((file: string) => pattern.test(file));
-    return filteredFiles.sort();
-  }
-
-  private async uploadFileToSlackChannel(file_uploads:object[]): Promise<void> {
+  
+  private async uploadFilesToSlackChannel(file_uploads: { filename: string, file: string }[]): Promise<void> {
     try {
       const currentDate = new Date().toLocaleDateString('en-US', {
         weekday: 'long',

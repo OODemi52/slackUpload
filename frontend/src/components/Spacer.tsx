@@ -1,6 +1,8 @@
-import React from 'react';
+type SpacerProps = {
+  size: number;
+};
 
-const Spacer = ({ size }) => {
+const Spacer = ({ size }: SpacerProps) => {
   const spacerStyle = {
     padding: `${size}rem`,
   };
