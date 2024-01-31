@@ -32,15 +32,10 @@ export const uploadFiles = async (req: express.Request, res: express.Response) =
   const form = new IncomingForm() as any;
 
   // Formidable config
-  form.uploadDir = path.join(__dirname, '../uploads');
+  form.uploadDir = '/tmp';
   form.keepExtensions = true;
   form.maxFileSize = 50 * 1024 * 1024; // 50MB
-
-  // Check upload folder, create if not present
-  if (!fs.existsSync(form.uploadDir)) {
-    fs.mkdirSync(form.uploadDir, { recursive: true });
-  }
-
+  
   form.parse(req, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
     if (err) {
       console.error(`Error processing upload: ${err}`);
