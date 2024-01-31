@@ -1,7 +1,5 @@
 import * as dotenv from 'dotenv';
 import { WebClient } from '@slack/web-api';
-import fs from 'fs';
-import path from 'path';
 
 dotenv.config();
 
@@ -27,7 +25,7 @@ export default class SlackBot {
 
   constructor(channel?: string) {
     this.client = new WebClient(process.env.SLACK_TOKEN);
-    this.channel = 'C04N4GHP6JW'//channel || ''; Need to fix this
+    this.channel = channel || ''
   }
 
   async getChannels() {
@@ -67,6 +65,10 @@ export default class SlackBot {
         month: 'long',
         day: 'numeric',
       });
+
+      if (!this.channel) {
+        throw new Error('No channel specified');
+      }
 
       await this.client.files.uploadV2({
         channel_id: this.channel,

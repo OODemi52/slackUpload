@@ -44,7 +44,7 @@ export const uploadFiles = async (req: express.Request, res: express.Response) =
   
     const { channel } = fields;
     console.log(`Uploading files to channel: ${channel}`);
-    const slackbot = new SlackBot(channel);
+    const slackbot = new SlackBot(channel[0]);
   
     // Transform the 'files' object to match the expected structure
     const uploadedFiles = files.files.map((file: File) => ({
