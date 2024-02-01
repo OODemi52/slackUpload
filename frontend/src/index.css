@@ -56,6 +56,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, .custom-file-up
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+button:disabled {
+  cursor: default;
+  outline: 0px;
+  display: none;
+}
+
+button:disabled:hover {
+  border: 0px;
+  outline: 0px;
+}
+
 input[type="file"] {
   display: none;
 }
@@ -73,13 +84,9 @@ input[type="file"] {
   }
 }
 
-button {
-  padding: ;
-}
-
 .custom-select {
-  -moz-appearance:none; /* Firefox */
-  -webkit-appearance:none; /* Safari and Chrome */
+  -moz-appearance:none;
+  -webkit-appearance:none;
   appearance:none;
 }
 
