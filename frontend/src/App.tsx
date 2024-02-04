@@ -55,7 +55,7 @@ function App() {
       }
   
       try {
-        const response = await fetch("https://tame-cyan-adder-shoe.cyclic.app/api/uploadFiles", {
+        const response = await fetch("https://ss-server-nu9y.onrender.com/api/uploadFiles", {
           method: "POST",
           body: formData,
         });
