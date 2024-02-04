@@ -39,18 +39,20 @@ export default class SlackBot {
   }
 
   async batchAndUploadFiles(uploadedFiles: UploadedFile[], message_length: number): Promise<void> {
-    console.log(uploadedFiles)
+    const sortedFiles = uploadedFiles.sort((a, b) => {
+      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  
     const files_upload: { filename: string, file: string }[] = [];
-
-    for (let i = 0; i < uploadedFiles.length; i++) {
-
-      const filename: string = uploadedFiles[i].name;
-      const file: string = uploadedFiles[i].path;
-      
-      files_upload.push({file, filename});
+  
+    for (let i = 0; i < sortedFiles.length; i++) {
+      const filename: string = sortedFiles[i].name;
+      const file: string = sortedFiles[i].path;
+  
+      files_upload.push({ file, filename });
       console.log('Files to upload:', files_upload);
-
-      if ((i + 1) % message_length === 0 || i === uploadedFiles.length - 1) {
+  
+      if ((i + 1) % message_length === 0 || i === sortedFiles.length - 1) {
         await this.uploadFilesToSlackChannel(files_upload);
         files_upload.length = 0;
       }
