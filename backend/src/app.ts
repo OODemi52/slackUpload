@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 
 // CORS (Cross-Origin Resource Sharing) allowing requests from designated frontends
 app.use(cors({
-  origin: "https://slackshots.onrender.com"
+  origin: ["https://slackshots.onrender.com", "http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:3001"]
 }
 ))
 app.options('*', cors())
