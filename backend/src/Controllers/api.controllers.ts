@@ -34,9 +34,9 @@ export const uploadFiles = async (req: express.Request, res: express.Response) =
   // Formidable config
   form.uploadDir = '/tmp';
   form.keepExtensions = true;
-  form.maxFileSize = 400 * 1024 * 1024; // 400MB, for individual files
-  form.maxTotalFileSize = 400 * 1024 * 1024; // 400MB, for all files in a batch
-  
+  form.options.maxFileSize = 2000 * 1024 * 1024; // 2GB, for individual files
+  form.options.maxTotalFileSize = 2000 * 1024 * 1024; // 2GB, for all files in a batch
+
   form.parse(req, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
     if (err) {
       console.error(`Error processing upload: ${err}`);
