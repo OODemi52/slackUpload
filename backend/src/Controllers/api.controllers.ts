@@ -58,17 +58,6 @@ export const uploadFiles = async (req: express.Request, res: express.Response) =
   
     try {
       await slackbot.batchAndUploadFiles(uploadedFiles, 14);
-
-      uploadedFiles.forEach((file: { path: fs.PathLike; }) => {
-        fs.unlink(file.path, unlinkErr => {
-          if (unlinkErr) {
-            console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
-          } else {
-            console.log(`Successfully deleted file ${file.path}`);
-          }
-        });
-      });
-
       res.status(200).json({ message: 'Files uploaded successfully!' });
     } catch (error) {
       console.error(`Error uploading files: ${error}`);
