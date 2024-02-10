@@ -4,6 +4,7 @@ import Spacer from './components/Spacer'
 import ChannelSelector from './components/ChannelSelector'
 import FolderSelector from './components/FolderSelector'
 import UploadButton from './components/UploadButton'
+import { SignInWithSlack } from './components/SignInWithSlack'
 
 declare module 'react' {
   interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
@@ -55,7 +56,7 @@ function App() {
       }
   
       try {
-        const response = await fetch("https://ss-server-nu9y.onrender.com/api/uploadFiles", {
+        const response = await fetch("https://tame-cyan-adder-shoe.cyclic.app/api/uploadFiles", {
           method: "POST",
           body: formData,
         });
@@ -103,6 +104,7 @@ function App() {
         disabled={!state.dirName || !state.channel}  
         onUpload={handleFileUpload} 
       />
+      <SignInWithSlack />
 
     </>
   )

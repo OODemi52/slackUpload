@@ -2,7 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
-import apiRouter from './Routes/api.routes';
+import apiRouter from './Routes/api.route';
+import authRouter from './Routes/auth.route';
 
 export const app: express.Application = express();
 
@@ -36,5 +37,8 @@ app.use(helmet());
 
 // API Routes
 app.use('/api', apiRouter);
+
+// Auth Routes
+app.use('/auth', authRouter);
 
 export default app;

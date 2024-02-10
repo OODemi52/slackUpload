@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import express from 'express';
-import SlackBot from '../Models/slackbot';
+import SlackBot from '../Models/slackbot.model';
 import { IncomingForm } from 'formidable';
 
 interface FormFields {
@@ -15,6 +15,10 @@ interface File {
   originalFilename: string;
   mimetype: string;
   lastModifiedDate?: Date;
+}
+
+export const api = async (request: express.Request, response: express.Response) => {
+  response.status(400).send('Something went wrong, you should not be here!');
 }
 
 export const getChannels = async (request: express.Request, response: express.Response) => {

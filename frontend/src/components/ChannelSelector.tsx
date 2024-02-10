@@ -19,7 +19,7 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({ onChannelChange }) =>
   const fetchChannels = async (): Promise<void> => {
     try {
       const response = await fetch(
-        'https://ss-server-nu9y.onrender.com/api/getChannels',
+        'https://tame-cyan-adder-shoe.cyclic.app/api/getChannels',
       );
       const data = await response.json();
       // Map the array of arrays to an array of strings (channel names)

@@ -26,3 +26,6 @@ dist-ssr
 
 # Ignore files related to API keys
 .env
+
+# Ignore AWS EC2 PEM files
+*.pem

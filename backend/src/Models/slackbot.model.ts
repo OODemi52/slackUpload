@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import { WebClient } from '@slack/web-api';
 
