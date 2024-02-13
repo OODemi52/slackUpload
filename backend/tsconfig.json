@@ -5,7 +5,7 @@
     "files": true
   },
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2017",
     "module": "commonjs",
     "rootDir": "./src",
     "outDir": "./dist",
@@ -15,7 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitAny": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "incremental": true,
   },
   "include": [
     "src/**/*"
