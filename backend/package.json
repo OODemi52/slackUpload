@@ -6,7 +6,7 @@
   "scripts": {
     "test": "test",
     "start": "node dist/server.js",
-    "build": "tsc --build",
+    "build": "node --max-old-space-size=4096 node_modules/.bin/tsc --build",
     "dev": "nodemon src/server.ts"
   },
   "repository": {
