@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import Spacer from './components/Spacer'
 import ChannelSelector from './components/ChannelSelector'
 import FolderSelector from './components/FolderSelector'
 import UploadButton from './components/UploadButton'
 import { SignInWithSlack } from './components/SignInWithSlack'
+import Modal from './components/Modal'
+import logo from '../public/SSLOGO_NOBG.png';
 
 declare module 'react' {
   interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
@@ -21,11 +23,20 @@ interface AppState {
 }
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [state, setState] = useState<AppState>({
     dirName: '',
     files: null,
     channel: '',
   });
+
+  useEffect(() => {
+    if (isFirstLoad) {
+      setIsFirstLoad(false);
+    }
+  }, [isFirstLoad]);
 
   const handleFolderChange = (dirName: string, files: FileList | null): void => {
     setState(prevState => ({
@@ -74,6 +85,19 @@ function App() {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <>
+        <Modal>
+          <img src={logo} alt="Slack Shots Logo" className="logo-image" />
+          <h1>SlackShots</h1>
+          <h3>Click Below To Add The App/Sign Into Your Workspace!</h3>
+          <SignInWithSlack />
+        </Modal>
+      </>
+    )
+  }
+
   return (
     <>
       <div>
@@ -81,9 +105,6 @@ function App() {
       </div>
       <h1>SlackShots</h1>
       <div className="card">
-        <p>
-          Took 100+ pictures today and don't feel like uploading them to Slack 10 pictures at a time? This app will automatically upload them for you! Just choose the folder you're uploading from and the channel your uploading to and we'll handle the rest!
-        </p>
       </div>
       
       <span>
@@ -104,8 +125,6 @@ function App() {
         disabled={!state.dirName || !state.channel}  
         onUpload={handleFileUpload} 
       />
-      <SignInWithSlack />
-
     </>
   )
 }

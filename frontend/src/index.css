@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background: linear-gradient(to bottom, #5f43b2, #8c73e9);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -47,12 +47,13 @@ button, input, select, .custom-file-upload {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover, input:hover, select:hover, .custom-file-upload:hover {
+
+button:hover, input:hover, select:hover, .custom-file-upload:hover, .slack-button:hover {
   border-color: #646cff;
 }
 
 button:focus, input:focus, select:focus, .custom-file-upload:focus,
-button:focus-visible, input:focus-visible, select:focus-visible, .custom-file-upload:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, .custom-file-upload:focus-visible, .slack-button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
@@ -90,6 +91,15 @@ input[type="file"] {
   appearance:none;
 }
 
+.slack-button {
+  border: 2px solid #535bf200;
+}
+
+.slack-button:hover {
+  box-shadow: 0 0 10px #646cff;
+  border: 2px solid #646cff;
+}
+
 select{
   text-align: center;
   text-align-last: center;
@@ -102,4 +112,85 @@ option {
 
 button {
   padding: 0.8em 8em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(to bottom, #5f43b2, #8c73e9);
+  padding: 80px;
+  z-index: 1001;
+  border-radius: 10px;
+  width: 90%;
+  height: 50%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
+  overflow: visible;
+  animation: fadeInModalContent 1.5s ease-out forwards;
+}
+
+@keyframes fadeInModalContent {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.logo-image {
+  width: 350px;
+  height: auto;
+}
+
+.modal-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: radial-gradient(white 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: particles 75s infinite linear;
+  z-index: -1;
+}
+
+
+@keyframes particles {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 -200vh;
+  }
 }
