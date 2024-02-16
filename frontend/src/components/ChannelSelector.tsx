@@ -1,51 +1,74 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  Box,
+  RadioGroup,
+  Radio,
+  Stack,
+} from '@chakra-ui/react';
+
+interface Channel {
+  id: string;
+  name: string;
+}
 
 interface ChannelSelectorProps {
   onChannelChange: (channelId: string) => void;
 }
 
-interface Channel {
-    id: string;
-    name: string;
-  }
-
 const ChannelSelector: React.FC<ChannelSelectorProps> = ({ onChannelChange }) => {
-    const [channels, setChannels] = useState<Channel[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [selectedChannel, setSelectedChannel] = useState('');
 
   useEffect(() => {
     fetchChannels();
   }, []);
 
-  const fetchChannels = async (): Promise<void> => {
+  const fetchChannels = async () => {
     try {
-      const response = await fetch(
-        'https://tame-cyan-adder-shoe.cyclic.app/api/getChannels',
-      );
+      const response = await fetch('http://localhost:3000/api/getChannels');
       const data = await response.json();
-      // Map the array of arrays to an array of strings (channel names)
-      const channelOptions = data.map(([id, name]: [string, string]) => ({
-        id,
-        name,
-      }));
-
-      setChannels(channelOptions);
+      setChannels(data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching channels:', error);
     }
   };
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const channelId = event.target.value;
+  const handleChannelSelect = (channelId: string) => {
+    setSelectedChannel(channelId);
     onChannelChange(channelId);
   };
 
   return (
-    <select onChange={handleChange} defaultValue="" className="custom-select" name="channels" id="channels">
-      <option value="" disabled>Choose Channel</option>
-      {channels.map(channel => (
-        <option key={channel.id} value={channel.id}>{channel.name}</option>
-      ))}
-    </select>
+    <Box border="2px solid" borderRadius="md" p={1} color="white">
+      <Accordion allowToggle bgColor="purple.500">
+        <AccordionItem sx={{ borderBottomWidth: 0 }}>
+          <h2>
+            <AccordionButton _expanded={{ bg: "purple.500", color: "white" }} bgGradient="linear(to-b, #5f43b2, #8c73e9)">
+              <Box flex="1" textAlign="left" color="whites">
+                Choose a Channel
+              </Box>
+              <AccordionIcon />
+            </AccordionButton>
+          </h2>
+          <AccordionPanel pb={4} bg="#191919">
+            <RadioGroup onChange={handleChannelSelect} value={selectedChannel}>
+              <Stack spacing={2} direction="column" color="purple.500">
+                {channels.map(channel => (
+                  <Radio key={channel.id} value={channel.id}>
+                    {channel.name}
+                  </Radio>
+                ))}
+              </Stack>
+            </RadioGroup>
+          </AccordionPanel>
+        </AccordionItem>
+      </Accordion>
+    </Box>
   );
 };
 

@@ -1,24 +1,13 @@
-import slackLogo from '../assets/Slack_Logo.webp'
-import ccLogo from '../assets/CCLOGO-Vector.png'
+import React from 'react';
+import { AspectRatio } from '@chakra-ui/react';
+import logoImage from '../../public/SSLOGO_NOBG.png';
 
-interface LogoProps {
-    org: "ccmd" | "slack"
-}
+const Logo: React.FC = () => {
+  return (
+    <AspectRatio maxW="100px" ratio={1}>
+      <img src={logoImage} alt="Slackshots Logo" />
+    </AspectRatio>
+  );
+};
 
-export default function Logo({ org }: LogoProps) {
-
-    if (org === "ccmd") {
-        return(
-            <>
-                <img src={ccLogo} className="logo" alt="Christ Chapel Logo" />
-            </>
-        )
-    }
-    if (org === "slack") {
-        return(
-            <>
-                <img src={slackLogo} className="logo react" alt="Slack Logo" />
-            </>
-        )
-    }
-}
+export default Logo;

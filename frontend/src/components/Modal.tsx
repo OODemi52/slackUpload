@@ -1,6 +1,7 @@
 import React from 'react';
 import '../index.css';
 
+
 const Modal = ({ children }: { children: React.ReactNode }) => {
     return (
         <>

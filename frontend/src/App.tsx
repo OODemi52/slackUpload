@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import Spacer from './components/Spacer'
-import ChannelSelector from './components/ChannelSelector'
-import FolderSelector from './components/FolderSelector'
-import UploadButton from './components/UploadButton'
 import { SignInWithSlack } from './components/SignInWithSlack'
 import Modal from './components/Modal'
-import logo from '../public/SSLOGO_NOBG.png';
+import Dashboard from './components/Dashboard'
+import Logo from './components/Logo'
+import logo from '../public/SSLOGO_NOBG.png'
 
 declare module 'react' {
   interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
@@ -23,7 +21,7 @@ interface AppState {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [user, setUser] = useState(null);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [state, setState] = useState<AppState>({
@@ -100,7 +98,8 @@ function App() {
 
   return (
     <>
-      <div>
+      <Dashboard />
+      {/*<div>
         <img src="../SSLOGO_NOBG.png" alt="Logo" />
       </div>
       <h1>SlackShots</h1>
@@ -124,7 +123,7 @@ function App() {
       <UploadButton 
         disabled={!state.dirName || !state.channel}  
         onUpload={handleFileUpload} 
-      />
+  />*/}
     </>
   )
 }
