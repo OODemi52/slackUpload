@@ -1,47 +1,86 @@
-import React from 'react';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
-  Box,
-  Checkbox,
-  CheckboxGroup,
-  Stack,
-} from '@chakra-ui/react';
+import React from "react";
+import { Box } from "@chakra-ui/react";
+import { MultiValue, Select, OptionBase } from "chakra-react-select";
 
-const FileTypeSelector = () => {
-  const [selectedFileTypes, setSelectedFileTypes] = React.useState([]);
+interface FileTypeSelectorProps {
+  selectedFileTypes: string[];
+  onSelectFileTypes: (fileTypes: string[]) => void;
+}
 
-  const handleCheckboxChange = (values) => {
-    setSelectedFileTypes(values);
+interface FileTypeOption extends OptionBase {
+  value: string;
+  label: string;
+}
+
+const FileTypeSelector: React.FC<FileTypeSelectorProps> = ({
+  selectedFileTypes,
+  onSelectFileTypes,
+}) => {
+  const fileTypesOptions = [
+    { value: ".jpg", label: "JPG" },
+    { value: ".jpeg", label: "JPEG" },
+    { value: ".png", label: "PNG" },
+    { value: ".cr2", label: "CR2" },
+    { value: ".cr3", label: "CR3" },
+    { value: ".dmg", label: "DMG" },
+    { value: ".gif", label: "GIF" },
+  ];
+
+  const handleSelectChange = (newValue: MultiValue<FileTypeOption>) => {
+    onSelectFileTypes(newValue.map((option: FileTypeOption) => option.value));
   };
 
   return (
-    <Box border="2px solid" borderRadius="md" p={1} color="white">
-      <Accordion allowToggle bgColor="purple.500">
-        <AccordionItem sx={{ borderBottomWidth: 0 }}>
-          <h2>
-            <AccordionButton _expanded={{ bg: "purple.500", color: "white" }} bgGradient="linear(to-b, #5f43b2, #8c73e9)">
-              <Box flex="1" textAlign="left" color="white">
-                Select File Types
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-          </h2>
-          <AccordionPanel pb={4} bg="#191919">
-            <CheckboxGroup colorScheme="purple" onChange={handleCheckboxChange} value={selectedFileTypes}>
-              <Stack spacing={2} direction="column" color="purple.500">
-                <Checkbox value="images">Images</Checkbox>
-                <Checkbox value="videos">Videos</Checkbox>
-                <Checkbox value="documents">Documents</Checkbox>
-                <Checkbox value="audio">Audio</Checkbox>
-              </Stack>
-            </CheckboxGroup>
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
+    <Box>
+      <Select
+        options={fileTypesOptions}
+        placeholder="Select File Types..."
+        closeMenuOnSelect={false}
+        isMulti
+        menuPlacement="top"
+        isSearchable={false}
+        onChange={handleSelectChange}
+        value={fileTypesOptions.filter((option) =>
+          selectedFileTypes.includes(option.value),
+        )}
+        chakraStyles={{
+          control: (provided) => ({
+            ...provided,
+            borderColor: "#b3b3b3",
+            bgGradient: "linear(to top, #5f43b2, #8c73e9)",
+          }),
+          dropdownIndicator: (provided) => ({
+            ...provided,
+            color: "black",
+          }),
+          option: (provided) => ({
+            ...provided,
+            color: "black",
+          }),
+          placeholder: (provided) => ({
+            ...provided,
+            color: "white",
+          }),
+          multiValue: (provided) => ({
+            ...provided,
+            backgroundColor: "purple.300",
+            overflow: "hidden",
+          }),
+          multiValueLabel: (provided) => ({
+            ...provided,
+            color: "black",
+            overflow: "hidden",
+          }),
+          multiValueRemove: (provided) => ({
+            ...provided,
+            color: "black",
+            ":hover": {
+              backgroundColor: "purple.400",
+              color: "black",
+            },
+          }),
+        }}
+      />
     </Box>
   );
 };

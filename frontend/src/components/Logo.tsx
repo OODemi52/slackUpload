@@ -1,6 +1,6 @@
-import React from 'react';
-import { AspectRatio } from '@chakra-ui/react';
-import logoImage from '../../public/SSLOGO_NOBG.png';
+import React from "react";
+import { AspectRatio } from "@chakra-ui/react";
+import logoImage from "../../public/SSLOGO_NOBG.png";
 
 const Logo: React.FC = () => {
   return (

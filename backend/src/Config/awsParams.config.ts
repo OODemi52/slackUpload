@@ -23,6 +23,7 @@ export const getParameterValue = async (parameterName: string): Promise<string> 
     try {
         const response = await ssm.getParameter(params).promise();
         if (response.Parameter && response.Parameter.Value) {
+            console.log('Parameter value:', response.Parameter.Value);
             return response.Parameter.Value;
         } else {
             throw new Error(`Parameter ${parameterName} not found or has no value.`);

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document, model} from 'mongoose';
 
 interface IUser extends Document {
     slackUserId: string;
@@ -46,6 +46,6 @@ const userSchema = new Schema({
     },
 }, { timestamps: true });
 
-const User = mongoose.model<IUser>('User', userSchema);
+const User = model<IUser>('User', userSchema);
 
 export default User;

@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import User from '../Models/user.model';
 import { getParameterValue } from '../Config/awsParams.config';
 
@@ -36,19 +35,6 @@ interface AuthedUser {
   access_token?: string | null;
   token_type?: string | null;
 }
-
-const initializeDBConnection = async () => {
-  const dbUrl = getParameterValue('DB_URL');
-
-  if (!dbUrl) {
-    throw new Error('Database Connection String is not defined');
-  }
-
-  mongoose.connect(await dbUrl)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('Could not connect to MongoDB:', err));
-}
-initializeDBConnection();
   
 export const auth = async (request: express.Request, response: express.Response) => {
   response.status(400).send('Something went wrong, you should not be here!');

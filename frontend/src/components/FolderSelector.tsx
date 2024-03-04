@@ -1,61 +1,103 @@
-import React, { useState } from 'react';
-import { Button, Input, VStack, Text, Flex, Divider } from '@chakra-ui/react';
+import React from "react";
+import { Button, Input, VStack, Flex, Divider } from "@chakra-ui/react";
+
+declare module "react" {
+  interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+    directory?: string;
+    webkitdirectory?: string;
+    e?: string;
+  }
+}
 
 interface FolderSelectorProps {
   onFileChange: (files: FileList | null) => void;
+  acceptedFileTypes: string[];
+  returnFileSelection: (fileSelection: string) => void;
 }
 
-const FolderSelector: React.FC<FolderSelectorProps> = ({ onFileChange }) => {
-  const [selectionName, setSelectionName] = useState<string>('');
-
+const FolderSelector: React.FC<FolderSelectorProps> = ({
+  onFileChange,
+  acceptedFileTypes,
+  returnFileSelection,
+}) => {
   const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
+
     if (files && files.length) {
-      const folderPath = files[0].webkitRelativePath;
-      const dirName = folderPath.split('/')[0];
-      setSelectionName(`Folder: ${dirName}`);
-      onFileChange(files);
+      const immediateFiles = Array.from(files).filter((file) => {
+        const pathParts = file.webkitRelativePath.split("/");
+        return (
+          pathParts.length === 2 &&
+          acceptedFileTypes.some((type) =>
+            file.name.toLowerCase().endsWith(type),
+          )
+        );
+      });
+
+      // Data transfer is used to make a FileList
+      const dataTransfer = new DataTransfer();
+      immediateFiles.forEach((file) => dataTransfer.items.add(file));
+      const immediateFileList = dataTransfer.files;
+
+      if (immediateFiles.length > 0) {
+        returnFileSelection(`${immediateFileList.length} selected`);
+      } else {
+        returnFileSelection("0 selected");
+      }
+
+      onFileChange(immediateFileList);
     } else {
-      setSelectionName('');
+      onFileChange(null);
     }
   };
 
   const handleFilesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length) {
-      setSelectionName(`Files: ${files.length} selected`);
+      returnFileSelection(`${files.length} selected`);
       onFileChange(files);
     } else {
-      setSelectionName('');
+      onFileChange(null);
     }
+    console.log(files);
   };
 
   return (
-    <VStack spacing={4} align="stretch">
-      <Text fontSize="lg" color="white">{selectionName || "Select Folder or Files"}</Text>
-      <Flex direction={{ base: "column", md: "row" }} align="center" justify="center">
+    <VStack>
+      <Flex direction="column" align="center" justify="center" height="full">
         <Button
           as="label"
           htmlFor="folderInput"
-          variant="outline"
-          color={"white"}
-          _hover={{ bg: '#aad2d2', color: 'black'}}
-          size="md"
+          variant="solid"
+          color="white"
+          bgGradient="linear(to top, #5f43b2, #8c73e9)"
+          border="1px solid #b3b3b3"
+          _hover={{ bg: "purple.600" }}
+          size="lg"
           cursor="pointer"
-          flex="1"
+          height="2.5rem"
+          width="10rem"
         >
           Choose Folder
         </Button>
-        <Divider orientation="vertical" m={2} colorScheme="purple" />
+        <Divider
+          orientation="horizontal"
+          my={1}
+          w="10rem"
+          colorScheme="purple"
+        />
         <Button
           as="label"
           htmlFor="filesInput"
           variant="solid"
-          colorScheme="purple"
-          _hover={{ bg: 'purple.600' }}
-          size="md"
+          color="white"
+          bgGradient="linear(to top, #5f43b2, #8c73e9)"
+          border="1px solid #b3b3b3"
+          _hover={{ bg: "purple.600" }}
+          size="lg"
           cursor="pointer"
-          flex="1"
+          height="2.5rem"
+          width="10rem"
         >
           Choose Files
         </Button>
@@ -65,17 +107,17 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({ onFileChange }) => {
         id="folderInput"
         webkitdirectory="true"
         directory=""
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         onChange={handleFolderChange}
-        accept="image/*"
+        accept={acceptedFileTypes.join(",")}
       />
       <Input
         type="file"
         id="filesInput"
         multiple
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         onChange={handleFilesChange}
-        accept="image/*"
+        accept={acceptedFileTypes.join(",")}
       />
     </VStack>
   );

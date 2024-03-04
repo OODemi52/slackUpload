@@ -14,109 +14,13 @@
   -webkit-text-size-adjust: 100%;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button, input, select, .custom-file-upload {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-
-button:hover, input:hover, select:hover, .custom-file-upload:hover, .slack-button:hover {
-  border-color: #646cff;
-}
-
-button:focus, input:focus, select:focus, .custom-file-upload:focus,
-button:focus-visible, input:focus-visible, select:focus-visible, .custom-file-upload:focus-visible, .slack-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-button:disabled {
-  cursor: default;
-  outline: 0px;
-  display: none;
-}
-
-button:disabled:hover {
-  border: 0px;
-  outline: 0px;
-}
-
-input[type="file"] {
-  display: none;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-.custom-select {
-  -moz-appearance:none;
-  -webkit-appearance:none;
-  appearance:none;
-}
-
-.slack-button {
-  border: 2px solid #535bf200;
-}
-
-.slack-button:hover {
-  box-shadow: 0 0 10px #646cff;
-  border: 2px solid #646cff;
-}
-
-select{
-  text-align: center;
-  text-align-last: center;
-  -moz-text-align-last: center;
-}
-
-option {
-  text-align-last: center;
-}
-
-button {
-  padding: 0.8em 8em;
-}
-
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-overlay {
@@ -185,7 +89,6 @@ button {
   z-index: -1;
 }
 
-
 @keyframes particles {
   from {
     background-position: 0 0;
@@ -193,45 +96,4 @@ button {
   to {
     background-position: 0 -200vh;
   }
-}
-
-.dashboard {
-  display: flex;
-  height: 100vh;
-  border: 1px solid #000;
-}
-
-.sidebar {
-  width: 200px;
-  border: 1px solid #000;
-}
-
-.dashboard-main {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #000;
-}
-
-.header {
-  height: 50px;
-  border: 1px solid #000;
-}
-
-.main-content {
-  flex-grow: 1;
-  padding: 20px;
-  overflow-y: auto;
-  border: 1px solid #000;
-}
-
-.upload-settings {
-  border: 1px solid #000;
-}
-
-.file-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  border: 1px solid #000;
 }
