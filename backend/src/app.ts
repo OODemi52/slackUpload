@@ -2,7 +2,10 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
-import apiRouter from './Routes/api.routes';
+import dbConnect from "./Config/dbConnect.config";
+import apiRouter from './Routes/api.route';
+import authRouter from './Routes/auth.route';
+import healthRouter from './Routes/health.route';
 
 export const app: express.Application = express();
 
@@ -36,5 +39,17 @@ app.use(helmet());
 
 // API Routes
 app.use('/api', apiRouter);
+
+// Auth Routes
+app.use('/auth', authRouter);
+
+// Health Check Routes
+app.use('/health', healthRouter);
+
+//Connect to MongoDB
+dbConnect();
+
+
+
 
 export default app;

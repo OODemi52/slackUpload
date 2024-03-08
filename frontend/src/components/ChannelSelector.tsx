@@ -1,51 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
+import { Box } from "@chakra-ui/react";
+import { Select } from "chakra-react-select";
+
+type Channel = { value: string; label: string };
 
 interface ChannelSelectorProps {
+  channels: Channel[];
   onChannelChange: (channelId: string) => void;
 }
 
-interface Channel {
-    id: string;
-    name: string;
-  }
+const ChannelSelector: React.FC<ChannelSelectorProps> = ({
+  channels,
+  onChannelChange,
+}) => {
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
-const ChannelSelector: React.FC<ChannelSelectorProps> = ({ onChannelChange }) => {
-    const [channels, setChannels] = useState<Channel[]>([]);
-
-  useEffect(() => {
-    fetchChannels();
-  }, []);
-
-  const fetchChannels = async (): Promise<void> => {
-    try {
-      const response = await fetch(
-        'https://ss-server-nu9y.onrender.com/api/getChannels',
-      );
-      const data = await response.json();
-      // Map the array of arrays to an array of strings (channel names)
-      const channelOptions = data.map(([id, name]: [string, string]) => ({
-        id,
-        name,
-      }));
-
-      setChannels(channelOptions);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const channelId = event.target.value;
-    onChannelChange(channelId);
+  const handleChannelSelect = (channel: Channel) => {
+    setSelectedChannel(channel);
+    onChannelChange(channel.value);
   };
 
   return (
-    <select onChange={handleChange} defaultValue="" className="custom-select" name="channels" id="channels">
-      <option value="" disabled>Choose Channel</option>
-      {channels.map(channel => (
-        <option key={channel.id} value={channel.id}>{channel.name}</option>
-      ))}
-    </select>
+    <Box>
+      <Select
+        options={channels}
+        placeholder="Select Channel"
+        menuPlacement="top"
+        isSearchable={false}
+        onChange={(newValue: Channel | null) =>
+          handleChannelSelect(newValue as Channel)
+        }
+        value={selectedChannel}
+        chakraStyles={{
+          control: (provided) => ({
+            ...provided,
+            borderColor: "#b3b3b3",
+            bgGradient: "linear(to top, #5f43b2, #8c73e9)",
+          }),
+          dropdownIndicator: (provided) => ({
+            ...provided,
+            color: "black",
+          }),
+          option: (provided) => ({
+            ...provided,
+            color: "black",
+          }),
+          placeholder: (provided) => ({
+            ...provided,
+            color: "white",
+          }),
+          singleValue: (provided) => ({
+            ...provided,
+            color: "white",
+          }),
+        }}
+      />
+    </Box>
   );
 };
 

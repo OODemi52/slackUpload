@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import { Button } from "@chakra-ui/react";
 
 interface UploadButtonProps {
   disabled: boolean;
@@ -6,17 +7,19 @@ interface UploadButtonProps {
 }
 
 const UploadButton: React.FC<UploadButtonProps> = ({ disabled, onUpload }) => {
-  const handleUpload = () => {
-      onUpload();
-  };
-
   return (
-    <button 
-      onClick={handleUpload} 
-      disabled={disabled} 
+    <Button
+      onClick={onUpload}
+      isDisabled={disabled}
+      variant="solid"
+      bgGradient="linear(to top, #5f43b2, #8c73e9)"
+      color="white"
+      border="1px solid #b3b3b3"
+      size="md"
+      width="100%"
     >
       Upload
-    </button>
+    </Button>
   );
 };
 
