@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
-import { SignInWithSlack } from "./components/SignInWithSlack";
-import Modal from "./components/Modal";
+//import { useState, useEffect } from "react";
+//import { SignInWithSlack } from "./components/SignInWithSlack";
+//import Modal from "./components/Modal";
 import Dashboard from "./components/Dashboard";
-import logo from "./assets/SSLOGO_NOBG.png";
+//import logo from "./assets/SSLOGO_NOBG.png";
 import { QueryClient, QueryClientProvider } from "react-query";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function App() {
+  /*
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [user, setUser] = useState(null);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+   
 
   useEffect(() => {
     if (isFirstLoad) {
@@ -30,6 +32,7 @@ function App() {
       </>
     );
   }
+  */
 
   return (
     <QueryClientProvider client={queryClient}>

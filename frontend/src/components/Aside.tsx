@@ -108,98 +108,101 @@ const Aside: React.FC = () => {
 
   const performUpload = async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
-        const maxBatchSize = 9 * 1024 * 1024; // 100 MB
-      let currentBatchSize = 0;
-      let currentBatch: File[] = [];
-      const batches: File[][] = [];
+    const maxBatchSize = 9 * 1024 * 1024; // 100 MB
+    let currentBatchSize = 0;
+    let currentBatch: File[] = [];
+    const batches: File[][] = [];
 
-      const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
-        file.name.toLowerCase().endsWith(selectedFileTypes.join(",")),
-      );
+    const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
+      file.name.toLowerCase().endsWith(selectedFileTypes.join(",")),
+    );
 
-      for (const file of filteredFiles) {
-        if (currentBatchSize + file.size > maxBatchSize) {
-          batches.push(currentBatch);
-          currentBatch = [];
-          currentBatchSize = 0;
-        }
-        currentBatch.push(file);
-        currentBatchSize += file.size;
-      }
-
-      if (currentBatch.length > 0) {
+    for (const file of filteredFiles) {
+      if (currentBatchSize + file.size > maxBatchSize) {
         batches.push(currentBatch);
+        currentBatch = [];
+        currentBatchSize = 0;
       }
+      currentBatch.push(file);
+      currentBatchSize += file.size;
+    }
 
-      // Uploads last batch of files. This endpoint intiates file processing on the server
-      const uploadLastBatch = async (files: File[]) => {
-        const formData = new FormData();
-        formData.append("channel", formState.channel);
-        formData.append("userID", formState.userID);
-        formData.append("sessionID", formState.sessionID);
-        formData.append("comment", formState.uploadComment);
-        formData.append("messageBatchSize", formState.messageBatchSize.toString());
-        files.forEach((file) => {
-          formData.append("files", file, file.name);
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
+    }
+
+    // Uploads last batch of files. This endpoint intiates file processing on the server
+    const uploadLastBatch = async (files: File[]) => {
+      const formData = new FormData();
+      formData.append("channel", formState.channel);
+      formData.append("userID", formState.userID);
+      formData.append("sessionID", formState.sessionID);
+      formData.append("comment", formState.uploadComment);
+      formData.append(
+        "messageBatchSize",
+        formState.messageBatchSize.toString(),
+      );
+      files.forEach((file) => {
+        formData.append("files", file, file.name);
+      });
+
+      try {
+        const response = await fetch(
+          "http://localhost:3000/api/uploadFinalFiles",
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+      } catch (error) {
+        console.error("Error uploading final batch:", error);
+      }
+    };
+
+    const uploadBatch = async (files: File[]) => {
+      const formData = new FormData();
+      formData.append("channel", formState.channel);
+      formData.append("userID", formState.userID);
+      formData.append("sessionID", formState.sessionID);
+      formData.append("comment", formState.uploadComment);
+      formData.append(
+        "messageBatchSize",
+        formState.messageBatchSize.toString(),
+      );
+      files.forEach((file) => {
+        formData.append("files", file, file.name);
+      });
+
+      try {
+        const response = await fetch("http://localhost:3000/api/uploadFiles", {
+          method: "POST",
+          body: formData,
         });
 
-        try {
-          const response = await fetch(
-            "http://localhost:3000/api/uploadFinalFiles",
-            {
-              method: "POST",
-              body: formData,
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(await response.text());
-          }
-        } catch (error) {
-          console.error("Error uploading final batch:", error);
+        if (!response.ok) {
+          throw new Error(await response.text());
         }
-      };
-
-      const uploadBatch = async (files: File[]) => {
-        const formData = new FormData();
-        formData.append("channel", formState.channel);
-        formData.append("userID", formState.userID);
-        formData.append("sessionID", formState.sessionID);
-        formData.append("comment", formState.uploadComment);
-        formData.append("messageBatchSize", formState.messageBatchSize.toString());
-        files.forEach((file) => {
-          formData.append("files", file, file.name);
-        });
-
-        try {
-          const response = await fetch(
-            "http://localhost:3000/api/uploadFiles",
-            {
-              method: "POST",
-              body: formData,
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error(await response.text());
-          }
-        } catch (error) {
-          console.error("Error uploading batch:", error);
-        }
-        console.log("Batch uploaded successfully!");
-      };
-
-      for (let i = 0; i < batches.length; i++) {
-        if (i === batches.length - 1) {
-          await uploadLastBatch(batches[i]);
-          setIsUploading(false);
-        } else {
-          await uploadBatch(batches[i]);
-        }
+      } catch (error) {
+        console.error("Error uploading batch:", error);
       }
+      console.log("Batch uploaded successfully!");
+    };
 
-      console.log("All batches uploaded successfully!");
-    } 
+    for (let i = 0; i < batches.length; i++) {
+      if (i === batches.length - 1) {
+        await uploadLastBatch(batches[i]);
+        setIsUploading(false);
+      } else {
+        await uploadBatch(batches[i]);
+      }
+    }
+
+    console.log("All batches uploaded successfully!");
+  };
 
   return (
     <HStack

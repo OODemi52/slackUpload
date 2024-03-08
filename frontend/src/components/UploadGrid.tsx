@@ -3,7 +3,7 @@ import { Grid, Box } from "@chakra-ui/react";
 import ImageCard from "./ImageCard";
 
 interface UploadGridProps {
-  pics: { url: string; name: string }[]
+  pics: { url: string; name: string }[];
   onScroll: (event: React.UIEvent<HTMLElement>) => void;
 }
 
@@ -15,11 +15,9 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll }) => {
       <Grid templateColumns={`repeat(4, 1fr)`} gap={6} p={4}>
         {Array.from({ length: rows }, (_, rowIndex) => (
           <React.Fragment key={rowIndex}>
-            {pics
-              .slice(rowIndex * 4, (rowIndex + 1) * 4)
-              .map((pic, index) => (
-                <ImageCard key={index} url={pic.url} name={pic.name} />
-              ))}
+            {pics.slice(rowIndex * 4, (rowIndex + 1) * 4).map((pic, index) => (
+              <ImageCard key={index} url={pic.url} name={pic.name} />
+            ))}
           </React.Fragment>
         ))}
       </Grid>
