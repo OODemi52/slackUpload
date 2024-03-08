@@ -1,12 +1,8 @@
 import React from "react";
-import WorkspaceSelector from "./WorkspaceSelector";
+//import WorkspaceSelector from "./WorkspaceSelector";
 
 const InfoBar: React.FC = () => {
-  return (
-    <div>
-      <WorkspaceSelector />
-    </div>
-  );
+  return <div></div>;
 };
 
 export default InfoBar;

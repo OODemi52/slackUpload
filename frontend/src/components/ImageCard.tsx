@@ -3,7 +3,7 @@ import { Box, Image, Link, useColorModeValue, Text } from "@chakra-ui/react";
 
 interface ImageCardProps {
   url: string;
-  name: string
+  name: string;
 }
 
 const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
@@ -23,22 +23,27 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
     zIndex: -1,
   };
 
-  const observer = useMemo(() => new IntersectionObserver(
-    (entries) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && !isLoaded) {
-        fetchImage(url);
-        setIsLoaded(true);
-        observer.unobserve(imageRef.current!);
-      }
-    },
-    { threshold: 0.1 }
-  ), [isLoaded, url]);
-
+  const observer = useMemo(
+    () =>
+      new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          if (entry.isIntersecting && !isLoaded) {
+            fetchImage(url);
+            setIsLoaded(true);
+            observer.unobserve(imageRef.current!);
+          }
+        },
+        { threshold: 0.1 },
+      ),
+    [isLoaded, url],
+  );
 
   const fetchImage = async (permalink: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`);
+      const response = await fetch(
+        `http://localhost:3000/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -76,7 +81,12 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
       ref={imageRef}
     >
       {imageUrl && (
-        <Box display="flex" alignItems="center" justifyContent="center" height="200px">
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          height="200px"
+        >
           <Image
             src={imageUrl}
             alt={name}
@@ -86,15 +96,20 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
             zIndex={1}
           />
           <Image
-          src={imageUrl}
-          alt="Background"
-          style={blurredImageStyle as React.CSSProperties}
-        />
+            src={imageUrl}
+            alt="Background"
+            style={blurredImageStyle as React.CSSProperties}
+          />
         </Box>
       )}
 
       <Box p="6" zIndex={2} bg="white">
-        <Text display="flex" alignItems="baseline" isTruncated fontWeight="semibold">
+        <Text
+          display="flex"
+          alignItems="baseline"
+          isTruncated
+          fontWeight="semibold"
+        >
           {name}
         </Text>
         <Link href={imageUrl || "#"} isExternal color="blue.500" download>
