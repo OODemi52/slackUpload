@@ -3,6 +3,9 @@ import { SignInWithSlack } from "./components/SignInWithSlack";
 import Modal from "./components/Modal";
 import Dashboard from "./components/Dashboard";
 import logo from "./assets/SSLOGO_NOBG.png";
+import { QueryClient, QueryClientProvider } from "react-query";
+
+const queryClient = new QueryClient()
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -29,9 +32,9 @@ function App() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <Dashboard />
-    </>
+    </QueryClientProvider>
   );
 }
 

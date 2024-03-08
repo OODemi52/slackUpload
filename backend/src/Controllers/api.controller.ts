@@ -3,7 +3,8 @@ import path from 'path';
 import express from 'express';
 import SlackBot from '../Models/slackbot.model';
 import { IncomingForm } from 'formidable';
-import { writeUploadedFileReference, readAllUploadedFileReferencesBySession } from '../Utils/db.util';
+import { writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls } from '../Utils/db.util';
+import axios from 'axios';
 
 interface FormFields {
   channel: string[];
@@ -34,6 +35,58 @@ export const getChannels = async (request: express.Request, response: express.Re
   } catch (error) {
       console.error(`Error fetching channels: ${error}`);
       response.status(500).json({ error: 'Failed to retrieve channels' });
+  }
+};
+
+export const getImagesUrls = async (req: express.Request, res: express.Response) => {
+  const { userID, page = '1', limit = '10' } = req.query as { userID: string, page: string, limit: string };
+
+  if (!userID) {
+    return res.status(400).send('UserID is required');
+  }
+
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const fileReferences = await paginateSlackPrivateUrls(userID, pageNumber, limitNumber);
+  
+  if (!fileReferences.length) {
+    return res.status(404).send('No file URLs found');
+  }
+
+  const urls = fileReferences.map(fileReference => ({
+    url: fileReference.slackPrivateFileURL,
+    name: fileReference.name
+  }));
+  res.json(urls);
+};
+
+export const getImagesProxy = async (req: express.Request, res: express.Response) => {
+
+  const { imageUrl, name } = req.query;
+  
+  if (!imageUrl) {
+    return res.status(400).send('Image URL is required');
+  }
+
+  try {
+    const response = await axios.get(decodeURIComponent(imageUrl.toString()), {
+      responseType: 'stream',
+      headers: {
+        Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
+      },
+    });
+
+    res.set(response.headers);
+    res.setHeader('Content-Type', 'image/jpg');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.status(response.status);
+
+    // Stream the image data to the client
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    res.status(500).send('Error fetching image');
   }
 };
 
@@ -80,6 +133,8 @@ export const uploadFiles = async (req: express.Request, res: express.Response) =
 export const uploadFinalFiles = async (req: express.Request, res: express.Response) => {
   const form = new IncomingForm() as any;
 
+  form.multiples = true;
+
   form.uploadDir = path.join(__dirname, '../../uploads');
   form.keepExtensions = true;
   form.options.maxFileSize = 2000 * 1024 * 1024;
@@ -112,8 +167,7 @@ export const uploadFinalFiles = async (req: express.Request, res: express.Respon
         await writeUploadedFileReference(file);
       }
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-      console.log(filesToUpload);
-      await slackbot.batchAndUploadFiles(filesToUpload, parseInt(fields.messageBatchSize[0]), fields.comment[0]);
+      await slackbot.batchAndUploadFiles(filesToUpload, fields.userID[0], fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0]);
       res.status(200).json({ message: 'Final files uploaded successfully!' });
     } catch (error) {
       console.error(`Error uploading files: ${error}`);

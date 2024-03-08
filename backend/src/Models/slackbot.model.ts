@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
+import {  updateUploadedFileReferenceWithSlackPrivateUrl } from '../Utils/db.util';
 import { WebClient } from '@slack/web-api';
 import { getParameterValue } from '../Config/awsParams.config';
 
@@ -57,7 +58,7 @@ export default class SlackBot {
     return Promise.all(deletionPromises);
   }
 
-  async batchAndUploadFiles(uploadedFiles: UploadedFile[], messageBatchSize: number, comment: string): Promise<void> {
+  async batchAndUploadFiles(uploadedFiles: UploadedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string): Promise<void> {
     const sortedFiles = uploadedFiles.sort((a, b) => {
       return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
     });
@@ -74,14 +75,20 @@ export default class SlackBot {
       const batchNumber = Math.floor(i / messageBatchSize) + 1;
       console.log(`Preparing batch ${batchNumber} out of ${totalBatches} for upload. Files to upload:`, files_upload);
 
-      await this.uploadFilesToSlackChannel(files_upload, comment);
+      const privateUrls = await this.uploadFilesToSlackChannel(files_upload, comment);
+
+      privateUrls.forEach(async (url, index) => {
+        const file = batchFiles[index];
+        await  updateUploadedFileReferenceWithSlackPrivateUrl(userID, sessionID, file.name, url);
+        console.log(`Updated file reference with Slack URL for file: ${file.name}`);
+    });
+
       await this.deletionPromises(batchFiles);
     }
     console.log(`All files uploaded to Slack`);
   }
   
-  private async uploadFilesToSlackChannel(file_uploads: { filename: string, file: string }[], comment: string): Promise<void> {
-
+  private async uploadFilesToSlackChannel(file_uploads: { filename: string, file: string }[], comment: string): Promise<string[]> {
     try {
       const currentDate = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
@@ -96,7 +103,7 @@ export default class SlackBot {
 
       const client = await this.clientPromise;
 
-      await client.files.uploadV2({
+      const response: any = await client.files.uploadV2({
         channel_id: this.channel,
         initial_comment: comment || currentDate,
         file_uploads : file_uploads,
@@ -104,6 +111,10 @@ export default class SlackBot {
 
       console.log(`Uploaded files to Slack`);
 
+      const privateUrls = response.files.flatMap((fileGroup: { files: { url_private: any; }[]; }) => fileGroup.files.map((file: { url_private: any; }) => file.url_private));
+      console.log(`Private URLs for uploaded files:`, privateUrls);
+      return privateUrls;
+      
     } catch (error: any) {
       if (error.code === 'slack_error_code') {
         console.error(`Error uploading files to Slack: ${error.message}`);

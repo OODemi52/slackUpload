@@ -108,7 +108,7 @@ const Aside: React.FC = () => {
 
   const performUpload = async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
-        const maxBatchSize = 100 * 1024 * 1024; // 100 MB
+        const maxBatchSize = 9 * 1024 * 1024; // 100 MB
       let currentBatchSize = 0;
       let currentBatch: File[] = [];
       const batches: File[][] = [];
@@ -200,8 +200,6 @@ const Aside: React.FC = () => {
 
       console.log("All batches uploaded successfully!");
     } 
-
-
 
   return (
     <HStack
