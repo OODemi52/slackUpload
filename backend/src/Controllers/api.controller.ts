@@ -93,7 +93,11 @@ export const getImagesProxy = async (req: express.Request, res: express.Response
 export const uploadFiles = async (req: express.Request, res: express.Response) => {
   const form = new IncomingForm() as any;
 
-  form.uploadDir = path.join(__dirname, '../../uploads');
+  const uploadDirPath = path.join(__dirname, '../../uploads');
+  if (!fs.existsSync(uploadDirPath)) {
+    fs.mkdirSync(uploadDirPath);
+  }
+  form.uploadDir = uploadDirPath;
   form.keepExtensions = true;
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
@@ -135,7 +139,11 @@ export const uploadFinalFiles = async (req: express.Request, res: express.Respon
 
   form.multiples = true;
 
-  form.uploadDir = path.join(__dirname, '../../uploads');
+  const uploadDirPath = path.join(__dirname, '../../uploads');
+  if (!fs.existsSync(uploadDirPath)) {
+    fs.mkdirSync(uploadDirPath);
+  }
+  form.uploadDir = uploadDirPath;
   form.keepExtensions = true;
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
