@@ -1,42 +1,43 @@
-//import { useState, useEffect } from "react";
-//import { SignInWithSlack } from "./components/SignInWithSlack";
-//import Modal from "./components/Modal";
-import Dashboard from "./components/Dashboard";
-//import logo from "./assets/SSLOGO_NOBG.png";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Dashboard from "./components/Dashboard";
+import LandingPage from "./components/LandingPage";
+import AuthSuccess from "./components/AuthSuccess";
+import AuthCallback from "./components/AuthCallback";
+import AuthContext from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
 function App() {
-  /*
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [user, setUser] = useState(null);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
-   
+  const [accessToken, setAccessToken] = useState<string | null>("");
 
   useEffect(() => {
-    if (isFirstLoad) {
-      setIsFirstLoad(false);
-    }
-  }, [isFirstLoad]);
-
-  if (!isAuthenticated) {
-    return (
-      <>
-        <Modal>
-          <img src={logo} alt="Slack Shots Logo" className="logo-image" />
-          <h1>SlackShots</h1>
-          <h3>Click Below To Add The App/Sign Into Your Workspace!</h3>
-          <SignInWithSlack />
-        </Modal>
-      </>
-    );
-  }
-  */
+    const brodChannel = new BroadcastChannel('auth_channel');
+  
+    brodChannel.onmessage = (event) => {
+      if (event.data.type === 'auth-success') {
+        setAccessToken(event.data.accessToken);
+        console.log("Received access token via BroadcastChannel: ", event.data.accessToken);
+      }
+    };
+  
+    return () => {
+      brodChannel.close();
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Dashboard />
+      <AuthContext.Provider value={{ accessToken, setAccessToken }}>
+        <Router>
+          <Routes>
+            <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
+            <Route path="/auth-callback" element={<AuthCallback />} />
+            <Route path="/auth-success" element={<AuthSuccess />} />
+          </Routes>
+        </Router>
+      </AuthContext.Provider>
     </QueryClientProvider>
   );
 }

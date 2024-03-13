@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import dbConnect from "./Config/dbConnect.config";
@@ -23,9 +24,12 @@ app.use((request: express.Request, response: express.Response, next) => {
   next();
 });
 
-//Body Parser (Gets content from response body)
+// Body Parser (Gets content from response body)
 app.use(bodyParser.json({ limit: '50mb'}));
 app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
+
+// Cookie Parser (Parses cookies from request headers)
+app.use(cookieParser());
 
 // CORS (Cross-Origin Resource Sharing) allowing requests from designated frontends
 app.use(cors({
@@ -34,7 +38,7 @@ app.use(cors({
 ))
 app.options('*', cors())
 
-//Helmet (Protect responses by setting specific security-focused headers)
+// Helmet (Protect responses by setting specific security-focused headers)
 app.use(helmet());
 
 // API Routes
@@ -46,7 +50,7 @@ app.use('/auth', authRouter);
 // Health Check Routes
 app.use('/health', healthRouter);
 
-//Connect to MongoDB
+// Connect to MongoDB
 dbConnect();
 
 
