@@ -11,6 +11,7 @@ const queryClient = new QueryClient();
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>("");
 
+  // Set access token on initial login
   useEffect(() => {
     const brodChannel = new BroadcastChannel('auth_channel');
   
@@ -24,6 +25,31 @@ function App() {
     return () => {
       brodChannel.close();
     };
+  }, []);
+
+  // Refresh the access token
+  useEffect(() => {
+    const refreshAccessToken = async () => {
+      try {
+        const response = await fetch('https://slackshots.demidaniel.online/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+        });
+  
+        if (!response.ok) {
+          throw new Error('Refresh token request failed');
+        }
+  
+        const data = await response.json();
+  
+        if (data.accessToken) {
+          setAccessToken(data.accessToken);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    refreshAccessToken();
   }, []);
 
   return (

@@ -37,7 +37,7 @@ const MainContent: React.FC = () => {
         console.error("Error fetching pics:", error);
       }
     },
-    [],
+    [accessToken],
   );
 
   useEffect(() => {
