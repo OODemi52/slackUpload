@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
         alignItems="center"
         w="100%"
         minH="100vh"
-        bg="purple.500"
+        bg="#8c73e9"
         boxShadow="0px 0px 10px rgba(0, 0, 0, 0.5)"
         bgGradient="linear(to bottom, #5f43b2, #8c73e9)"
       >

@@ -1,14 +1,11 @@
-import mongoose from "mongoose";
-import { getParameterValue } from "../Config/awsParams.config";
 import UploadedFileReference from "../Models/uploadedfilereference.model";
+import User from "../Models/user.model";
 
 
 // Want to implemet crud methods
 /* Currently needs to be implemented (delete as you go) :
     - writeUser
-    - writeUserPreferences
     - readUser
-    - readUserPreferences
 
 
     Implement in the future
@@ -18,6 +15,28 @@ import UploadedFileReference from "../Models/uploadedfilereference.model";
     - readAllUsers
     etc.
 */
+
+interface UserAuthData {
+  tokenType: string;
+  scope: string;
+  botUserId: string;
+  appId: string;
+  team?: {
+    name?: string;
+    id?: string;
+  };
+  enterprise?: {
+    name?: string;
+    id?: string;
+  };
+  authedUser?: {
+    id?: string;
+    scope?: string;
+    accessToken?: string;
+    tokenType?: string;
+  };
+  refreshToken?: string;
+}
 
 export const writeUploadedFileReference = async (fileDetails: any) => {
     try {
@@ -73,3 +92,52 @@ export const paginateSlackPrivateUrls = async (userID: string, page: number = 1,
     throw error;
   }
 }
+
+export const writeUser = async (userAuthData: UserAuthData) => {
+  const { tokenType, scope, botUserId, appId, team, enterprise, authedUser } = userAuthData;
+  const userDoc = await User.findOneAndUpdate(
+    { 'authedUser.id': authedUser?.id, 'team.id': team?.id }, 
+    userAuthData, 
+    { new: true, upsert: true }
+  );
+  return userDoc;
+};
+
+/*
+export const readUser = async (userId: string, teamId: string) => {
+  try {
+    const user = await User.findOne({ slackUserId: userId, teamID: teamId });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  } catch (error) {
+    console.error('Error reading user:', error);
+    throw error;
+  }
+};
+*/
+
+export const updateWithRefreshToken  = async (userId: string, refreshToken: string | undefined) => {
+  try {
+    await User.findOneAndUpdate({ _id: userId }, { refreshToken })
+  } catch (error) {
+    console.error('Error updating user with refresh token:', error);
+    throw error;
+  }
+}
+
+export const readUser = async (userId: string) => {
+  try {
+    const userData = await User.findById(userId);
+
+    if (!userData) {
+      throw new Error('User not found');
+    }
+
+    return { _id: userData._id, userData };
+  } catch (error) {
+    console.error('Error reading user:', error);
+    throw error;
+  }
+};

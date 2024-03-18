@@ -1,42 +1,67 @@
-//import { useState, useEffect } from "react";
-//import { SignInWithSlack } from "./components/SignInWithSlack";
-//import Modal from "./components/Modal";
-import Dashboard from "./components/Dashboard";
-//import logo from "./assets/SSLOGO_NOBG.png";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Dashboard from "./components/Dashboard";
+import LandingPage from "./components/LandingPage";
+import AuthCallback from "./components/AuthCallback";
+import AuthContext from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
 function App() {
-  /*
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [user, setUser] = useState(null);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
-   
+  const [accessToken, setAccessToken] = useState<string | null>("");
 
+  // Set access token on initial login
   useEffect(() => {
-    if (isFirstLoad) {
-      setIsFirstLoad(false);
-    }
-  }, [isFirstLoad]);
+    const brodChannel = new BroadcastChannel('auth_channel');
+  
+    brodChannel.onmessage = (event) => {
+      if (event.data.type === 'auth-success') {
+        setAccessToken(event.data.accessToken);
+        console.log("Received access token via BroadcastChannel");
+      }
+    };
+  
+    return () => {
+      brodChannel.close();
+    };
+  }, []);
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <Modal>
-          <img src={logo} alt="Slack Shots Logo" className="logo-image" />
-          <h1>SlackShots</h1>
-          <h3>Click Below To Add The App/Sign Into Your Workspace!</h3>
-          <SignInWithSlack />
-        </Modal>
-      </>
-    );
-  }
-  */
+  // Refresh the access token
+  useEffect(() => {
+    const refreshAccessToken = async () => {
+      try {
+        const response = await fetch('https://slackshots.demidaniel.online/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+        });
+  
+        if (!response.ok) {
+          throw new Error('Refresh token request failed');
+        }
+  
+        const data = await response.json();
+  
+        if (data.accessToken) {
+          setAccessToken(data.accessToken);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    refreshAccessToken();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Dashboard />
+      <AuthContext.Provider value={{ accessToken, setAccessToken }}>
+        <Router>
+          <Routes>
+            <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
+            <Route path="/auth-callback" element={<AuthCallback />} />
+          </Routes>
+        </Router>
+      </AuthContext.Provider>
     </QueryClientProvider>
   );
 }

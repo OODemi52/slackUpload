@@ -1,8 +1,6 @@
 import { Schema, Document, model} from 'mongoose';
 
 interface IUser extends Document {
-    slackUserId: string;
-    accessToken: string;
     tokenType: string;
     scope: string;
     botUserId: string;
@@ -18,14 +16,12 @@ interface IUser extends Document {
     authedUser?: {
         id?: string | null;
         scope?: string | null;
-        accessToken?: string | null;
         tokenType?: string | null;
     };
+    refreshToken?: string | null;
 }
 
 const userSchema = new Schema({
-    slackUserId: { type: String, required: true, unique: true },
-    accessToken: { type: String, required: true },
     tokenType: { type: String, required: true },
     scope: { type: String, required: true },
     botUserId: { type: String, required: true },
@@ -41,9 +37,9 @@ const userSchema = new Schema({
     authedUser: {
         id: { type: String, required: true },
         scope: { type: String, required: true },
-        accessToken: { type: String, required: true },
         tokenType: { type: String, required: true },
     },
+    refreshToken: { type: String, required: true },
 }, { timestamps: true });
 
 const User = model<IUser>('User', userSchema);

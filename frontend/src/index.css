@@ -1,17 +1,49 @@
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: 400;  
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background: linear-gradient(to bottom, #5f43b2, #8c73e9);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  overflow: hidden;
+
+  background: #181818;
+}
+
+.logo-image {
+  width: 350px;
+  height: auto;
+}
+
+.particle {
+  opacity: 0;
+  position: absolute;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 1);
+  width: 100px;
+  height: 100px;
+  aspect-ratio: 3/2;
+}
+
+@keyframes blow {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, -100vh) scale(0.2);
+  }
 }
 
 @keyframes fadeIn {
@@ -23,42 +55,6 @@
   }
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: fadeIn 1s ease-out forwards;
-}
-
-.modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: linear-gradient(to bottom, #5f43b2, #8c73e9);
-  padding: 80px;
-  z-index: 1001;
-  border-radius: 10px;
-  width: 90%;
-  height: 50%;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
-  overflow: visible;
-  animation: fadeInModalContent 1.5s ease-out forwards;
-}
-
 @keyframes fadeInModalContent {
   from {
     opacity: 0;
@@ -67,33 +63,5 @@
   to {
     opacity: 1;
     transform: translate(-50%, -50%);
-  }
-}
-
-.logo-image {
-  width: 350px;
-  height: auto;
-}
-
-.modal-content::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  background-image: radial-gradient(white 1px, transparent 1px);
-  background-size: 50px 50px;
-  animation: particles 75s infinite linear;
-  z-index: -1;
-}
-
-@keyframes particles {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: 0 -200vh;
   }
 }

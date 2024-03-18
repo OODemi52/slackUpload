@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo, useContext } from "react";
 import { Box, Image, Link, useColorModeValue, Text } from "@chakra-ui/react";
+import AuthContext from "../context/AuthContext";
 
 interface ImageCardProps {
   url: string;
@@ -39,10 +40,17 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
     [isLoaded, url],
   );
 
+  const { accessToken } = useContext(AuthContext);
+
   const fetchImage = async (permalink: string) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -56,12 +64,13 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
   };
 
   useEffect(() => {
-    if (imageRef.current) {
-      observer.observe(imageRef.current);
+    const currentImageRef = imageRef.current;
+    if (currentImageRef) {
+      observer.observe(currentImageRef);
     }
     return () => {
-      if (imageRef.current) {
-        observer.unobserve(imageRef.current);
+      if (currentImageRef) {
+        observer.unobserve(currentImageRef);
       }
     };
   }, [imageRef, url, observer]);

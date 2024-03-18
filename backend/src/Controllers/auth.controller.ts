@@ -1,8 +1,9 @@
 import express from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import User from '../Models/user.model';
-import { getParameterValue } from '../Config/awsParams.config';
+import { getParameterValue, setParameterValue } from '../Config/awsParams.config';
+import { writeUser, updateWithRefreshToken, readUser } from '../Utils/db.util';
+import { generateToken, decodeToken } from '../Utils/jwt.util';
 
 dotenv.config();
 
@@ -66,25 +67,42 @@ export const callback = async (request: express.Request, response: express.Respo
     if (tokenResponse.data.ok) {
       const { access_token, token_type, scope, bot_user_id, app_id, team, enterprise, authed_user } = tokenResponse.data;
 
-      const updateData = {
-        accessToken: access_token,
+      await setParameterValue(`SLA_IDAU${authed_user?.id}IDT${team?.id}`, access_token);
+
+      const userAuthData = {
         tokenType: token_type,
         scope: scope,
         botUserId: bot_user_id,
         appId: app_id,
-        team: team ? { name: team.name, id: team.id } : undefined,
+        team: team ? { name: team.name || undefined, id: team.id || undefined } : undefined,
         enterprise: enterprise ? { name: enterprise.name, id: enterprise.id } : undefined,
         authedUser: authed_user ? {
-          id: authed_user.id,
-          scope: authed_user.scope,
-          accessToken: authed_user.access_token,
-          tokenType: authed_user.token_type
+          id: authed_user.id || undefined,
+          scope: authed_user.scope || undefined,
+          token_type: authed_user.token_type || undefined,
         } : undefined,
       };
 
-      await User.findOneAndUpdate({ slackUserId: authed_user?.id }, updateData, { new: true, upsert: true });
+      const userDoc = await writeUser(userAuthData);
 
-      return response.redirect('/success');
+      const accessToken = await generateToken(userDoc._id.toString(), 'access');
+      const refreshToken = await generateToken(userDoc._id.toString(), 'refresh');
+
+      await updateWithRefreshToken(userDoc._id.toString(), refreshToken);
+
+      response.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax', // Lax due to limitations of Safari browser, look into workaround
+        path: '/',
+        maxAge: 14 * 24 * 60 * 60 * 1000,
+      });
+
+      const clientHost = await getParameterValue('CLIENT_HOST');
+      const cleintProtocol = await getParameterValue('CLIENT_PROTOCOL');
+
+      const clientRedirectUrl = `${cleintProtocol}://${clientHost}/auth-callback?accessToken=${accessToken}`;
+      return response.redirect(clientRedirectUrl);
     } else {
       console.error('Error obtaining access token:', tokenResponse.data.error);
       return response.status(500).send(`Error obtaining access token: ${tokenResponse.data.error}`);
@@ -94,3 +112,30 @@ export const callback = async (request: express.Request, response: express.Respo
     return response.status(500).send('Internal Server Error');
   }
 };
+
+export const refresh = async (request: express.Request, response: express.Response) => {
+  const refreshToken = request.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return response.status(401).send('Refresh token is missing');
+  }
+
+  try {
+    const decoded = await decodeToken(refreshToken);
+
+    const user = await readUser((decoded as any).userId);
+
+    const valid = user.userData.refreshToken === refreshToken;
+
+    if (!valid) {
+      return response.status(401).send('Invalid refresh token');
+    }
+
+    const newAccessToken = await generateToken((decoded as any).userId, 'access');
+    
+    return response.status(200).send({ accessToken: newAccessToken });
+  } catch (error) {
+    console.log("Error refreshng token:", error);
+    return response.status(400).send('Invalid refresh token');
+  }
+}
