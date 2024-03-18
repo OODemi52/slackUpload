@@ -26,14 +26,14 @@ export default class SlackBot {
   private channel: string;
   private clientPromise: Promise<WebClient>;
 
-  constructor(channel?: string) {
+  constructor(channel?: string, accessToken?: string) {
     this.channel = channel || ''
-    this.clientPromise = this.setupClient();
+    this.clientPromise = this.setupClient(accessToken);
   }
 
-  private async setupClient(): Promise<WebClient> {
-    const slackToken = await getParameterValue('SLACK_TOKEN');
-    return new WebClient(slackToken);
+  private async setupClient(accessToken: string | undefined): Promise<WebClient> {
+    //const slackToken = await getParameterValue('SLACK_TOKEN');
+    return new WebClient(accessToken);
   }
 
   async getChannels() {

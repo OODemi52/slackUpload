@@ -63,6 +63,7 @@ export const decodeToken = async (refreshToken: string) => {
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
             console.error('Refresh token expired:', error);
+
         } else {
             console.error('Error validating refresh token:', error);
         }

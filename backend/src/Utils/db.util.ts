@@ -103,7 +103,7 @@ export const writeUser = async (userAuthData: UserAuthData) => {
   return userDoc;
 };
 
-
+/*
 export const readUser = async (userId: string, teamId: string) => {
   try {
     const user = await User.findOne({ slackUserId: userId, teamID: teamId });
@@ -116,6 +116,7 @@ export const readUser = async (userId: string, teamId: string) => {
     throw error;
   }
 };
+*/
 
 export const updateWithRefreshToken  = async (userId: string, refreshToken: string | undefined) => {
   try {
@@ -126,18 +127,17 @@ export const updateWithRefreshToken  = async (userId: string, refreshToken: stri
   }
 }
 
-export const readToken = async (userId: string) => {
-
+export const readUser = async (userId: string) => {
   try {
-    const token = await User.findOne({ _id: userId });
+    const userData = await User.findById(userId);
 
-    if (!token) {
-      throw new Error('Token not found');
+    if (!userData) {
+      throw new Error('User not found');
     }
 
-    return token;
+    return { _id: userData._id, userData };
   } catch (error) {
-    console.error('Error reading token:', error);
+    console.error('Error reading user:', error);
     throw error;
   }
-}
+};

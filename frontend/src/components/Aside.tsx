@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import * as uuid from "uuid";
 import { HStack, VStack, Spacer, Box, Text, Divider } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
@@ -7,11 +7,11 @@ import MessageBatchSize from "./MessageBatchSize";
 import FileTypesSelector from "./FileTypesSelector";
 import UploadComment from "./UploadComment";
 import UploadButton from "./UploadButton";
+import AuthContext from "../context/AuthContext";
 
 interface FormState {
   files: FileList | null;
   channel: string;
-  userID: string;
   uploadComment: string;
   messageBatchSize: number;
   sessionID: string;
@@ -20,20 +20,17 @@ interface FormState {
 type Channel = { value: string; label: string };
 
 const Aside: React.FC = () => {
-  const [isUploading, setIsUploading] = useState(false); // For disabling the upload button while uploading
-  const [startUpload, setStartUpload] = useState(false); // For starting the upload after the session ID is set
-  const [channels, setChannels] = useState<Channel[]>([]); // For storing the fetched list of channels
-  const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([
-    ".jpg",
-  ]); // For storing the selected file types
-  const [fileSelection, setFileSelection] = useState<string>(""); // For displaying what files are selected
+  const [isUploading, setIsUploading] = useState(false);
+  const [startUpload, setStartUpload] = useState(false);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
+  const [fileSelection, setFileSelection] = useState<string>("");
   const [formState, setFormState] = useState<FormState>({
     // For storing the state to be sent to the server
     files: null,
     channel: "",
     messageBatchSize: 10,
     uploadComment: "",
-    userID: "0001",
     sessionID: "",
   });
 
@@ -44,13 +41,17 @@ const Aside: React.FC = () => {
   useEffect(() => {
     if (startUpload && formState.sessionID) {
       performUpload();
-      setStartUpload(false); // Reset the flag after starting the upload
+      setStartUpload(false);
     }
   }, [formState.sessionID, startUpload]);
 
+  const { accessToken } = useContext(AuthContext);
+
   const fetchChannels = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/getChannels");
+      const response = await fetch("https://slackshots.demidaniel.online/api/getChannels", {headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },});
       const data = await response.json();
       const formattedChannels: Channel[] = data.map(
         (channel: [string, string]) => ({
@@ -72,7 +73,6 @@ const Aside: React.FC = () => {
     }));
   };
 
-  // Set the form state with the selected channel
   const handleChannelSelection = (channelId: string) => {
     setFormState((prevState) => ({
       ...prevState,
@@ -80,7 +80,6 @@ const Aside: React.FC = () => {
     }));
   };
 
-  // Set the form state with the upload comment
   const handleCommentChange = (uploadComment: string) => {
     setFormState((prevState) => ({
       ...prevState,
@@ -108,7 +107,7 @@ const Aside: React.FC = () => {
 
   const performUpload = async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
-    const maxBatchSize = 9 * 1024 * 1024; // 100 MB
+    const maxBatchSize = 9 * 1024 * 1024; // 9 MB
     let currentBatchSize = 0;
     let currentBatch: File[] = [];
     const batches: File[][] = [];
@@ -135,7 +134,6 @@ const Aside: React.FC = () => {
     const uploadLastBatch = async (files: File[]) => {
       const formData = new FormData();
       formData.append("channel", formState.channel);
-      formData.append("userID", formState.userID);
       formData.append("sessionID", formState.sessionID);
       formData.append("comment", formState.uploadComment);
       formData.append(
@@ -148,10 +146,13 @@ const Aside: React.FC = () => {
 
       try {
         const response = await fetch(
-          "http://localhost:3000/api/uploadFinalFiles",
+          "https://slackshots.demidaniel.online/api/uploadFinalFiles",
           {
             method: "POST",
             body: formData,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
           },
         );
 
@@ -166,7 +167,6 @@ const Aside: React.FC = () => {
     const uploadBatch = async (files: File[]) => {
       const formData = new FormData();
       formData.append("channel", formState.channel);
-      formData.append("userID", formState.userID);
       formData.append("sessionID", formState.sessionID);
       formData.append("comment", formState.uploadComment);
       formData.append(
@@ -178,9 +178,12 @@ const Aside: React.FC = () => {
       });
 
       try {
-        const response = await fetch("http://localhost:3000/api/uploadFiles", {
+        const response = await fetch("https://slackshots.demidaniel.online/api/uploadFiles", {
           method: "POST",
           body: formData,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         });
 
         if (!response.ok) {

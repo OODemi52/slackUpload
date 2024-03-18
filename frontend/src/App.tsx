@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
 import LandingPage from "./components/LandingPage";
-import AuthSuccess from "./components/AuthSuccess";
 import AuthCallback from "./components/AuthCallback";
 import AuthContext from "./context/AuthContext";
 
@@ -18,7 +17,7 @@ function App() {
     brodChannel.onmessage = (event) => {
       if (event.data.type === 'auth-success') {
         setAccessToken(event.data.accessToken);
-        console.log("Received access token via BroadcastChannel: ", event.data.accessToken);
+        console.log("Received access token via BroadcastChannel");
       }
     };
   
@@ -34,7 +33,6 @@ function App() {
           <Routes>
             <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
             <Route path="/auth-callback" element={<AuthCallback />} />
-            <Route path="/auth-success" element={<AuthSuccess />} />
           </Routes>
         </Router>
       </AuthContext.Provider>

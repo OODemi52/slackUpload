@@ -26,14 +26,13 @@ export const getParameterValue = async (parameterName: string): Promise<string> 
     try {
         const response = await ssmClient.send(new GetParameterCommand(params));
         if (response.Parameter && response.Parameter.Value) {
-            console.log('Parameter value:', response.Parameter.Value);
             return response.Parameter.Value;
         } else {
-            throw new Error(`Parameter ${parameterName} not found or has no value.`);
+            throw new Error(`Parameter not found or has no value.`);
         }
     } catch (error) {
-        console.error(`Error getting parameter ${parameterName}: `, error);
-        throw error;
+        console.error(`Error getting parameter.`, error);
+        throw error; 
     }
 };
 
@@ -47,9 +46,9 @@ export const setParameterValue = async (parameterName: string, parameterValue: s
 
     try {
         await ssmClient.send(new PutParameterCommand(params));
-        console.log(`Parameter ${parameterName} set successfully.`);
+        console.log(`Parameter set successfully.`);
     } catch (error) {
-        console.error(`Error setting parameter ${parameterName}: `, error);
+        console.error(`Error setting parameter.`, error);
         throw error;
     }
 };

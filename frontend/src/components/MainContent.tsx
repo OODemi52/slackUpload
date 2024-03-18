@@ -1,17 +1,25 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useContext } from "react";
 import UploadGrid from "./UploadGrid";
-import { Grid, GridItem } from "@chakra-ui/react";
+import { AbsoluteCenter, Grid, GridItem, Text } from "@chakra-ui/react";
+import AuthContext from "../context/AuthContext";
 
 const MainContent: React.FC = () => {
   const [pics, setPics] = useState<{ url: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const { accessToken } = useContext(AuthContext);
+
   const fetchUrls = useCallback(
-    async (userId: string, page: number, limit: number = 16) => {
+    async (page: number, limit: number = 16) => {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/getImagesUrls?userID=${userId}&page=${page}&limit=${limit}`,
+          `https://slackshots.demidaniel.online/api/getImagesUrls?page=${page}&limit=${limit}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
         );
 
         if (!response.ok) {
@@ -33,7 +41,7 @@ const MainContent: React.FC = () => {
   );
 
   useEffect(() => {
-    fetchUrls("0001", page);
+    fetchUrls(page);
   }, [page, fetchUrls]);
 
   const handleScroll = useCallback(
@@ -69,7 +77,11 @@ const MainContent: React.FC = () => {
         height="full"
         boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
       >
-        <UploadGrid pics={pics} onScroll={handleScroll} />
+        {pics.length ? (
+          <UploadGrid pics={pics} onScroll={handleScroll} />
+        ) : (
+          <AbsoluteCenter color="#404040"><Text fontSize="xxx-large" textAlign="center">Upload Images To Get Started!</Text></AbsoluteCenter>
+        )}
       </GridItem>
     </Grid>
   );

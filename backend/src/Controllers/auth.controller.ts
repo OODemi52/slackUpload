@@ -2,7 +2,7 @@ import express from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { getParameterValue, setParameterValue } from '../Config/awsParams.config';
-import { writeUser, updateWithRefreshToken, readToken } from '../Utils/db.util';
+import { writeUser, updateWithRefreshToken, readUser } from '../Utils/db.util';
 import { generateToken, decodeToken } from '../Utils/jwt.util';
 
 dotenv.config();
@@ -64,12 +64,10 @@ export const callback = async (request: express.Request, response: express.Respo
       },
     });
 
-    console.log('Token response:', tokenResponse.data);
-
     if (tokenResponse.data.ok) {
       const { access_token, token_type, scope, bot_user_id, app_id, team, enterprise, authed_user } = tokenResponse.data;
 
-      await setParameterValue(`USR_SL${authed_user?.id}T${team?.id}`, access_token);
+      await setParameterValue(`SLA_IDAU${authed_user?.id}IDT${team?.id}`, access_token);
 
       const userAuthData = {
         tokenType: token_type,
@@ -95,12 +93,12 @@ export const callback = async (request: express.Request, response: express.Respo
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'lax', // Lax due to limitations of Safari browser, look into workaround
         path: '/',
         maxAge: 14 * 24 * 60 * 60 * 1000,
       });
 
-      const clientRedirectUrl = `http://localhost:5173/auth-callback?accessToken=${accessToken}`;
+      const clientRedirectUrl = `http://127.0.0.1:5173/auth-callback?accessToken=${accessToken}`;
       return response.redirect(clientRedirectUrl);
     } else {
       console.error('Error obtaining access token:', tokenResponse.data.error);
@@ -122,9 +120,9 @@ export const refresh = async (request: express.Request, response: express.Respon
   try {
     const decoded = await decodeToken(refreshToken);
 
-    const storedRefreshToken = await readToken((decoded as any).userId);
+    const user = await readUser((decoded as any).userId);
 
-    const valid = storedRefreshToken.refreshToken === refreshToken;
+    const valid = user.userData.refreshToken === refreshToken;
 
     if (!valid) {
       return response.status(401).send('Invalid refresh token');
