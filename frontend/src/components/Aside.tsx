@@ -49,7 +49,7 @@ const Aside: React.FC = () => {
 
   const fetchChannels = async () => {
     try {
-      const response = await fetch("https://slackshots.demidaniel.online/api/getChannels", {headers: {
+      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getChannels`, {headers: {
         Authorization: `Bearer ${accessToken}`,
       },});
       const data = await response.json();
@@ -146,7 +146,7 @@ const Aside: React.FC = () => {
 
       try {
         const response = await fetch(
-          "https://slackshots.demidaniel.online/api/uploadFinalFiles",
+          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFinalFiles`,
           {
             method: "POST",
             body: formData,
@@ -178,7 +178,7 @@ const Aside: React.FC = () => {
       });
 
       try {
-        const response = await fetch("https://slackshots.demidaniel.online/api/uploadFiles", {
+        const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, {
           method: "POST",
           body: formData,
           headers: {

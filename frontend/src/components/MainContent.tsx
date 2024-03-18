@@ -14,7 +14,7 @@ const MainContent: React.FC = () => {
     async (page: number, limit: number = 16) => {
       try {
         const response = await fetch(
-          `https://slackshots.demidaniel.online/api/getImagesUrls?page=${page}&limit=${limit}`,
+          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${page}&limit=${limit}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,

@@ -98,7 +98,10 @@ export const callback = async (request: express.Request, response: express.Respo
         maxAge: 14 * 24 * 60 * 60 * 1000,
       });
 
-      const clientRedirectUrl = `http://127.0.0.1:5173/auth-callback?accessToken=${accessToken}`;
+      const clientHost = await getParameterValue('CLIENT_HOST');
+      const cleintProtocol = await getParameterValue('CLIENT_PROTOCOL');
+
+      const clientRedirectUrl = `${cleintProtocol}://${clientHost}/auth-callback?accessToken=${accessToken}`;
       return response.redirect(clientRedirectUrl);
     } else {
       console.error('Error obtaining access token:', tokenResponse.data.error);

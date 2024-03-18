@@ -2,7 +2,6 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import cors from 'cors';
 import dbConnect from "./Config/dbConnect.config";
 import apiRouter from './Routes/api.route';
 import authRouter from './Routes/auth.route';

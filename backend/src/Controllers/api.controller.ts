@@ -101,7 +101,6 @@ export const getImagesProxy = async (request: express.Request, response: express
   }
 };
 
-
 export const uploadFiles = async (request: express.Request, response: express.Response) => {
   const form = new IncomingForm() as any;
 
@@ -164,13 +163,11 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
   form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
-    console.log('Fields:', fields);
-    console.log('Files:', files);
-    console.log('Request User ID:', request.userId);  
 
     if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
       return response.status(404).send('No fields or files found');
     }
+
     if (err) {
       console.error(`Error processing upload: ${err}`);
       return response.status(500).json({ error: 'Error processing upload' });
@@ -178,14 +175,6 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   
     console.log(`Uploading final files to channel: ${fields.channel} for User: ${request.userId} and Session: ${fields.sessionID}`);
     const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
-
-
-    console.log('fields.channel:', fields.channel);
-    console.log('fields.sessionID:', fields.sessionID);
-    console.log('fields.messageBatchSize:', fields.messageBatchSize);
-    console.log('fields.comment:', fields.comment);
-    console.log('files.files:', files.files);
-  
 
     const uploadedFiles = files.files.map((file: File) => ({
       name: file.originalFilename,
