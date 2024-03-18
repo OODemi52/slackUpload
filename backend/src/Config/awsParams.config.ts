@@ -1,6 +1,5 @@
 import { SSMClient, GetParameterCommand, PutParameterCommand , GetParameterCommandInput, PutParameterCommandInput } from "@aws-sdk/client-ssm";
 
-
 import dotenv from 'dotenv';
 
 dotenv.config();

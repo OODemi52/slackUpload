@@ -45,7 +45,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
   const fetchImage = async (permalink: string) => {
     try {
       const response = await fetch(
-        `https://slackshots.demidaniel.online/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

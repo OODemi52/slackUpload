@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import {  updateUploadedFileReferenceWithSlackPrivateUrl } from '../Utils/db.util';
 import { WebClient } from '@slack/web-api';
-import { getParameterValue } from '../Config/awsParams.config';
 
 dotenv.config();
 
