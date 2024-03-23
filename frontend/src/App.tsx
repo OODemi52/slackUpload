@@ -31,7 +31,7 @@ function App() {
   useEffect(() => {
     const refreshAccessToken = async () => {
       try {
-        const response = await fetch('https://slackshots.demidaniel.online/auth/refresh', {
+        const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
         });
