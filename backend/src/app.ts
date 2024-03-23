@@ -9,10 +9,12 @@ import healthRouter from './Routes/health.route';
 
 export const app: express.Application = express();
 
-// CORS (Cross-Origin Resource Sharing) allowing requests from designated client origins
 app.use((request: express.Request, response: express.Response, next: express.NextFunction) => {
-  const allowedOrigins = ["https://slackshots.app", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
+  const allowedOrigins = ["https://www.slackshots.app", "https://slackshots.app", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
   const origin = request.headers.origin as string;
+
+  console.log('Origin:', origin);
+  console.log('Is origin allowed:', allowedOrigins.includes(origin));
   
   if (allowedOrigins.includes(origin)) {
     response.setHeader('Access-Control-Allow-Origin', origin);
@@ -25,14 +27,11 @@ app.use((request: express.Request, response: express.Response, next: express.Nex
   next();
 });
 
-// Body Parser (Gets content from response body)
 app.use(bodyParser.json({ limit: '50mb'}));
 app.use(bodyParser.urlencoded({ limit: '50mb',extended: true }));
 
-// Cookie Parser (Parses cookies from request headers)
 app.use(cookieParser());
 
-// Helmet (Protect responses by setting specific security-focused headers)
 app.use(helmet());
 
 // API Routes
@@ -46,8 +45,5 @@ app.use('/health', healthRouter);
 
 // Connect to MongoDB
 dbConnect();
-
-
-
 
 export default app;
