@@ -9,6 +9,7 @@ import {
     ModalHeader,
     ModalFooter,
     ModalBody,
+    Button,
   } from '@chakra-ui/react'
 
 interface LandingPageProps {
@@ -93,6 +94,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ count = 400 }) => {
           alignItems="center"
         >
           <SlackAuth />
+          <Button
+          isLoading
+      loadingText="Uploading"
+      variant="solid"
+      bgGradient="linear(to top, #5f43b2, #8c73e9)"
+      color="white"
+      border="1px solid #b3b3b3"
+      size="md"
+      width="100%"
+    >
+      Upload
+    </Button>
         </ModalFooter>
         </ModalContent>
       </Modal>

@@ -37,7 +37,7 @@ function App() {
         });
   
         if (!response.ok) {
-          throw new Error('Refresh token request failed');
+          throw new Error('Refresh token request failed. Try signing in again.');
         }
   
         const data = await response.json();
@@ -58,7 +58,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
-            <Route path="/auth-callback" element={<AuthCallback />} />
+            <Route path="/auth-callback" element={<AuthCallback />} /> 
           </Routes>
         </Router>
       </AuthContext.Provider>

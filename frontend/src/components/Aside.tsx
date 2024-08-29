@@ -305,7 +305,8 @@ const Aside: React.FC = () => {
       <Divider orientation="vertical" />
       <Box width="20%" alignSelf="center" mr="1.2rem" mt="1.2rem">
         <UploadButton
-          disabled={!formState.files || !formState.channel || isUploading}
+          loading={isUploading}
+          disabled={!formState.files || !formState.channel}
           onUpload={handleFileUpload}
         />
       </Box>
