@@ -9,7 +9,7 @@ import {
     ModalHeader,
     ModalFooter,
     ModalBody,
-  } from '@chakra-ui/react'
+  } from '@chakra-ui/react';
 
 interface LandingPageProps {
     count?: number;
@@ -66,6 +66,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ count = 400 }) => {
           bgGradient="linear(to bottom right, #202020, #080808)"
           boxShadow="8px 16px 16px rgba(0, 0, 0, 0.75)"
           borderRadius="50px"
+          w="80%"
         >
         <ModalBody
           display="flex"

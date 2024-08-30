@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 
 const SlackAuth: React.FC = () => {
-  const [loading, setLoading] = useState(false);
 
   const handleSignIn = () => {
-    setLoading(true);
     const width = 600, height = 600;
     const left = (window.innerWidth - width) / 2;
     const top = (window.innerHeight - height) / 2;
@@ -19,9 +17,7 @@ const SlackAuth: React.FC = () => {
 
   return (
     <>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
+      {(
         <img
           alt="Add to Slack"
           className="slack-button"

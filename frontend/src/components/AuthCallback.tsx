@@ -18,7 +18,8 @@ const AuthCallback = () => {
 
       setTimeout(() => {
         if (window.opener) {
-          window.close();
+          window.opener.location.reload();
+          close();
         }
       }, 500);
     }
