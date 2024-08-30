@@ -46,16 +46,20 @@ const FileTypeSelector: React.FC<FileTypeSelectorProps> = ({
         chakraStyles={{
           control: (provided) => ({
             ...provided,
-            borderColor: "#b3b3b3",
-            bgGradient: "linear(to top, #5f43b2, #8c73e9)",
+            border: "2px solid",
+            borderColor: "#202020",
+            bgGradient: "linear(to bottom right, #080808, #202020)",
+            boxShadow: "4px 4px 4px rgba(0, 0, 0, 0.5)",
           }),
           dropdownIndicator: (provided) => ({
             ...provided,
-            color: "black",
+            bgGradient: "linear(to bottom right, #080808, #202020)",
+            color: "white",
           }),
           option: (provided) => ({
             ...provided,
-            color: "black",
+            backgroundColor: "#080808",
+            color: "white",
           }),
           placeholder: (provided) => ({
             ...provided,
@@ -63,21 +67,27 @@ const FileTypeSelector: React.FC<FileTypeSelectorProps> = ({
           }),
           multiValue: (provided) => ({
             ...provided,
-            backgroundColor: "purple.300",
+            backgroundColor: "#202020",
             overflow: "hidden",
           }),
           multiValueLabel: (provided) => ({
             ...provided,
-            color: "black",
+            color: "white",
+            backgroundColor: "#202020",
             overflow: "hidden",
           }),
           multiValueRemove: (provided) => ({
             ...provided,
-            color: "black",
+            color: "white",
             ":hover": {
-              backgroundColor: "purple.400",
-              color: "black",
+              backgroundColor: "#202020",
+              color: "white",
             },
+          }),
+          menuList: (provided) => ({
+            ...provided,
+            backgroundColor: "#080808",
+            color: "white",
           }),
         }}
       />

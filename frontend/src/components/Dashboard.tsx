@@ -20,9 +20,8 @@ const Dashboard: React.FC = () => {
         alignItems="center"
         w="100%"
         minH="100vh"
-        bg="#8c73e9"
         boxShadow="0px 0px 10px rgba(0, 0, 0, 0.5)"
-        bgGradient="linear(to bottom, #5f43b2, #8c73e9)"
+        bg="#080808"
       >
         <Grid
           templateAreas={`
@@ -33,17 +32,18 @@ const Dashboard: React.FC = () => {
           gridTemplateRows={"50px 1fr auto"}
           gridTemplateColumns={"1fr"}
           overflow="hidden"
-          boxShadow="0px 0px 10px rgba(0, 0, 0, 1)"
+          boxShadow="0px 0px 30px rgba(0, 0, 0, 1)"
           height="95vh"
           width="95vw"
-          borderRadius={5}
+          borderRadius={10}
+          border="4px solid #282828"
         >
           <GridItem gridArea="header" bg="#282828" mb="1px">
             <Header />
           </GridItem>
           <GridItem
             gridArea="main"
-            bg="purple.500"
+            bg="#282828"
             overflowY="auto"
             boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
           >

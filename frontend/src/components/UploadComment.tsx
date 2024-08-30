@@ -21,10 +21,13 @@ const UploadComment: React.FC<UploadCommentProps> = ({ onCommentChange }) => {
         onChange={handleChange}
         placeholder="Comment (optional)..."
         size="sm"
-        resize="vertical"
-        bg="white"
-        borderColor="#b3b3b3"
+        bgGradient="linear(to bottom right, #080808, #202020)"
+        borderColor="#202020"
+        border="2px solid #202020"
         borderRadius={5}
+        boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
+        color="white"
+        resize="none"
       />
     </Box>
   );

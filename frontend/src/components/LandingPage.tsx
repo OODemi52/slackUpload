@@ -49,7 +49,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ count = 400 }) => {
       alignItems="center"
       minH="100vh"
       color="white"
-      bgGradient="linear(to bottom, #5f43b2, #8c73e9)"
+      bgGradient="linear(to bottom right, #202020, #080808)"
       >
         {particles}
     <Modal
@@ -62,9 +62,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ count = 400 }) => {
     >
         <ModalOverlay backdropBrightness={100} backdropBlur={100} />
         <ModalContent 
-          bgGradient="linear(to bottom, #5f43b2, #8c73e9)"
           padding="1rem"
-          bg="#181818"
+          bgGradient="linear(to bottom right, #202020, #080808)"
+          boxShadow="8px 16px 16px rgba(0, 0, 0, 0.75)"
+          borderRadius="50px"
         >
         <ModalBody
           display="flex"

@@ -4,9 +4,6 @@ import User from "../Models/user.model";
 
 // Want to implemet crud methods
 /* Currently needs to be implemented (delete as you go) :
-    - writeUser
-    - readUser
-
 
     Implement in the future
     - updateUploadedFile
@@ -139,5 +136,15 @@ export const readUser = async (userId: string) => {
   } catch (error) {
     console.error('Error reading user:', error);
     throw error;
+  }
+};
+
+export const invalidateRefreshToken = async (userId: string) => {
+  try {
+    await User.updateOne( { _id: userId }, { $set: { refreshToken: null } }
+    );
+  } catch (error) {
+    console.error('Error invalidating refresh token:', error);
+    throw new Error('Failed to invalidate refresh token');
   }
 };

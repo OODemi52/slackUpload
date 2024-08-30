@@ -2,7 +2,7 @@ import express from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { getParameterValue, setParameterValue } from '../Config/awsParams.config';
-import { writeUser, updateWithRefreshToken, readUser } from '../Utils/db.util';
+import { writeUser, updateWithRefreshToken, readUser, invalidateRefreshToken } from '../Utils/db.util';
 import { generateToken, decodeToken } from '../Utils/jwt.util';
 
 dotenv.config();
@@ -137,5 +137,39 @@ export const refresh = async (request: express.Request, response: express.Respon
   } catch (error) {
     console.log("Error refreshng token:", error);
     return response.status(400).send('Invalid refresh token');
+  }
+}
+
+export const logout = async (request: express.Request, response: express.Response) => {
+  const refreshToken = request.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return response.status(400).send('Refresh token is missing');
+  }
+
+  try {
+    const decoded = await decodeToken(refreshToken);
+    const userId = (decoded as any).userId;
+    
+    const user = await readUser(userId);
+    const valid = user.userData.refreshToken === refreshToken;
+
+    if (!valid) {
+      return response.status(401).send('Invalid refresh token');
+    }
+
+    response.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    await invalidateRefreshToken(userId);
+
+    return response.status(200).send('Logged out successfully');
+  } catch (error) {
+    console.log('Error during logout:', error);
+    return response.status(500).send('Internal Server Error');
   }
 }

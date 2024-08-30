@@ -31,7 +31,7 @@ export default class SlackBot {
   }
 
   private async setupClient(accessToken: string | undefined): Promise<WebClient> {
-    //const slackToken = await getParameterValue('SLACK_TOKEN');
+    //const slackToken = await getParameterValue('SLACK_TOKEN'); // For local testing
     return new WebClient(accessToken);
   }
 

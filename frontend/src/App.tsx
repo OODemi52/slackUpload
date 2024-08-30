@@ -11,7 +11,6 @@ const queryClient = new QueryClient();
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>("");
 
-  // Set access token on login and reload page
   useEffect(() => {
     const brodChannel = new BroadcastChannel('auth_channel');
   
@@ -28,7 +27,6 @@ function App() {
     };
   }, []);
 
-  // Refresh the access token
   useEffect(() => {
     const refreshAccessToken = async () => {
       try {
