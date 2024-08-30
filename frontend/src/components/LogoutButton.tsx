@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import {
   Tooltip,
   Button,
@@ -9,11 +9,13 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
 } from "@chakra-ui/react";
+import AuthContext from "../context/AuthContext";
 
 const LogoutButton: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const { setAccessToken } = useContext(AuthContext);
 
   const handleLogout = async () => {
     try {
@@ -21,7 +23,8 @@ const LogoutButton: React.FC = () => {
         method: "POST",
         credentials: "include",
       });
-      window.location.reload(); // This should clear the access token
+      setAccessToken(null);
+      window.location.reload();
     } catch (error) {
       console.error("Logout failed", error);
     }
