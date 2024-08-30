@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useContext } from "react";
 import UploadGrid from "./UploadGrid";
-import { AbsoluteCenter, Grid, GridItem, Text } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
 
 const MainContent: React.FC = () => {
@@ -37,7 +37,7 @@ const MainContent: React.FC = () => {
         console.error("Error fetching pics:", error);
       }
     },
-    [accessToken],
+    [accessToken]
   );
 
   useEffect(() => {
@@ -56,34 +56,56 @@ const MainContent: React.FC = () => {
         setPage((prevPage) => prevPage + 1);
       }
     },
-    [hasMore],
+    [hasMore]
   );
 
   return (
-    <Grid templateRows="1fr 9fr" gap={0} w="full" h="full">
-      <GridItem
+    <Flex h="full">
+      {/* Sidebar section */}
+      <Box
         bg="#282828"
         boxShadow="0px 4px 4px rgba(0, 0, 0, 1)"
-        position="relative"
-        zIndex={1}
+        flex="1"
+        h="full"
+        overflowY="auto"
       >
-        {/* Will implement InfoBar component later */}
-      </GridItem>
-      <GridItem
-        overflowY="scroll"
+        {/* Sidebar content */}
+      </Box>
+
+      {/* Main Content section */}
+      <Box
         bg="#181818"
+        w="full" 
+        h="full"
         display="flex"
         flexDirection="column"
-        height="full"
         boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
       >
         {pics.length ? (
           <UploadGrid pics={pics} onScroll={handleScroll} />
         ) : (
-          <AbsoluteCenter color="#404040"><Text fontSize="xxx-large" textAlign="center">Upload Images To Get Started!</Text></AbsoluteCenter>
+          <Text
+            color="#404040"
+            fontSize="xxx-large"
+            textAlign="center"
+            mt="auto"
+            mb="auto"
+          >
+            Upload Images To Get Started!
+          </Text>
         )}
-      </GridItem>
-    </Grid>
+      </Box>
+
+      {/* Right Sidebar or Other Section */}
+      <Box
+        bg="#282828"
+        flex="1"
+        h="full"
+        overflowY="auto"
+      >
+        {/* Right sidebar content */}
+      </Box>
+    </Flex>
   );
 };
 

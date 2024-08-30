@@ -12,44 +12,53 @@ const Dashboard: React.FC = () => {
       minW="100vw"
       w="100vw"
       maxH="100vh"
-      h="95%"
+      h="100vh"  // Ensure full height usage
     >
       <Box
         display="flex"
         justifyContent="center"
         alignItems="center"
         w="100%"
-        minH="100vh"
+        h="100vh"
         boxShadow="0px 0px 10px rgba(0, 0, 0, 0.5)"
         bg="#080808"
       >
         <Grid
           templateAreas={`
-            "header header"
-            "main main"
-            "aside aside"
+            "header"
+            "main"
+            "aside"
           `}
           gridTemplateRows={"50px 1fr auto"}
           gridTemplateColumns={"1fr"}
-          overflow="hidden"
-          boxShadow="0px 0px 30px rgba(0, 0, 0, 1)"
-          height="95vh"
+          height="100vh"
           width="95vw"
           borderRadius={10}
           border="4px solid #282828"
         >
+          {/* Header */}
           <GridItem gridArea="header" bg="#282828" mb="1px">
             <Header />
           </GridItem>
+
+          {/* Main Content */}
           <GridItem
             gridArea="main"
             bg="#282828"
             overflowY="auto"
             boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
+            minH={{ base: "65vh", md: "auto" }}
           >
             <MainContent />
           </GridItem>
-          <GridItem gridArea="aside" bg="#282828">
+
+          {/* Aside */}
+          <GridItem
+            gridArea="aside"
+            bg="#282828"
+            h="auto"
+            boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
+          >
             <Aside />
           </GridItem>
         </Grid>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import * as uuid from "uuid";
-import { HStack, VStack, Spacer, Box, Text, Divider } from "@chakra-ui/react";
+import { Stack, VStack, Spacer, Box, Text, Divider } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
 import FolderSelector from "./FolderSelector";
 import MessageBatchSize from "./MessageBatchSize";
@@ -208,7 +208,7 @@ const Aside: React.FC = () => {
   };
 
   return (
-    <HStack
+    <Stack
       spacing={4}
       align="stretch"
       height="full"
@@ -216,14 +216,16 @@ const Aside: React.FC = () => {
       paddingY={3}
       position="relative"
       zIndex={1}
+      direction={{ base: "column", md: "row" }} // Responsive direction
       boxShadow="0px -4px 4px rgba(0, 0, 0, 1)"
     >
+      {/* Files Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
-        width="15rem"
-        pl="2.5rem"
+        width={{ base: "100%", md: "15rem" }} // Adjust width for smaller screens
+        pl={{ base: "0", md: "2.5rem" }} // Adjust padding
       >
         <Text color="white" fontSize="18px" fontWeight="bold">
           Files: {fileSelection}{" "}
@@ -236,11 +238,13 @@ const Aside: React.FC = () => {
           />
         </Box>
       </VStack>
+
+      {/* Channel Selector Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
-        width="15rem"
+        width={{ base: "100%", md: "15rem" }}
       >
         <Text
           alignSelf="flex-start"
@@ -257,11 +261,13 @@ const Aside: React.FC = () => {
           />
         </Box>
       </VStack>
+
+      {/* Message Batch Size Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
-        width="15rem"
+        width={{ base: "100%", md: "15rem" }}
       >
         <Text
           alignSelf="flex-start"
@@ -277,11 +283,13 @@ const Aside: React.FC = () => {
           />
         </Box>
       </VStack>
+
+      {/* File Types Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
-        width="15rem"
+        width={{ base: "100%", md: "15rem" }}
       >
         <Text
           alignSelf="flex-start"
@@ -298,19 +306,29 @@ const Aside: React.FC = () => {
           />
         </Box>
       </VStack>
-      <Box width="20%" alignSelf="flex-end">
+
+      {/* Comment and Upload Section */}
+      <Box width={{ base: "100%", md: "20%" }} alignSelf="flex-end">
         <UploadComment onCommentChange={handleCommentChange} />
       </Box>
-      <Spacer />
-      <Divider orientation="vertical" />
-      <Box width="20%" alignSelf="center" mr="1.2rem" mt="1.2rem">
+
+      {/* Hide Divider and Folder Selector on smaller screens */}
+      <Spacer display={{ base: "none", md: "block" }} />
+      <Divider display={{ base: "none", md: "block" }} orientation="vertical" />
+
+      <Box
+        width={{ base: "100%", md: "20%" }}
+        alignSelf={{ base: "center", md: "center" }}
+        mr={{ base: 0, md: "1.2rem" }}
+        mt={{ base: 0, md: "1.2rem" }}
+      >
         <UploadButton
           loading={isUploading}
           disabled={!formState.files || !formState.channel}
           onUpload={handleFileUpload}
         />
       </Box>
-    </HStack>
+    </Stack>
   );
 };
 

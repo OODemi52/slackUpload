@@ -3,7 +3,8 @@
   line-height: 1.5;
   font-weight: 400;  
 
-  color-scheme: light dark;
+  color-scheme: dark;
+  background-color: #080808;
   color: rgba(255, 255, 255, 0.87);
 
   font-synthesis: none;
@@ -12,9 +13,9 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  overflow: hidden;
+  overflow: scroll;
 
-  background: #181818;
+  background: #080808;
 }
 
 .logo-image {

@@ -1,7 +1,7 @@
 import React from "react";
 import { Heading, Flex, Box } from "@chakra-ui/react";
 import logo from "../assets/SSLOGO_NOBG.png";
-import LogoutButton from "./LogoutButton";
+import Logout from "./Logout";
 
 const Header: React.FC = () => {
   return (
@@ -26,7 +26,7 @@ const Header: React.FC = () => {
             SlackShots
           </Heading>
         </Flex>
-        <LogoutButton />
+        <Logout />
       </Flex>
     </Box>
   );
