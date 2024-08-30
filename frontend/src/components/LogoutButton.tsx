@@ -19,13 +19,16 @@ const LogoutButton: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch("/auth/logout", {
+      const response = await fetch("/auth/logout", {
         method: "POST",
         credentials: "include",
       });
-      setAccessToken(null);
-      window.location.reload();
-    } catch (error) {
+      if (response.ok) {
+        setAccessToken(null);
+        window.location.reload();
+          } else {
+        console.error("Logout failed", response);
+          }    } catch (error) {
       console.error("Logout failed", error);
     }
   };
