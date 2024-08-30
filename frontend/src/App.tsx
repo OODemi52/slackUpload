@@ -11,14 +11,15 @@ const queryClient = new QueryClient();
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>("");
 
-  // Set access token on login
+  // Set access token on login and reload page
   useEffect(() => {
     const brodChannel = new BroadcastChannel('auth_channel');
   
     brodChannel.onmessage = (event) => {
       if (event.data.type === 'auth-success') {
         setAccessToken(event.data.accessToken);
-        console.log("Received access token via BroadcastChannel");
+        console.log("Received access token via BroadcastChannel. Reloading page...");
+        window.location.reload();
       }
     };
   
