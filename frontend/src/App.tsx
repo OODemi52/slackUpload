@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>("");
 
-  // Set access token on initial login
+  // Set access token on login
   useEffect(() => {
     const brodChannel = new BroadcastChannel('auth_channel');
   
@@ -58,7 +58,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
-            <Route path="/auth-callback" element={<AuthCallback />} /> 
+            <Route path="/authCallback" element={<AuthCallback />} /> 
           </Routes>
         </Router>
       </AuthContext.Provider>
