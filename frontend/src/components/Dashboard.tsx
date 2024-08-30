@@ -12,26 +12,27 @@ const Dashboard: React.FC = () => {
       minW="100vw"
       w="100vw"
       maxH="100vh"
-      h="100vh"  // Ensure full height usage
+      h="95%"
     >
       <Box
         display="flex"
         justifyContent="center"
         alignItems="center"
         w="100%"
-        h="100vh"
+        minH="100vh"
         boxShadow="0px 0px 10px rgba(0, 0, 0, 0.5)"
         bg="#080808"
+        pt={{ base: "26rem", md: "0" }}
       >
         <Grid
           templateAreas={`
-            "header"
-            "main"
-            "aside"
+            "header header"
+            "main main"
+            "aside aside"
           `}
           gridTemplateRows={"50px 1fr auto"}
           gridTemplateColumns={"1fr"}
-          height="100vh"
+          height={{ base: "auto", md: "95vh" }}
           width="95vw"
           borderRadius={10}
           border="4px solid #282828"
@@ -56,8 +57,8 @@ const Dashboard: React.FC = () => {
           <GridItem
             gridArea="aside"
             bg="#282828"
+            w="100%"
             h="auto"
-            boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
           >
             <Aside />
           </GridItem>

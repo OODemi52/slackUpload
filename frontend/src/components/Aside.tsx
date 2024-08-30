@@ -212,20 +212,20 @@ const Aside: React.FC = () => {
       spacing={4}
       align="stretch"
       height="full"
+      width="full"
       justify="space-around"
       paddingY={3}
       position="relative"
       zIndex={1}
-      direction={{ base: "column", md: "row" }} // Responsive direction
-      boxShadow="0px -4px 4px rgba(0, 0, 0, 1)"
+      direction={{ base: "column", md: "row" }}
     >
       {/* Files Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
-        width={{ base: "100%", md: "15rem" }} // Adjust width for smaller screens
-        pl={{ base: "0", md: "2.5rem" }} // Adjust padding
+        width={{ base: "100%", md: "15rem" }}
+        pl={{ base: "0", md: "2.5rem" }}
       >
         <Text color="white" fontSize="18px" fontWeight="bold">
           Files: {fileSelection}{" "}
