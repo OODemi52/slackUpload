@@ -19,7 +19,7 @@ const LogoutButton: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/auth/logout", {
+      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
