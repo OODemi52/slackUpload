@@ -15,11 +15,13 @@ const UploadButton: React.FC<UploadButtonProps> = ({ loading, disabled, onUpload
       isLoading={loading}
       loadingText="Uploading..."
       variant="solid"
-      bgGradient="linear(to top, #5f43b2, #8c73e9)"
+      bgGradient="linear(to bottom right, #080808, #202020)"
       color="white"
-      border="1px solid #b3b3b3"
+      border="2px solid #202020"
       size="md"
       width="100%"
+      _hover={{ border: "1px solid white" }}
+      boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
     >
       Upload
     </Button>

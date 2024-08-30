@@ -30,27 +30,53 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
         onChange={(newValue: Channel | null) =>
           handleChannelSelect(newValue as Channel)
         }
+        
         value={selectedChannel}
         chakraStyles={{
           control: (provided) => ({
             ...provided,
-            borderColor: "#b3b3b3",
-            bgGradient: "linear(to top, #5f43b2, #8c73e9)",
+            border: "2px solid",
+            borderColor: "#202020",
+            bgGradient: "linear(to bottom right, #080808, #202020)",
+            boxShadow: "4px 4px 4px rgba(0, 0, 0, 0.5)",
+            "&:hover": { border: "1px solid white" }
           }),
           dropdownIndicator: (provided) => ({
             ...provided,
-            color: "black",
+            bgGradient: "linear(to bottom right, #080808, #202020)",
+            color: "white",
           }),
           option: (provided) => ({
             ...provided,
-            color: "black",
+            backgroundColor: "#080808",
+            color: "white",
           }),
           placeholder: (provided) => ({
             ...provided,
             color: "white",
           }),
-          singleValue: (provided) => ({
+          multiValue: (provided) => ({
             ...provided,
+            backgroundColor: "#202020",
+            overflow: "hidden",
+          }),
+          multiValueLabel: (provided) => ({
+            ...provided,
+            color: "white",
+            backgroundColor: "#202020",
+            overflow: "hidden",
+          }),
+          multiValueRemove: (provided) => ({
+            ...provided,
+            color: "white",
+            ":hover": {
+              backgroundColor: "#202020",
+              color: "white",
+            },
+          }),
+          menuList: (provided) => ({
+            ...provided,
+            backgroundColor: "#080808",
             color: "white",
           }),
         }}

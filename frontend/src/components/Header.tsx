@@ -1,6 +1,7 @@
 import React from "react";
 import { Heading, Flex, Box } from "@chakra-ui/react";
 import logo from "../assets/SSLOGO_NOBG.png";
+import LogoutButton from "./LogoutButton";
 
 const Header: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ const Header: React.FC = () => {
             SlackShots
           </Heading>
         </Flex>
+        <LogoutButton />
       </Flex>
     </Box>
   );

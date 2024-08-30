@@ -26,11 +26,13 @@ const MessageBatchSize: React.FC<MessageBatchSizeProps> = ({
 
   return (
     <Box
-      bgGradient="linear(to top, #5f43b2, #8c73e9)"
+      bgGradient="linear(to bottom right, #080808, #202020)"
       rounded={5}
       p={2}
       pb={5}
-      border="1px solid #b3b3b3"
+      border="2px solid #202020"
+      boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
+      _hover={{ border: "1px solid white" }}
     >
       <Slider
         id="slider"
@@ -53,7 +55,7 @@ const MessageBatchSize: React.FC<MessageBatchSizeProps> = ({
         </SliderTrack>
         <Tooltip
           borderRadius={5}
-          bg="#282828"
+          bg="#202020"
           border="1px solid #b3b3b3"
           color="white"
           placement="bottom"
