@@ -10,14 +10,16 @@ const queryClient = new QueryClient();
 
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>("");
+  const [isTokenProcessed, setIsTokenProcessed] = useState(false);
 
   useEffect(() => {
     const brodChannel = new BroadcastChannel('auth_channel');
   
     brodChannel.onmessage = (event) => {
-      if (event.data.type === 'auth-success') {
+      if (event.data.type === 'auth-success' && !isTokenProcessed) {
         setAccessToken(event.data.accessToken);
-        console.log("Received access token via BroadcastChannel. Reloading page...");
+        console.log("Received access token via BroadcastChannel.");
+        setIsTokenProcessed(true);
         window.location.reload();
       }
     };
@@ -25,7 +27,7 @@ function App() {
     return () => {
       brodChannel.close();
     };
-  }, []);
+  }, [isTokenProcessed]);
 
   useEffect(() => {
     const refreshAccessToken = async () => {

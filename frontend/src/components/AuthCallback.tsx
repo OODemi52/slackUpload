@@ -17,13 +17,10 @@ const AuthCallback = () => {
       setTokenPassed(true);
 
       setTimeout(() => {
-        if (tokenPassed) {
-          close();
-        }
-      }, 500);
+        window.close();
+      }, 1000);
     }
-    
-  }, [location, tokenPassed]);
+  }, [location]);
 
   return tokenPassed ? <>Authentication Processed! You Can Close This Window If It Has Not Closed!</> : <>Processing Authentication...</>;
 };
