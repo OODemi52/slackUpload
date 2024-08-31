@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useContext } from "react";
-import { Box, Image, Link, useColorModeValue, Text } from "@chakra-ui/react";
+import { Box, Image, Checkbox, useColorModeValue, Text } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
 
 interface ImageCardProps {
@@ -10,19 +10,11 @@ interface ImageCardProps {
 const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [isLoaded, setIsLoaded] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
 
   const bg = useColorModeValue("white", "gray.800");
   const color = useColorModeValue("gray.800", "white");
-  const blurredImageStyle = {
-    filter: "blur(100px)",
-    transform: "scale(3)",
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    objectFit: "contain",
-    zIndex: -1,
-  };
 
   const observer = useMemo(
     () =>
@@ -35,9 +27,9 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
             observer.unobserve(imageRef.current!);
           }
         },
-        { threshold: 0.1 },
+        { threshold: 0.1 }
       ),
-    [isLoaded, url],
+    [isLoaded, url]
   );
 
   const { accessToken } = useContext(AuthContext);
@@ -77,6 +69,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
 
   return (
     <Box
+      position="relative"
       maxW="sm"
       border="1px solid #b3b3b3"
       borderRadius="lg"
@@ -84,47 +77,90 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
       bg={bg}
       color={color}
       shadow="md"
-      position="relative"
-      backdropBlur="8px"
-      zIndex={0}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       ref={imageRef}
     >
+      {/* Checkbox in top left */}
+      <Checkbox
+        position="absolute"
+        top="8px"
+        left="8px"
+        zIndex={2}
+        bg="whiteAlpha.800"
+        borderRadius="md"
+        size="lg"
+      />
+
+      {/* Download icon in top right */}
+      {imageUrl && (
+        <a
+          href={imageUrl}
+          download
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            zIndex: 2,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            padding: "4px",
+            borderRadius: "4px",
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="feather feather-download"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </a>
+      )}
+
+      {/* Image */}
       {imageUrl && (
         <Box
           display="flex"
           alignItems="center"
           justifyContent="center"
           height="200px"
+          position="relative"
         >
           <Image
             src={imageUrl}
             alt={name}
-            objectFit="contain"
-            maxH="100%"
-            maxW="100%"
-            zIndex={1}
+            objectFit="cover"
+            width="100%"
+            height="100%"
           />
-          <Image
-            src={imageUrl}
-            alt="Background"
-            style={blurredImageStyle as React.CSSProperties}
-          />
+
+          {/* Hover effect */}
+          {isHovered && (
+            <Box
+              position="absolute"
+              bottom="0"
+              width="100%"
+              bg="blackAlpha.700"
+              color="white"
+              textAlign="center"
+              p={2}
+              transition="opacity 0.3s"
+              opacity={0.9}
+            >
+              <Text>{name}</Text>
+            </Box>
+          )}
         </Box>
       )}
-
-      <Box p="6" zIndex={2} bg="white">
-        <Text
-          display="flex"
-          alignItems="baseline"
-          isTruncated
-          fontWeight="semibold"
-        >
-          {name}
-        </Text>
-        <Link href={imageUrl || "#"} isExternal color="blue.500" download>
-          Download
-        </Link>
-      </Box>
     </Box>
   );
 };
