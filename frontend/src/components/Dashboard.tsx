@@ -7,7 +7,6 @@ import MainContent from "./MainContent";
 const Dashboard: React.FC = () => {
   return (
     <Box
-      display="flex"
       justifyContent="center"
       minW="100vw"
       w="100vw"
@@ -22,7 +21,7 @@ const Dashboard: React.FC = () => {
         minH="100vh"
         boxShadow="0px 0px 10px rgba(0, 0, 0, 0.5)"
         bg="#080808"
-        pt={{ base: "26rem", md: "0" }}
+        py={5}
       >
         <Grid
           templateAreas={`
@@ -59,6 +58,7 @@ const Dashboard: React.FC = () => {
             bg="#282828"
             w="100%"
             h="auto"
+            justifyContent="center"
           >
             <Aside />
           </GridItem>

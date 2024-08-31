@@ -50,6 +50,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ count = 400 }) => {
       minH="100vh"
       color="white"
       bgGradient="linear(to bottom right, #202020, #080808)"
+      overflow="hidden"
       >
         {particles}
     <Modal

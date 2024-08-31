@@ -78,6 +78,7 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({
           cursor="pointer"
           height="2.5rem"
           width="10rem"
+          display={{ base: "none", lg: "flex" }}
         >
           Choose Folder
         </Button>
@@ -85,6 +86,7 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({
           orientation="horizontal"
           my={1}
           w="10rem"
+          display={{ base: "none", lg: "flex" }}
         />
         <Button
           as="label"

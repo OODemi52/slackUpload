@@ -79,6 +79,10 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
             backgroundColor: "#080808",
             color: "white",
           }),
+          singleValue: (provided) => ({
+            ...provided,
+            color: "white",
+            }),
         }}
       />
     </Box>

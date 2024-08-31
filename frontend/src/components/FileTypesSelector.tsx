@@ -79,8 +79,9 @@ const FileTypeSelector: React.FC<FileTypeSelectorProps> = ({
           multiValueRemove: (provided) => ({
             ...provided,
             color: "white",
+            colorScheme: "light",
             ":hover": {
-              backgroundColor: "#202020",
+              backgroundColor: "white",
               color: "white",
             },
           }),

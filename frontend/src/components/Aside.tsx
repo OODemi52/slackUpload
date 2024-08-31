@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import * as uuid from "uuid";
-import { Stack, VStack, Spacer, Box, Text, Divider } from "@chakra-ui/react";
+import { Stack, VStack, Spacer, Box, Text, Divider, SimpleGrid } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
 import FolderSelector from "./FolderSelector";
 import MessageBatchSize from "./MessageBatchSize";
@@ -215,20 +215,81 @@ const Aside: React.FC = () => {
       width="full"
       justify="space-around"
       paddingY={3}
+      paddingX={2}
       position="relative"
       zIndex={1}
       direction={{ base: "column", md: "row" }}
     >
-      {/* Files Section */}
+      {/* For base (mobile) screens */}
+      <SimpleGrid
+        columns={{ base: 2, md: 1 }}
+        spacing={4}
+        width="full"
+        alignItems="start"
+        display={{ base: "grid", md: "none" }}
+      >
+        {/* Files and Channel Selectors */}
+        <VStack align="stretch">
+          <Text color="white" fontSize="18px" fontWeight="bold">
+            Files: {fileSelection}
+          </Text>
+          <Box alignSelf="flex-start">
+            <FolderSelector
+              onFileChange={handleFolderSelection}
+              acceptedFileTypes={selectedFileTypes}
+              returnFileSelection={setFileSelection}
+            />
+          </Box>
+        </VStack>
+
+        <VStack align="stretch">
+          <Text color="white" fontSize="18px" fontWeight="bold">
+            Channel:
+          </Text>
+          <Box>
+            <ChannelSelector
+              channels={channels}
+              onChannelChange={handleChannelSelection}
+            />
+          </Box>
+        </VStack>
+
+        {/* Message Batch Size and File Types Selectors */}
+        <VStack align="stretch">
+          <Text color="white" fontSize="18px" fontWeight="bold">
+            Message Batch Size:
+          </Text>
+          <Box>
+            <MessageBatchSize
+              onMessageBatchSizeChange={handleMessageBatchSizeChange}
+            />
+          </Box>
+        </VStack>
+
+        <VStack align="stretch">
+          <Text color="white" fontSize="18px" fontWeight="bold">
+            File Types:
+          </Text>
+          <Box>
+            <FileTypesSelector
+              selectedFileTypes={selectedFileTypes}
+              onSelectFileTypes={setSelectedFileTypes}
+            />
+          </Box>
+        </VStack>
+      </SimpleGrid>
+
+      {/* Rest of layout for larger screens */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
         width={{ base: "100%", md: "15rem" }}
         pl={{ base: "0", md: "2.5rem" }}
+        display={{ base: "none", md: "flex" }}
       >
         <Text color="white" fontSize="18px" fontWeight="bold">
-          Files: {fileSelection}{" "}
+          Files: {fileSelection}
         </Text>
         <Box alignSelf="flex-start">
           <FolderSelector
@@ -239,12 +300,12 @@ const Aside: React.FC = () => {
         </Box>
       </VStack>
 
-      {/* Channel Selector Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
         width={{ base: "100%", md: "15rem" }}
+        display={{ base: "none", md: "flex" }}
       >
         <Text
           alignSelf="flex-start"
@@ -262,12 +323,12 @@ const Aside: React.FC = () => {
         </Box>
       </VStack>
 
-      {/* Message Batch Size Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
         width={{ base: "100%", md: "15rem" }}
+        display={{ base: "none", md: "flex" }}
       >
         <Text
           alignSelf="flex-start"
@@ -284,12 +345,12 @@ const Aside: React.FC = () => {
         </Box>
       </VStack>
 
-      {/* File Types Section */}
       <VStack
         align="stretch"
         height="full"
         justify="space-around"
         width={{ base: "100%", md: "15rem" }}
+        display={{ base: "none", md: "flex" }}
       >
         <Text
           alignSelf="flex-start"
@@ -312,7 +373,6 @@ const Aside: React.FC = () => {
         <UploadComment onCommentChange={handleCommentChange} />
       </Box>
 
-      {/* Hide Divider and Folder Selector on smaller screens */}
       <Spacer display={{ base: "none", md: "block" }} />
       <Divider display={{ base: "none", md: "block" }} orientation="vertical" />
 
