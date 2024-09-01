@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Grid, GridItem, Box } from "@chakra-ui/react";
+import { Grid, GridItem, Box, useToast } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
@@ -25,6 +25,8 @@ const Dashboard: React.FC = () => {
   const [startUpload, setStartUpload] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
 
+  const toast = useToast();
+
   const handleFormStateChange = useCallback((newState: Partial<FormState>) => {
     setFormState(prevState => ({ ...prevState, ...newState }));
   }, []);
@@ -33,7 +35,31 @@ const Dashboard: React.FC = () => {
     setStartUpload(false);
     setIsUploading(false);
     setUploadComplete(false);
-  }, []);
+
+    toast({
+      title: "Upload Complete",
+      description: "Your files have been uploaded successfully.",
+      status: "success",
+      duration: 5000,
+      isClosable: true,
+      position: "top",
+    });
+  }, [toast]);
+
+  const handleUploadFail = useCallback(() => {
+    setStartUpload(false);
+    setIsUploading(false);
+    setUploadComplete(false);
+
+    toast({
+      title: "Upload Failed",
+      description: "There was an issue uploading your files.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+      position: "top",
+    });
+  }, [toast]);
 
   return (
     <Box
@@ -85,6 +111,7 @@ const Dashboard: React.FC = () => {
             startUpload={startUpload}
             uploadComplete={uploadComplete}
             onUploadComplete={handleUploadComplete}
+            onUploadFail={handleUploadFail}
           />
           </GridItem>
 

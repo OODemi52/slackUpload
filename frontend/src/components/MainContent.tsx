@@ -15,9 +15,10 @@ interface MainContentProps {
   startUpload: boolean;
   uploadComplete: boolean;
   onUploadComplete: () => void;
+  onUploadFail: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, startUpload, uploadComplete, onUploadComplete }) => {
+const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, onUploadComplete, onUploadFail }) => {
   const [pics, setPics] = useState<{ url: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -67,20 +68,14 @@ const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, start
         setPics([]);
         setPage(1);
         fetchUrls(1);
-      }, 500); // 500ms delay
+      }, 500);
 
       return () => clearTimeout(timer);
+    } else if (onUploadFail) {
+      onUploadFail();
     }
-  }, [uploadComplete, onUploadComplete, fetchUrls]);
+  }, [uploadComplete, onUploadComplete, onUploadFail, fetchUrls]);
 
-  useEffect(() => {
-    if (startUpload && formState.sessionID) {
-      onUploadComplete();
-      setPics([]);
-      setPage(1);
-      fetchUrls(1);
-    }
-  }, [startUpload, formState.sessionID, onUploadComplete, fetchUrls]);
 
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLElement>) => {
