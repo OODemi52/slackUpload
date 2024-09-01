@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useContext } from "react";
 import UploadGrid from "./UploadGrid";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
+import LogoAnimation from "./LogoAnimation";
 
 interface MainContentProps {
   formState: {
@@ -18,7 +19,7 @@ interface MainContentProps {
   onUploadFail: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, onUploadComplete, onUploadFail }) => {
+const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, startUpload, onUploadComplete, onUploadFail }) => {
   const [pics, setPics] = useState<{ url: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -69,12 +70,16 @@ const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, 
         setPage(1);
         fetchUrls(1);
       }, 500);
-
+  
       return () => clearTimeout(timer);
-    } else if (onUploadFail) {
+    }
+  }, [uploadComplete, onUploadComplete, fetchUrls]);
+  
+  useEffect(() => {
+    if (!uploadComplete && isUploading === false && startUpload === false) {
       onUploadFail();
     }
-  }, [uploadComplete, onUploadComplete, onUploadFail, fetchUrls]);
+  }, [uploadComplete, isUploading, startUpload, onUploadFail]);
 
 
   const handleScroll = useCallback(
@@ -105,7 +110,7 @@ const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, 
       >
         {isUploading ? (
           <Text color="#404040" fontSize="xxx-large" textAlign="center" mt="auto" mb="auto">
-            Uploading...
+            <LogoAnimation />
           </Text>
         ) : pics.length ? (
           <UploadGrid pics={pics} onScroll={handleScroll} />
