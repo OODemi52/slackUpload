@@ -5,9 +5,10 @@ import AuthContext from '../context/AuthContext';
 interface ImageCardProps {
   url: string;
   name: string;
+  onClick: () => void;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -129,6 +130,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
             transition="opacity 0.2s ease-in-out"
             opacity={isHovered ? 0.95 : 1}
             loading="lazy"
+            onClick={onClick}
           />
         </>
       )}
