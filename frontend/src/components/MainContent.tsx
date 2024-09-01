@@ -13,10 +13,11 @@ interface MainContentProps {
   };
   isUploading: boolean;
   startUpload: boolean;
+  uploadComplete: boolean;
   onUploadComplete: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, startUpload, onUploadComplete }) => {
+const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, startUpload, uploadComplete, onUploadComplete }) => {
   const [pics, setPics] = useState<{ url: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -60,6 +61,19 @@ const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, start
   }, [page, fetchUrls, accessToken]);
 
   useEffect(() => {
+    if (uploadComplete) {
+      const timer = setTimeout(() => {
+        onUploadComplete();
+        setPics([]);
+        setPage(1);
+        fetchUrls(1);
+      }, 500); // 500ms delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadComplete, onUploadComplete, fetchUrls]);
+
+  useEffect(() => {
     if (startUpload && formState.sessionID) {
       onUploadComplete();
       setPics([]);
@@ -85,18 +99,6 @@ const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, start
 
   return (
     <Flex h="full">
-      {/* Sidebar section */}
-      <Box
-        bg="#282828"
-        boxShadow="0px 4px 4px rgba(0, 0, 0, 1)"
-        flex="1"
-        h="full"
-        overflowY="auto"
-      >
-        {/* Sidebar content */}
-      </Box>
-
-      {/* Main Content section */}
       <Box
         bg="#181818"
         w="full"
@@ -117,16 +119,6 @@ const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, start
             Upload Images To Get Started!
           </Text>
         )}
-      </Box>
-
-      {/* Right Sidebar or Other Section */}
-      <Box
-        bg="#282828"
-        flex="1"
-        h="full"
-        overflowY="auto"
-      >
-        {/* Right sidebar content */}
       </Box>
     </Flex>
   );

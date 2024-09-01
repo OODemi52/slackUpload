@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Grid, GridItem, Box } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
@@ -21,9 +21,9 @@ const Dashboard: React.FC = () => {
     uploadComment: "",
     sessionID: "",
   });
-
   const [isUploading, setIsUploading] = useState(false);
   const [startUpload, setStartUpload] = useState(false);
+  const [uploadComplete, setUploadComplete] = useState(false);
 
   const handleFormStateChange = useCallback((newState: Partial<FormState>) => {
     setFormState(prevState => ({ ...prevState, ...newState }));
@@ -32,11 +32,8 @@ const Dashboard: React.FC = () => {
   const handleUploadComplete = useCallback(() => {
     setStartUpload(false);
     setIsUploading(false);
+    setUploadComplete(false);
   }, []);
-
-  useEffect(() => {
-    console.log("Updated form state:", formState);
-  }, [formState]);
 
   return (
     <Box
@@ -86,6 +83,7 @@ const Dashboard: React.FC = () => {
             formState={formState}
             isUploading={isUploading}
             startUpload={startUpload}
+            uploadComplete={uploadComplete}
             onUploadComplete={handleUploadComplete}
           />
           </GridItem>
@@ -105,6 +103,7 @@ const Dashboard: React.FC = () => {
               setIsUploading={setIsUploading}
               startUpload={startUpload}
               setStartUpload={setStartUpload}
+              setUploadComplete={setUploadComplete}
             />
           </GridItem>
         </Grid>

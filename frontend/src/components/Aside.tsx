@@ -24,6 +24,7 @@ interface AsideProps {
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   startUpload: boolean;
   setStartUpload: React.Dispatch<React.SetStateAction<boolean>>;
+  setUploadComplete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface Channel { 
@@ -31,7 +32,7 @@ interface Channel {
   label: string 
 }
 
-const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload }) => {
+const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete }) => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
@@ -174,13 +175,14 @@ const performUpload = useCallback(async () => {
       if (i === batches.length - 1) {
         await uploadLastBatch(batches[i]);
         setIsUploading(false);
+        setUploadComplete(true);
       } else {
         await uploadBatch(batches[i]);
       }
     }
 
     console.log("All batches uploaded successfully!");
-  }, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, accessToken, setIsUploading]);
+}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, accessToken, setIsUploading, setUploadComplete]);
 
   useEffect(() => {
     if (startUpload && formState.sessionID) {
