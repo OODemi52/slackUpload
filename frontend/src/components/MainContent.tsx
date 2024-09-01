@@ -3,7 +3,20 @@ import UploadGrid from "./UploadGrid";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
 
-const MainContent: React.FC = () => {
+interface MainContentProps {
+  formState: {
+    files: FileList | null;
+    channel: string;
+    uploadComment: string;
+    messageBatchSize: number;
+    sessionID: string;
+  };
+  isUploading: boolean;
+  startUpload: boolean;
+  onUploadComplete: () => void;
+}
+
+const MainContent: React.FC<MainContentProps> = ({ formState, isUploading, startUpload, onUploadComplete }) => {
   const [pics, setPics] = useState<{ url: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -46,6 +59,15 @@ const MainContent: React.FC = () => {
     }
   }, [page, fetchUrls, accessToken]);
 
+  useEffect(() => {
+    if (startUpload && formState.sessionID) {
+      onUploadComplete();
+      setPics([]);
+      setPage(1);
+      fetchUrls(1);
+    }
+  }, [startUpload, formState.sessionID, onUploadComplete, fetchUrls]);
+
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLElement>) => {
       const { target } = event;
@@ -82,18 +104,16 @@ const MainContent: React.FC = () => {
         display="flex"
         flexDirection="column"
         boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
-        onScroll={handleScroll} // Attach scroll handler to the Box
+        onScroll={handleScroll}
       >
-        {pics.length ? (
+        {isUploading ? (
+          <Text color="#404040" fontSize="xxx-large" textAlign="center" mt="auto" mb="auto">
+            Uploading...
+          </Text>
+        ) : pics.length ? (
           <UploadGrid pics={pics} onScroll={handleScroll} />
         ) : (
-          <Text
-            color="#404040"
-            fontSize="xxx-large"
-            textAlign="center"
-            mt="auto"
-            mb="auto"
-          >
+          <Text color="#404040" fontSize="xxx-large" textAlign="center" mt="auto" mb="auto">
             Upload Images To Get Started!
           </Text>
         )}

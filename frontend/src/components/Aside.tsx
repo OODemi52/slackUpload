@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as uuid from "uuid";
 import { Stack, VStack, Spacer, Box, Text, Divider, SimpleGrid } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
@@ -17,55 +17,47 @@ interface FormState {
   sessionID: string;
 }
 
-type Channel = { value: string; label: string };
+interface AsideProps {
+  formState: FormState;
+  setFormState: React.Dispatch<React.SetStateAction<FormState>>;
+  isUploading: boolean;
+  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
+  startUpload: boolean;
+  setStartUpload: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-const Aside: React.FC = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [startUpload, setStartUpload] = useState(false);
+interface Channel { 
+  value: string;
+  label: string 
+}
+
+const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload }) => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
-  const [formState, setFormState] = useState<FormState>({
-    // For storing the state to be sent to the server
-    files: null,
-    channel: "",
-    messageBatchSize: 10,
-    uploadComment: "",
-    sessionID: "",
-  });
-
-  useEffect(() => {
-    fetchChannels();
-  }, []);
-
-  useEffect(() => {
-    if (startUpload && formState.sessionID) {
-      performUpload();
-      setStartUpload(false);
-    }
-  }, [formState.sessionID, startUpload]);
 
   const { accessToken } = useContext(AuthContext);
 
-  const fetchChannels = async () => {
+  const fetchChannels = useCallback(async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getChannels`, {headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },});
+      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getChannels`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       const data = await response.json();
       const formattedChannels: Channel[] = data.map(
         (channel: [string, string]) => ({
-          value: channel[0], // Channel ID
-          label: channel[1], // Channel Name
+          value: channel[0],
+          label: channel[1],
         }),
       );
       setChannels(formattedChannels);
     } catch (error) {
       console.error("Error fetching channels:", error);
     }
-  };
+  }, [accessToken]);
 
-  // Set the form state with the selected FileList
   const handleFolderSelection = (files: FileList | null): void => {
     setFormState((prevState) => ({
       ...prevState,
@@ -93,8 +85,6 @@ const Aside: React.FC = () => {
       messageBatchSize,
     }));
   };
-
-  // Upload the files to the server
   const handleFileUpload = async (): Promise<void> => {
     setIsUploading(true);
     const newSessionID = uuid.v4();
@@ -105,7 +95,7 @@ const Aside: React.FC = () => {
     setStartUpload(true);
   };
 
-  const performUpload = async () => {
+const performUpload = useCallback(async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
     const maxBatchSize = 9 * 1024 * 1024; // 9 MB
     let currentBatchSize = 0;
@@ -130,7 +120,6 @@ const Aside: React.FC = () => {
       batches.push(currentBatch);
     }
 
-    // Uploads last batch of files. This endpoint intiates file processing on the server
     const uploadLastBatch = async (files: File[]) => {
       const formData = new FormData();
       formData.append("channel", formState.channel);
@@ -205,7 +194,18 @@ const Aside: React.FC = () => {
     }
 
     console.log("All batches uploaded successfully!");
-  };
+  }, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, accessToken, setIsUploading]);
+
+  useEffect(() => {
+    if (startUpload && formState.sessionID) {
+      performUpload();
+      setStartUpload(false);
+    }
+  }, [formState.sessionID, performUpload, setStartUpload, startUpload]);
+
+  useEffect(() => {
+    fetchChannels();
+  }, [fetchChannels]);
 
   return (
     <Stack

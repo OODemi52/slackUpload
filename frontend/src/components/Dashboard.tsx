@@ -1,10 +1,39 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Grid, GridItem, Box } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
 
+interface FormState {
+  files: FileList | null;
+  channel: string;
+  uploadComment: string;
+  messageBatchSize: number;
+  sessionID: string;
+}
+
 const Dashboard: React.FC = () => {
+
+  const [formState, setFormState] = useState<FormState>({
+    files: null,
+    channel: "",
+    messageBatchSize: 10,
+    uploadComment: "",
+    sessionID: "",
+  });
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [startUpload, setStartUpload] = useState(false);
+
+  const handleFormStateChange = useCallback((newState: React.SetStateAction<FormState>) => {
+    setFormState((prevState: FormState) => ({ ...prevState, ...newState }));
+  }, []);
+
+  const handleUploadComplete = useCallback(() => {
+    setStartUpload(false);
+    setIsUploading(false);
+  }, []);
+
   return (
     <Box
       justifyContent="center"
@@ -49,7 +78,12 @@ const Dashboard: React.FC = () => {
             boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
             minH={{ base: "65vh", md: "auto" }}
           >
-            <MainContent />
+           <MainContent
+            formState={formState}
+            isUploading={isUploading}
+            startUpload={startUpload}
+            onUploadComplete={handleUploadComplete}
+          />
           </GridItem>
 
           {/* Aside */}
@@ -60,7 +94,14 @@ const Dashboard: React.FC = () => {
             h="auto"
             justifyContent="center"
           >
-            <Aside />
+            <Aside
+              formState={formState}
+              setFormState={handleFormStateChange}
+              isUploading={isUploading}
+              setIsUploading={setIsUploading}
+              startUpload={startUpload}
+              setStartUpload={setStartUpload}
+            />
           </GridItem>
         </Grid>
       </Box>

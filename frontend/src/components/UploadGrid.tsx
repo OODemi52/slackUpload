@@ -1,8 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Grid, Box, AlertDialog, AlertDialogContent, Image } from "@chakra-ui/react";
 import ImageCard from "./ImageCard";
 
-// Define the type for the image properties used in ImageCard and selectedImage
 interface ImageProps {
   src: string;
   alt: string;
@@ -13,9 +12,10 @@ interface ImageProps {
 interface UploadGridProps {
   pics: { url: string; name: string }[];
   onScroll: (event: React.UIEvent<HTMLElement>) => void;
+  onUploadComplete?: () => void;
 }
 
-const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll }) => {
+const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplete }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -27,11 +27,17 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll }) => {
     setIsOpen(true);
   };
 
+  useEffect(() => {
+    if (onUploadComplete) {
+      onUploadComplete();
+    }
+  }, [pics, onUploadComplete]);
+
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>
       <Grid
-        templateColumns={{ base: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }}
-        gap={6}
+        templateColumns={{ base: 'repeat(2, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }}
+        gap={4}
         p={4}
       >
         {pics.map((pic, index) => (
