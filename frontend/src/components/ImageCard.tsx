@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
-import { Box, Image, Checkbox } from '@chakra-ui/react';
+import { Box, Image, Skeleton } from '@chakra-ui/react';
 import AuthContext from '../context/AuthContext';
 
 interface ImageCardProps {
   url: string;
   name: string;
   onClick: () => void;
+  onLoad: () => void;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick, onLoad }) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -16,10 +17,11 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
 
   const { accessToken } = useContext(AuthContext);
 
-  const fetchImage = useCallback(async (permalink: string) => {
+  const fetchImage = useCallback(async (permalink: string, isLowRes: boolean = true) => {
     try {
+      const resolution = isLowRes ? 'low' : 'high';
       const response = await fetch(
-        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}&resolution=${resolution}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -32,10 +34,12 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
       setImageUrl(imageUrl);
+      setIsLoaded(true);
+      onLoad();
     } catch (error) {
       console.error('Error fetching image:', error);
     }
-  }, [accessToken]);
+  }, [accessToken, onLoad]);
 
   const observer = useMemo(() => {
     return new IntersectionObserver(
@@ -43,8 +47,6 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
         const [entry] = entries;
         if (entry.isIntersecting && !isLoaded) {
           fetchImage(url);
-          setIsLoaded(true);
-          observer.unobserve(imageRef.current!);
         }
       },
       { threshold: 0.1 }
@@ -63,12 +65,17 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
     };
   }, [observer]);
 
+  const handleClick = () => {
+    fetchImage(url, false);
+    onClick();
+  };
+
   return (
     <Box
-      display="flex"
       position="relative"
       w="100%"
-      h="auto"
+      h="0"
+      paddingBottom="100%"
       borderRadius="sm"
       overflow="hidden"
       shadow="lg"
@@ -76,64 +83,24 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
       onMouseLeave={() => setIsHovered(false)}
       ref={imageRef}
       bg="#282828"
-      justifyContent="center"
-      alignItems="center"
     >
-      <Checkbox
-        position="absolute"
-        top="4px"
-        left="3px"
-        zIndex={2}
-        bg="whiteAlpha.500"
-        size="md"
-        borderColor="whiteAlpha.500"
-        borderRadius="md"
-        display="none"
-      />
-      {imageUrl && (
-        <>
-          <button
-            style={{
-              position: 'absolute',
-              top: '0px',
-              right: '0px',
-              zIndex: 2,
-              color: 'white',
-              padding: '4px',
-              borderRadius: 'md',
-            }}
-          >
-            {isHovered && (
-              <svg
-                width="16"
-                height="24"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="white"
-                className="filter-shadow"
-                stroke="white"
-                color="white"
-              >
-                <path
-                  fill="#FFF"
-                  d="M12 3a2 2 0 10-4 0 2 2 0 004 0zm-2 5a2 2 0 110 4 2 2 0 010-4zm0 7a2 2 0 110 4 2 2 0 010-4z"
-                />
-              </svg>
-            )}
-          </button>
+      <Skeleton isLoaded={isLoaded} h="100%" w="100%" startColor="#3f3f3f" endColor="#282828">
+        {imageUrl && (
           <Image
             src={imageUrl}
             alt={name}
             objectFit="cover"
             w="100%"
-            h="auto"
+            h="100%"
+            position="absolute"
+            top="0"
+            left="0"
             transition="opacity 0.2s ease-in-out"
             opacity={isHovered ? 0.80 : 1}
-            loading="lazy"
-            onClick={onClick}
+            onClick={handleClick}
           />
-        </>
-      )}
+        )}
+      </Skeleton>
     </Box>
   );
 };
