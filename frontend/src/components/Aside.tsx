@@ -25,6 +25,7 @@ interface AsideProps {
   startUpload: boolean;
   setStartUpload: React.Dispatch<React.SetStateAction<boolean>>;
   setUploadComplete: React.Dispatch<React.SetStateAction<boolean>>;
+  setUploadAttempted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface Channel { 
@@ -32,7 +33,7 @@ interface Channel {
   label: string 
 }
 
-const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete }) => {
+const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete, setUploadAttempted }) => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
@@ -77,6 +78,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   
   const handleFileUpload = async (): Promise<void> => {
     setIsUploading(true);
+    setUploadAttempted(true);
     const newSessionID = uuid.v4();
     setFormState({ sessionID: newSessionID });
     setStartUpload(true);

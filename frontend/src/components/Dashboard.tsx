@@ -24,6 +24,7 @@ const Dashboard: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [startUpload, setStartUpload] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [uploadAttempted, setUploadAttempted] = useState(false);
 
   const toast = useToast();
 
@@ -35,7 +36,8 @@ const Dashboard: React.FC = () => {
     setStartUpload(false);
     setIsUploading(false);
     setUploadComplete(false);
-
+    setUploadAttempted(false);
+  
     toast({
       title: "Upload Complete",
       description: "Your files have been uploaded successfully.",
@@ -45,12 +47,13 @@ const Dashboard: React.FC = () => {
       position: "top",
     });
   }, [toast]);
-
+  
   const handleUploadFail = useCallback(() => {
     setStartUpload(false);
     setIsUploading(false);
     setUploadComplete(false);
-
+    setUploadAttempted(false);
+  
     toast({
       title: "Upload Failed",
       description: "There was an issue uploading your files.",
@@ -112,6 +115,7 @@ const Dashboard: React.FC = () => {
             uploadComplete={uploadComplete}
             onUploadComplete={handleUploadComplete}
             onUploadFail={handleUploadFail}
+            uploadAttempted={uploadAttempted}
           />
           </GridItem>
 
@@ -131,6 +135,7 @@ const Dashboard: React.FC = () => {
               startUpload={startUpload}
               setStartUpload={setStartUpload}
               setUploadComplete={setUploadComplete}
+              setUploadAttempted={setUploadAttempted}
             />
           </GridItem>
         </Grid>
