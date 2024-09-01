@@ -128,7 +128,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
             w="100%"
             h="auto"
             transition="opacity 0.2s ease-in-out"
-            opacity={isHovered ? 0.95 : 1}
+            opacity={isHovered ? 0.80 : 1}
             loading="lazy"
             onClick={onClick}
           />

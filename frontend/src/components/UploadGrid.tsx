@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Grid, Box, AlertDialog, AlertDialogContent, Image } from "@chakra-ui/react";
 import ImageCard from "./ImageCard";
+import AuthContext from '../context/AuthContext';
 
 interface ImageProps {
   src: string;
@@ -19,12 +20,30 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const { accessToken } = useContext(AuthContext);
 
   const onClose = () => setIsOpen(false);
 
-  const handleImageClick = (image: ImageProps) => {
-    setSelectedImage(image);
-    setIsOpen(true);
+  const handleImageClick = async (image: { url: string; name: string }) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(image.url)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setSelectedImage({ src: imageUrl, alt: image.name, width: 300, height: 300 });
+      setIsOpen(true);
+    } catch (error) {
+      console.error('Error fetching full-size image:', error);
+    }
   };
 
   useEffect(() => {
@@ -45,7 +64,7 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
             key={index}
             url={pic.url}
             name={pic.name}
-            onClick={() => handleImageClick({ src: pic.url, alt: pic.name, width: 300, height: 300 })}
+            onClick={() => handleImageClick(pic)}
           />
         ))}
       </Grid>
