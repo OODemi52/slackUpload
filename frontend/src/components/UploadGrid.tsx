@@ -82,7 +82,11 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
                 alt={selectedImage.alt}
                 width="auto"
                 height="auto"
-                style={{ maxWidth: "100%", maxHeight: "100%" }}
+                style={{ maxWidth: "95vh" }}
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                margin="0 auto"
                 className="rounded-lg shadow-lg transition-opacity duration-500 ease-in-out"
                 loading="eager"
               />

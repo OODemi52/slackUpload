@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
-import { Box, Image, Checkbox } from '@chakra-ui/react';
+import { Box, Image, Checkbox, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 import AuthContext from '../context/AuthContext';
 
 interface ImageCardProps {
@@ -63,6 +63,22 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
     };
   }, [observer]);
 
+  const handleDownload = () => {
+    if (imageUrl) {
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleDelete = () => {
+    // Placeholder for delete functionality
+    console.log('Delete functionality not implemented yet');
+  };
+
   return (
     <Box
       display="flex"
@@ -92,35 +108,45 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
       />
       {imageUrl && (
         <>
-          <button
-            style={{
-              position: 'absolute',
-              top: '0px',
-              right: '0px',
-              zIndex: 2,
-              color: 'white',
-              padding: '4px',
-              borderRadius: 'md',
-            }}
-          >
-            {isHovered && (
-              <svg
-                width="16"
-                height="24"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="white"
-                className="filter-shadow"
-                stroke="white"
-                color="white"
-              >
-                <path
-                  fill="#FFF"
-                  d="M12 3a2 2 0 10-4 0 2 2 0 004 0zm-2 5a2 2 0 110 4 2 2 0 010-4zm0 7a2 2 0 110 4 2 2 0 010-4z"
-                />
-              </svg>
-            )}
-          </button>
+          <Menu>
+            <MenuButton
+              as="button"
+              style={{
+                position: 'absolute',
+                top: '0px',
+                right: '0px',
+                zIndex: 2,
+                color: 'white',
+                padding: '4px',
+                borderRadius: 'md',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {isHovered && (
+                <svg
+                  width="16"
+                  height="24"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="white"
+                  className="filter-shadow"
+                  stroke="white"
+                  color="white"
+                >
+                  <path
+                    fill="#FFF"
+                    d="M12 3a2 2 0 10-4 0 2 2 0 004 0zm-2 5a2 2 0 110 4 2 2 0 010-4zm0 7a2 2 0 110 4 2 2 0 010-4z"
+                  />
+                </svg>
+              )}
+            </MenuButton>
+            <MenuList>
+              <MenuItem onClick={handleDownload}>Download</MenuItem>
+              <MenuItem onClick={handleDelete} color="red">Delete</MenuItem>
+            </MenuList>
+          </Menu>
           <Image
             src={imageUrl}
             alt={name}
