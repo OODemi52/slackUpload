@@ -19,7 +19,7 @@ interface FormState {
 
 interface AsideProps {
   formState: FormState;
-  setFormState: React.Dispatch<React.SetStateAction<FormState>>;
+  setFormState: (newState: Partial<FormState>) => void;
   isUploading: boolean;
   setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
   startUpload: boolean;
@@ -59,39 +59,25 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   }, [accessToken]);
 
   const handleFolderSelection = (files: FileList | null): void => {
-    setFormState((prevState) => ({
-      ...prevState,
-      files,
-    }));
+    setFormState({ files });
   };
-
-  const handleChannelSelection = (channelId: string) => {
-    setFormState((prevState) => ({
-      ...prevState,
-      channel: channelId,
-    }));
+  
+  const handleChannelSelection = (channel: string) => {
+    setFormState({ channel });
   };
-
+  
   const handleCommentChange = (uploadComment: string) => {
-    setFormState((prevState) => ({
-      ...prevState,
-      uploadComment,
-    }));
+    setFormState({ uploadComment });
   };
-
+  
   const handleMessageBatchSizeChange = (messageBatchSize: number) => {
-    setFormState((prevState) => ({
-      ...prevState,
-      messageBatchSize,
-    }));
+    setFormState({ messageBatchSize });
   };
+  
   const handleFileUpload = async (): Promise<void> => {
     setIsUploading(true);
     const newSessionID = uuid.v4();
-    setFormState((prevState) => ({
-      ...prevState,
-      sessionID: newSessionID,
-    }));
+    setFormState({ sessionID: newSessionID });
     setStartUpload(true);
   };
 

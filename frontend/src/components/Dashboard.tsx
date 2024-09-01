@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Grid, GridItem, Box } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
@@ -25,14 +25,18 @@ const Dashboard: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [startUpload, setStartUpload] = useState(false);
 
-  const handleFormStateChange = useCallback((newState: React.SetStateAction<FormState>) => {
-    setFormState((prevState: FormState) => ({ ...prevState, ...newState }));
+  const handleFormStateChange = useCallback((newState: Partial<FormState>) => {
+    setFormState(prevState => ({ ...prevState, ...newState }));
   }, []);
 
   const handleUploadComplete = useCallback(() => {
     setStartUpload(false);
     setIsUploading(false);
   }, []);
+
+  useEffect(() => {
+    console.log("Updated form state:", formState);
+  }, [formState]);
 
   return (
     <Box
