@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Grid, Box, AlertDialog, AlertDialogContent, Image, useToast, Progress } from "@chakra-ui/react";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import { Grid, Box, AlertDialog, AlertDialogOverlay, AlertDialogContent, Image } from "@chakra-ui/react";
 import ImageCard from "./ImageCard";
-import LogoAnimation from "./LogoAnimation";
+import AuthContext from '../context/AuthContext';
 
 interface ImageProps {
   src: string;
@@ -19,56 +19,41 @@ interface UploadGridProps {
 const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplete }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [loadedImages, setLoadedImages] = useState(0);
-  const [isFirstPageLoaded, setIsFirstPageLoaded] = useState(false);
-  const [isFullImageLoading, setIsFullImageLoading] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const toast = useToast();
+  const { accessToken } = useContext(AuthContext);
 
   const onClose = () => setIsOpen(false);
 
-  const handleImageClick = (image: { url: string; name: string }) => {
-    setSelectedImage({ src: image.url, alt: image.name, width: 300, height: 300 });
-    setIsOpen(true);
-    setIsFullImageLoading(true);
+  const handleImageClick = async (image: { url: string; name: string }) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(image.url)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setSelectedImage({ src: imageUrl, alt: image.name, width: 300, height: 300 });
+      setIsOpen(true);
+    } catch (error) {
+      console.error('Error fetching full-size image:', error);
+    }
   };
 
-  const handleImageLoad = useCallback(() => {
-    setLoadedImages((prev) => {
-      const newCount = prev + 1;
-      if (newCount === Math.min(16, pics.length) && !isFirstPageLoaded) {
-        setIsFirstPageLoaded(true);
-        if (onUploadComplete) {
-          onUploadComplete();
-          toast({
-            title: "Upload Complete",
-            description: "Your files have been uploaded successfully.",
-            status: "success",
-            duration: 5000,
-            isClosable: true,
-            position: "top",
-          });
-        }
-      }
-      return newCount;
-    });
-  }, [pics.length, isFirstPageLoaded, onUploadComplete, toast]);
-
   useEffect(() => {
-    setLoadedImages(0);
-    setIsFirstPageLoaded(false);
-  }, [pics]);
-
-  const loadingProgress = (loadedImages / Math.min(16, pics.length)) * 100;
+    if (onUploadComplete) {
+      onUploadComplete();
+    }
+  }, [pics, onUploadComplete]);
 
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>
-      {!isFirstPageLoaded && (
-        <>
-          <LogoAnimation />
-          <Progress value={loadingProgress} size="sm" colorScheme="blue" />
-        </>
-      )}
       <Grid
         templateColumns={{ base: 'repeat(2, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }}
         gap={4}
@@ -80,7 +65,6 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
             url={pic.url}
             name={pic.name}
             onClick={() => handleImageClick(pic)}
-            onLoad={handleImageLoad}
           />
         ))}
       </Grid>
@@ -91,23 +75,19 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
           leastDestructiveRef={cancelRef}
           onClose={onClose}
         >
-          <AlertDialogContent>
-            {isFullImageLoading && (
-              <Box display="flex" justifyContent="center" alignItems="center" height="30px">
-                <LogoAnimation />
-              </Box>
-            )}
-            <Image
-              src={selectedImage.src}
-              alt={selectedImage.alt}
-              width="auto"
-              height="auto"
-              style={{ maxWidth: "100%", maxHeight: "100%", transform: "translate3d(0, 0, 0)" }}
-              className="rounded-lg shadow-lg transition-opacity duration-500 ease-in-out"
-              onLoad={() => setIsFullImageLoading(false)}
-              display={isFullImageLoading ? "none" : "block"}
-            />
-          </AlertDialogContent>
+          <AlertDialogOverlay>
+            <AlertDialogContent>
+              <Image
+                src={selectedImage.src}
+                alt={selectedImage.alt}
+                width="auto"
+                height="auto"
+                style={{ maxWidth: "100%", maxHeight: "100%" }}
+                className="rounded-lg shadow-lg transition-opacity duration-500 ease-in-out"
+                loading="eager"
+              />
+            </AlertDialogContent>
+          </AlertDialogOverlay>
         </AlertDialog>
       )}
     </Box>
