@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Box, Image, Checkbox, useColorModeValue, Text } from '@chakra-ui/react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
+import { Box, Image, Checkbox } from '@chakra-ui/react';
+import AuthContext from '../context/AuthContext';
 
 interface ImageCardProps {
   url: string;
@@ -12,28 +13,18 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const imageRef = useRef<HTMLDivElement | null>(null);
 
-  const bg = useColorModeValue('white', 'gray.800');
-  const color = useColorModeValue('gray.800', 'white');
+  const { accessToken } = useContext(AuthContext);
 
-  const observer = useMemo(
-    () =>
-      new IntersectionObserver(
-        (entries) => {
-          const [entry] = entries;
-          if (entry.isIntersecting && !isLoaded) {
-            fetchImage(url);
-            setIsLoaded(true);
-            observer.unobserve(imageRef.current!);
-          }
-        },
-        { threshold: 0.1 }
-      ),
-    [isLoaded, url]
-  );
-
-  const fetchImage = async (permalink: string) => {
+  const fetchImage = useCallback(async (permalink: string) => {
     try {
-      const response = await fetch(permalink);
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -43,7 +34,21 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
     } catch (error) {
       console.error('Error fetching image:', error);
     }
-  };
+  }, [accessToken]);
+
+  const observer = useMemo(() => {
+    return new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoaded) {
+          fetchImage(url);
+          setIsLoaded(true);
+          observer.unobserve(imageRef.current!);
+        }
+      },
+      { threshold: 0.1 }
+    );
+  }, [fetchImage, isLoaded, url]);
 
   useEffect(() => {
     const currentImageRef = imageRef.current;
@@ -55,99 +60,77 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
         observer.unobserve(currentImageRef);
       }
     };
-  }, [imageRef, url, observer]);
+  }, [observer]);
 
   return (
     <Box
+      display="flex"
       position="relative"
-      maxW="sm"
-      borderRadius="lg"
+      w="100%"
+      h="auto"
+      borderRadius="sm"
       overflow="hidden"
-      bg={bg}
-      color={color}
-      shadow="md"
+      shadow="lg"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       ref={imageRef}
+      bg="#282828"
+      justifyContent="center"
+      alignItems="center"
     >
-      {/* Checkbox in top left */}
       <Checkbox
         position="absolute"
-        top="8px"
-        left="8px"
+        top="4px"
+        left="3px"
         zIndex={2}
-        bg="whiteAlpha.800"
+        bg="whiteAlpha.500"
+        size="md"
+        borderColor="whiteAlpha.500"
         borderRadius="md"
-        size="lg"
+        display="none"
       />
-
-      {/* Download icon in top right */}
       {imageUrl && (
-        <a
-          href={imageUrl}
-          download
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            zIndex: 2,
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            padding: '4px',
-            borderRadius: '4px',
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <>
+          <button
+            style={{
+              position: 'absolute',
+              top: '0px',
+              right: '0px',
+              zIndex: 2,
+              color: 'white',
+              padding: '4px',
+              borderRadius: 'md',
+            }}
           >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-        </a>
-      )}
-
-      {/* Image */}
-      {imageUrl && (
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          height="200px"
-          position="relative"
-        >
+            {isHovered && (
+              <svg
+                width="16"
+                height="24"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="white"
+                className="filter-shadow"
+                stroke="white"
+                color="white"
+              >
+                <path
+                  fill="#FFF"
+                  d="M12 3a2 2 0 10-4 0 2 2 0 004 0zm-2 5a2 2 0 110 4 2 2 0 010-4zm0 7a2 2 0 110 4 2 2 0 010-4z"
+                />
+              </svg>
+            )}
+          </button>
           <Image
             src={imageUrl}
             alt={name}
             objectFit="cover"
-            width="100%"
-            height="100%"
+            w="100%"
+            h="auto"
+            transition="opacity 0.2s ease-in-out"
+            opacity={isHovered ? 0.95 : 1}
+            loading="lazy"
           />
-
-          {/* Hover effect */}
-          {isHovered && (
-            <Box
-              position="absolute"
-              bottom="0"
-              width="100%"
-              bg="blackAlpha.700"
-              color="white"
-              textAlign="center"
-              p={2}
-              transition="opacity 0.3s"
-              opacity={0.9}
-            >
-              <Text>{name}</Text>
-            </Box>
-          )}
-        </Box>
+        </>
       )}
     </Box>
   );

@@ -41,8 +41,10 @@ const MainContent: React.FC = () => {
   );
 
   useEffect(() => {
-    fetchUrls(page);
-  }, [page, fetchUrls]);
+    if (accessToken) {
+      fetchUrls(page);
+    }
+  }, [page, fetchUrls, accessToken]);
 
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLElement>) => {
@@ -75,11 +77,12 @@ const MainContent: React.FC = () => {
       {/* Main Content section */}
       <Box
         bg="#181818"
-        w="full" 
+        w="full"
         h="full"
         display="flex"
         flexDirection="column"
         boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
+        onScroll={handleScroll} // Attach scroll handler to the Box
       >
         {pics.length ? (
           <UploadGrid pics={pics} onScroll={handleScroll} />
