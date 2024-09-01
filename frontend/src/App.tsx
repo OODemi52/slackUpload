@@ -58,7 +58,7 @@ function App() {
       <AuthContext.Provider value={{ accessToken, setAccessToken }}>
         <Router>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
             <Route path="/authCallback" element={<AuthCallback />} /> 
           </Routes>
         </Router>
