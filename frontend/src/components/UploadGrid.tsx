@@ -8,17 +8,15 @@ interface UploadGridProps {
 }
 
 const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll }) => {
-  const rows = Math.ceil(pics.length / 4);
-
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>
-      <Grid templateColumns={`repeat(4, 1fr)`} gap={6} p={4}>
-        {Array.from({ length: rows }, (_, rowIndex) => (
-          <React.Fragment key={rowIndex}>
-            {pics.slice(rowIndex * 4, (rowIndex + 1) * 4).map((pic, index) => (
-              <ImageCard key={index} url={pic.url} name={pic.name} />
-            ))}
-          </React.Fragment>
+      <Grid 
+        templateColumns={{ base: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' }} 
+        gap={6} 
+        p={4}
+      >
+        {pics.map((pic, index) => (
+          <ImageCard key={index} url={pic.url} name={pic.name} />
         ))}
       </Grid>
     </Box>

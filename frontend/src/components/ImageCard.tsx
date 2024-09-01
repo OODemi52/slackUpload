@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef, useMemo, useContext } from "react";
-import { Box, Image, Checkbox, useColorModeValue, Text } from "@chakra-ui/react";
-import AuthContext from "../context/AuthContext";
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Box, Image, Checkbox, useColorModeValue, Text } from '@chakra-ui/react';
 
 interface ImageCardProps {
   url: string;
@@ -8,13 +7,13 @@ interface ImageCardProps {
 }
 
 const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
-  const [imageUrl, setImageUrl] = useState<string>("");
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const imageRef = useRef<HTMLDivElement>(null);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const imageRef = useRef<HTMLDivElement | null>(null);
 
-  const bg = useColorModeValue("white", "gray.800");
-  const color = useColorModeValue("gray.800", "white");
+  const bg = useColorModeValue('white', 'gray.800');
+  const color = useColorModeValue('gray.800', 'white');
 
   const observer = useMemo(
     () =>
@@ -32,18 +31,9 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
     [isLoaded, url]
   );
 
-  const { accessToken } = useContext(AuthContext);
-
   const fetchImage = async (permalink: string) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(permalink);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -51,7 +41,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
       const imageUrl = URL.createObjectURL(blob);
       setImageUrl(imageUrl);
     } catch (error) {
-      console.error("Error fetching image:", error);
+      console.error('Error fetching image:', error);
     }
   };
 
@@ -71,7 +61,6 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
     <Box
       position="relative"
       maxW="sm"
-      border="1px solid #b3b3b3"
       borderRadius="lg"
       overflow="hidden"
       bg={bg}
@@ -98,13 +87,13 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
           href={imageUrl}
           download
           style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
             zIndex: 2,
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            padding: "4px",
-            borderRadius: "4px",
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            padding: '4px',
+            borderRadius: '4px',
           }}
         >
           <svg
@@ -117,7 +106,6 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name }) => {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="feather feather-download"
           >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
