@@ -11,7 +11,6 @@ import healthRouter from './Routes/health.route';
 
 export const app: express.Application = express();
 
-
 // CORS
 const allowedOrigins = ["https://www.slackshots.app", "https://slackshots.app", "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
 

@@ -97,16 +97,17 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     const filteredFiles = filterFiles(Array.from(formState.files ?? []), selectedFileTypes);
   
     const batches = filteredFiles.reduce((acc: File[][], file) => {
-      const lastBatch = acc[acc.length - 1] || [];
-      const batchSize = lastBatch.reduce((sum, f) => sum + f.size, 0);
-      
-      if (batchSize + file.size > MAX_BATCH_SIZE) {
-        acc.push([file]);
+      let lastBatch = acc[acc.length - 1];
+    
+      if (!lastBatch || lastBatch.reduce((sum, f) => sum + f.size, 0) + file.size > MAX_BATCH_SIZE) {
+        lastBatch = [file];
+        acc.push(lastBatch);
+        console.debug(`New batch created with size: ${file.size} bytes.`);
       } else {
         lastBatch.push(file);
-        if (acc.length === 0) acc.push(lastBatch);
+        console.debug(`Added ${file.size} bytes to existing batch.`);
       }
-      
+    
       return acc;
     }, []);
   
@@ -137,7 +138,9 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         if (!response.ok) {
           throw new Error(await response.text());
         }
-        console.log(`${isLastBatch ? "Final" : ""} batch uploaded successfully!`);
+
+        console.log(`${isLastBatch ? "Final b" : "B"}atch uploaded successfully!`);
+        
       } catch (error) {
         console.error(`Error uploading ${isLastBatch ? "final" : ""} batch:`, error);
         throw error;
@@ -158,6 +161,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       setIsUploading(false);
     }
   }, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, MAX_BATCH_SIZE, accessToken, setIsUploading, setUploadComplete]);
+  
   useEffect(() => {
     if (startUpload && formState.sessionID) {
       performUpload();
