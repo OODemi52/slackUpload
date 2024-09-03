@@ -108,7 +108,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
       />
       {imageUrl && (
         <>
-          <Menu>
+          <Menu colorScheme="dark" size="md">
             <MenuButton
               as="button"
               style={{
