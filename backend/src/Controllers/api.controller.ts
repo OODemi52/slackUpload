@@ -118,6 +118,7 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
   form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
+    console.log('Started parsing form for file upload...');
     if (err) {
       console.error(`Error processing upload: ${err}`);
       return response.status(500).json({ error: 'Error processing upload' });
@@ -148,6 +149,7 @@ export const uploadFiles = async (request: express.Request, response: express.Re
       response.status(500).json({ error: 'Internal Server Error' });
     }
   });
+  console.log('Finished parsing form.');
 };
 
 export const uploadFinalFiles = async (request: express.Request, response: express.Response) => {
@@ -172,6 +174,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
   form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
+    console.log('Started parsing final form for file upload...');
 
     console.log(`Starting final upload process for session: ${fields.sessionID?.[0]}, User: ${request.userId}`);
 
@@ -216,5 +219,6 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
       console.trace(`Error uploading files: ${error}`);
       response.status(500).json({ error: 'Internal Server Error' });
     }
+    console.log('Finished parsing final form.');
   });
 }
