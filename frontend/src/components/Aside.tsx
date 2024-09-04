@@ -84,84 +84,108 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     setStartUpload(true);
   };
 
-  const MAX_BATCH_SIZE = 9 * 1024 * 1024; // 9 MB
-
-  const performUpload = useCallback(async () => {
+const performUpload = useCallback(async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
-  
-    const filterFiles = (files: File[], allowedTypes: string[]) => 
-      Array.from(files ?? []).filter((file) =>
-        allowedTypes.some(type => file.name.toLowerCase().endsWith(type))
-      );
-  
-    const filteredFiles = filterFiles(Array.from(formState.files ?? []), selectedFileTypes);
-  
-    const batches = filteredFiles.reduce((acc: File[][], file) => {
-      let lastBatch = acc[acc.length - 1];
-    
-      if (!lastBatch || lastBatch.reduce((sum, f) => sum + f.size, 0) + file.size > MAX_BATCH_SIZE) {
-        lastBatch = [file];
-        acc.push(lastBatch);
-        console.debug(`New batch created with size: ${file.size} bytes.`);
-      } else {
-        lastBatch.push(file);
-        console.debug(`Added ${file.size} bytes to existing batch.`);
+    const maxBatchSize = 9 * 1024 * 1024; // 9 MB
+    let currentBatchSize = 0;
+    let currentBatch: File[] = [];
+    const batches: File[][] = [];
+
+    const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
+      file.name.toLowerCase().endsWith(selectedFileTypes.join(",")),
+    );
+
+    for (const file of filteredFiles) {
+      if (currentBatchSize + file.size > maxBatchSize) {
+        batches.push(currentBatch);
+        currentBatch = [];
+        currentBatchSize = 0;
       }
-    
-      return acc;
-    }, []);
-  
-    const uploadBatch = async (files: File[], isLastBatch: boolean) => {
+      currentBatch.push(file);
+      currentBatchSize += file.size;
+    }
+
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
+    }
+
+    const uploadLastBatch = async (files: File[]) => {
       const formData = new FormData();
       formData.append("channel", formState.channel);
       formData.append("sessionID", formState.sessionID);
       formData.append("comment", formState.uploadComment);
-      formData.append("messageBatchSize", formState.messageBatchSize.toString());
+      formData.append(
+        "messageBatchSize",
+        formState.messageBatchSize.toString(),
+      );
       files.forEach((file) => {
         formData.append("files", file, file.name);
       });
-  
-      const endpoint = isLastBatch ? "uploadFinalFiles" : "uploadFiles";
-  
+
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/${endpoint}`,
+          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFinalFiles`,
           {
             method: "POST",
             body: formData,
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
-  
+
         if (!response.ok) {
           throw new Error(await response.text());
         }
-
-        console.log(`${isLastBatch ? "Final b" : "B"}atch uploaded successfully!`);
-        
       } catch (error) {
-        console.error(`Error uploading ${isLastBatch ? "final" : ""} batch:`, error);
-        throw error;
+        console.error("Error uploading final batch:", error);
       }
     };
-  
-    const uploadPromises = batches.map((batch, index) => 
-      uploadBatch(batch, index === batches.length - 1)
-    );
-  
-    try {
-      await Promise.all(uploadPromises);
-      setIsUploading(false);
-      setUploadComplete(true);
-      console.log("All batches uploaded successfully!");
-    } catch (error) {
-      console.error("Error uploading batches:", error);
-      setIsUploading(false);
+
+    const uploadBatch = async (files: File[]) => {
+      const formData = new FormData();
+      formData.append("channel", formState.channel);
+      formData.append("sessionID", formState.sessionID);
+      formData.append("comment", formState.uploadComment);
+      formData.append(
+        "messageBatchSize",
+        formState.messageBatchSize.toString(),
+      );
+      files.forEach((file) => {
+        formData.append("files", file, file.name);
+      });
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+      } catch (error) {
+        console.error("Error uploading batch:", error);
+      }
+      console.log("Batch uploaded successfully!");
+    };
+
+    for (let i = 0; i < batches.length; i++) {
+      if (i === batches.length - 1) {
+        await uploadLastBatch(batches[i]);
+        setIsUploading(false);
+        setUploadComplete(true);
+      } else {
+        await uploadBatch(batches[i]);
+      }
     }
-  }, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, MAX_BATCH_SIZE, accessToken, setIsUploading, setUploadComplete]);
-  
+
+    console.log("All batches uploaded successfully!");
+}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, accessToken, setIsUploading, setUploadComplete]);
+
   useEffect(() => {
     if (startUpload && formState.sessionID) {
       performUpload();
