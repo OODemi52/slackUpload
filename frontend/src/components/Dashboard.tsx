@@ -106,7 +106,6 @@ const Dashboard: React.FC = () => {
             bg="#282828"
             overflowY="auto"
             boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
-            zIndex={10}
             minH={{ base: "65vh", md: "auto" }}
           >
            <MainContent
