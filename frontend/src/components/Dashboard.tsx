@@ -126,6 +126,7 @@ const Dashboard: React.FC = () => {
             w="100%"
             h="auto"
             justifyContent="center"
+            boxShadow="0 0 -20px rgba(0, 0, 0, 0.6)"
           >
             <Aside
               formState={formState}

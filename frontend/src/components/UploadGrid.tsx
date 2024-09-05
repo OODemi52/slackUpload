@@ -18,6 +18,7 @@ interface UploadGridProps {
 
 const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplete }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [isOpen, setIsOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const { accessToken } = useContext(AuthContext);
@@ -46,6 +47,25 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
     }
   };
 
+  const calculateImageDimensions = (naturalWidth: number, naturalHeight: number) => {
+    const maxWidth = window.innerWidth * 0.9;
+    const maxHeight = window.innerHeight * 0.9;
+    let width = naturalWidth;
+    let height = naturalHeight;
+  
+    if (width > maxWidth) {
+      height = (maxWidth / width) * height;
+      width = maxWidth;
+    }
+  
+    if (height > maxHeight) {
+      width = (maxHeight / height) * width;
+      height = maxHeight;
+    }
+  
+    setImageDimensions({ width, height });
+  };
+
   useEffect(() => {
     if (onUploadComplete) {
       onUploadComplete();
@@ -71,27 +91,31 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
 
       {selectedImage && (
         <AlertDialog
-          isOpen={isOpen}
-          leastDestructiveRef={cancelRef}
-          onClose={onClose}
-        >
-          <AlertDialogOverlay>
-            <AlertDialogContent>
-              <Image
-                src={selectedImage.src}
-                alt={selectedImage.alt}
-                width="auto"
-                height="auto"
-                style={{ maxWidth: "95vw", maxHeight: "95vh", margin: "0 auto" }}
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                className="rounded-lg shadow-lg transition-opacity duration-500 ease-in-out"
-                loading="eager"
-              />
-            </AlertDialogContent>
-          </AlertDialogOverlay>
-        </AlertDialog>
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+        size="full"
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent bg="transparent" boxShadow="none" maxW="100vw" maxH="100vh">
+            <Image
+              src={selectedImage.src}
+              alt={selectedImage.alt}
+              width={`${imageDimensions.width}px`}
+              height={`${imageDimensions.height}px`}
+              objectFit="contain"
+              onLoad={(e) => {
+                const img = e.target as HTMLImageElement;
+                calculateImageDimensions(img.naturalWidth, img.naturalHeight);
+              }}
+              display="block"
+              margin="auto"
+              className="rounded-lg shadow-lg transition-opacity duration-500 ease-in-out"
+              loading="eager"
+            />
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
       )}
     </Box>
   );
