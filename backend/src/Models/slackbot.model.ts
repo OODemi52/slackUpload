@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
-import {  updateUploadedFileReferenceWithSlackPrivateUrl } from '../Utils/db.util';
+import { updateUploadedFileReferenceWithSlackPrivateUrl } from '../Utils/db.util';
 import { WebClient } from '@slack/web-api';
 
 dotenv.config();
@@ -46,45 +46,35 @@ export default class SlackBot {
     }
   }
 
-  async deletionPromises(uploadedFiles: UploadedFile[]): Promise<void[]> {
-    const deletionPromises = uploadedFiles.map((file: UploadedFile) =>
-      fs.promises.unlink(file.path).then(() => {
-        console.log(`Successfully deleted file ${file.path}`);
-      }).catch((unlinkErr) => {
-        console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
-      })
-    );
-    return Promise.all(deletionPromises);
+  private async deleteFile(file: UploadedFile): Promise<void> {
+    try {
+      await fs.promises.unlink(file.path);
+      console.log(`Successfully deleted file ${file.path}`);
+    } catch (unlinkErr) {
+      console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
+    }
   }
 
   async batchAndUploadFiles(uploadedFiles: UploadedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string): Promise<void> {
-    const sortedFiles = uploadedFiles.sort((a, b) => {
-      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-    });
-
-    const totalBatches = Math.ceil(sortedFiles.length / messageBatchSize);
+    const sortedFiles = uploadedFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     for (let i = 0; i < sortedFiles.length; i += messageBatchSize) {
       const batchFiles = sortedFiles.slice(i, i + messageBatchSize);
+
       const files_upload = batchFiles.map(file => ({
         filename: file.name,
         file: file.path
       }));
 
-      const batchNumber = Math.floor(i / messageBatchSize) + 1;
-      console.log(`Preparing batch ${batchNumber} out of ${totalBatches} for upload. Files to upload:`, files_upload);
-
       const privateUrls = await this.uploadFilesToSlackChannel(files_upload, comment);
 
-      privateUrls.forEach(async (url, index) => {
+      await Promise.all(privateUrls.map(async (url, index) => {
         const file = batchFiles[index];
-        await  updateUploadedFileReferenceWithSlackPrivateUrl(userID, sessionID, file.name, url);
-        console.log(`Updated file reference with Slack URL for file: ${file.name}`);
-    });
+        await updateUploadedFileReferenceWithSlackPrivateUrl(userID, sessionID, file.name, url);
+      }));
 
-      await this.deletionPromises(batchFiles);
+      await Promise.all(batchFiles.map(file => this.deleteFile(file)));
     }
-    console.log(`All files uploaded to Slack`);
   }
   
   private async uploadFilesToSlackChannel(file_uploads: { filename: string, file: string }[], comment: string): Promise<string[]> {
@@ -105,22 +95,16 @@ export default class SlackBot {
       const response: any = await client.files.uploadV2({
         channel_id: this.channel,
         initial_comment: comment || currentDate,
-        file_uploads : file_uploads,
+        file_uploads: file_uploads,
       });
 
-      console.log(`Uploaded files to Slack`);
-
-      const privateUrls = response.files.flatMap((fileGroup: { files: { url_private: any; }[]; }) => fileGroup.files.map((file: { url_private: any; }) => file.url_private));
-      console.log(`Private URLs for uploaded files:`, privateUrls);
+      const privateUrls = response.files.flatMap((fileGroup: { files: { url_private: any; }[]; }) => 
+        fileGroup.files.map((file: { url_private: any; }) => file.url_private)
+      );
       return privateUrls;
-      
     } catch (error: any) {
-      if (error.code === 'slack_error_code') {
-        console.error(`Error uploading files to Slack: ${error.message}`);
-      } else {
-        console.error(`Unexpected error: ${error}`);
-      }
+      console.error(`Error uploading files to Slack: ${error.message}`);
       throw error;
     } 
- }
+  }
 }

@@ -105,11 +105,11 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   // Files are uploaded to my server in batches. This function takes the files,
   // formats the metadata, and writes the metadata to the database with a reference
   // to the file path on the server. 
-  const form = new IncomingForm() as any;
 
+  const form = new IncomingForm() as any;
   const uploadDirPath = path.join(__dirname, '../../uploads');
+
   if (!fs.existsSync(uploadDirPath)) {
-    console.debug(`Creating directory at path: ${uploadDirPath}`);
     fs.mkdirSync(uploadDirPath);
   }
   form.uploadDir = uploadDirPath;
@@ -118,44 +118,39 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
   form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
-    console.log('Started parsing form for file upload...');
     if (err) {
       console.error(`Error processing upload: ${err}`);
       return response.status(500).json({ error: 'Error processing upload' });
     }
-
-    console.log(`Received files: ${Object.keys(files).map(key => files[key].originalFilename).join(', ')}`);
-  
-    console.log(`Uploading files to channel: ${fields.channel ? fields.channel[0] : 'undefined'} for User: ${request.userId || 'undefined'} and Session: ${fields.sessionID ? fields.sessionID[0] : 'undefined'}`);
-    const slackbot = new SlackBot(fields.channel[0]);
-  
-    const uploadedFiles = files.files.map((file: File) => ({
-      name: file.originalFilename,
-      path: file.filepath,
-      size: file.size,
-      sessionID: fields.sessionID[0], // is returned as array, so access the first element
-      userID: request.userId, // is returned as array, so access the first element
-      type: file.mimetype,
-      lastModifiedDate: file.lastModifiedDate,
-      isUploaded: false
-    }));
   
     try {
-      for (const file of uploadedFiles) {
-        await writeUploadedFileReference(file);
-      }
+      const slackbot = new SlackBot(fields.channel[0]);
+
+      const uploadedFiles = files.files.map((file: File) => ({
+        name: file.originalFilename,
+        path: file.filepath,
+        size: file.size,
+        sessionID: fields.sessionID[0], // is returned as array, so access the first element
+        userID: request.userId, // is returned as array, so access the first element
+        type: file.mimetype,
+        lastModifiedDate: file.lastModifiedDate,
+        isUploaded: false
+      }));
+
+      await Promise.all(uploadedFiles.map((file: any) => writeUploadedFileReference(file)));
+      response.status(200).json({ message: 'Files processed successfully' });
+
     } catch (error) {
       console.error(`Error uploading files: ${error}`);
       response.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  console.log('Finished parsing form.');
 };
 
 export const uploadFinalFiles = async (request: express.Request, response: express.Response) => {
   // This function is similar to the one above. The differences are that 1.) in this function, the user's
-  // info is used to get thier Slack access token, and 2.) it then gets all the file references from the database
-  /// which are then passed to the slackbot to be uploaded to the specified channel.
+  // info is used to get their Slack access token, and 2.) it then gets all the file references from the database
+  // which are then passed to the slackbot to be uploaded to the specified channel.
 
   const user = await readUser(request.user as string);
   const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
@@ -174,11 +169,6 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
   form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
-    console.log('Started parsing final form for file upload...');
-
-    console.log(`Starting final upload process for session: ${fields.sessionID?.[0]}, User: ${request.userId}`);
-
-    console.log(`Received final files: ${Object.keys(files).map(key => files[key].originalFilename).join(', ')}`);
 
     if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
       return response.status(404).send('No fields or files found');
@@ -188,30 +178,28 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
       console.error(`Error processing upload: ${err}`);
       return response.status(500).json({ error: 'Error processing upload' });
     }
-  
-    console.log(`Uploading final files to channel: ${fields.channel} for User: ${request.userId} and Session: ${fields.sessionID}`);
-    const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
 
-    const uploadedFiles = files.files.map((file: File) => ({
-      name: file.originalFilename,
-      path: file.filepath,
-      size: file.size,
-      sessionID: fields.sessionID[0], // is returned as array, so access the first element
-      userID: request.userId,
-      type: file.mimetype,
-      lastModifiedDate: file.lastModifiedDate,
-      isUploaded: false
-    }));
-  
     try {
+  
+      const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
+
+      const uploadedFiles = files.files.map((file: File) => ({
+        name: file.originalFilename,
+        path: file.filepath,
+        size: file.size,
+        sessionID: fields.sessionID[0], // is returned as array, so access the first element
+        userID: request.userId,
+        type: file.mimetype,
+        lastModifiedDate: file.lastModifiedDate,
+        isUploaded: false
+      }));
+  
       if (uploadedFiles.length === 0) {
         return response.status(400).send('No files to upload.');
       }
 
-      for (const file of uploadedFiles) {
-        await writeUploadedFileReference(file);
-      }
-      console.debug(`Starting to upload files to Slack for session: ${fields.sessionID[0]}`);
+      await Promise.all(uploadedFiles.map((file: any) => writeUploadedFileReference(file)));
+
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
       await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0]);
       response.status(200).json({ message: 'Final files uploaded successfully!' });
@@ -219,6 +207,5 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
       console.trace(`Error uploading files: ${error}`);
       response.status(500).json({ error: 'Internal Server Error' });
     }
-    console.log('Finished parsing final form.');
   });
 }
