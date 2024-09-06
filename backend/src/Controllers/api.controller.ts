@@ -55,10 +55,12 @@ export const getImagesUrls = async (request: express.Request, response: express.
     return response.status(404).send('No file URLs found');
   }
 
-  const urls = fileReferences.map(fileReference => ({
-    url: fileReference.slackPrivateFileURL,
-    name: fileReference.name,
-  }));
+  const urls = fileReferences
+    .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '')
+    .map(fileReference => ({
+      url: fileReference.slackPrivateFileURL,
+      name: fileReference.name,
+    }));
   response.json(urls);
 };
 
