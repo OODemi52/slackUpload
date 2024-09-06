@@ -6,7 +6,7 @@ import { IncomingForm } from 'formidable';
 import SlackBot from '../Models/slackbot.model';
 import { UploadedFile, ParsedFile } from '../types/file';
 import { getParameterValue } from '../Config/awsParams.config';
-import { readUser, writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls } from '../Utils/db.util';
+import { readUser, writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls, deleteUploadedFileReferences } from '../Utils/db.util';
 
 interface FormFields {
   channel: string[];
@@ -57,7 +57,7 @@ export const getImagesUrls = async (request: express.Request, response: express.
 
   const urls = fileReferences.map(fileReference => ({
     url: fileReference.slackPrivateFileURL,
-    name: fileReference.name
+    name: fileReference.name,
   }));
   response.json(urls);
 };
@@ -122,7 +122,6 @@ export const uploadFiles = async (request: express.Request, response: express.Re
     }
   
     try {
-
       if (!request.userId) {
         return response.status(400).send('UserID is required');
       }
@@ -152,9 +151,6 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   // This function is similar to the one above. The differences are that 1.) in this function, the user's
   // info is used to get their Slack access token, and 2.) it then gets all the file references from the database
   // which are then passed to the slackbot to be uploaded to the specified channel.
-
-  const user = await readUser(request.user as string);
-  const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
 
   const form = new IncomingForm() as any;
 
@@ -195,6 +191,8 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
     }
 
     try {
+      const user = await readUser(request.user as string);
+      const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
       const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
 
       if (!Array.isArray(files.files)) {
@@ -231,3 +229,4 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
     }
   });
 }
+

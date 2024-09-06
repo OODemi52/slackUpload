@@ -29,7 +29,19 @@ export default class SlackBot {
     }
   }
 
-  private async deleteFile(file: ParsedFile): Promise<void> {}
+  async deleteFilesFromSlack(fileIDs: any): Promise<void> {
+    try {
+      const client = await this.clientPromise;
+      await Promise.all(fileIDs.map(async (file: any) => {
+        await client.files.delete({
+          file: file.id,
+        });
+      }));
+    } catch (error) {
+      console.error(`Error deleting files: ${error}`);
+      throw error;
+    }
+  }
 
   async batchAndUploadFiles(parsedFiles: ParsedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string): Promise<ParsedFile[]> {
     const sortedFiles = parsedFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
