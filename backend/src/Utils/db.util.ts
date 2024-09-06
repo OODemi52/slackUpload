@@ -62,7 +62,7 @@ export const updateUploadedFileReferenceWithSlackPrivateUrlAndFileId = async (us
       { userID, sessionID, name: fileName },
       { 
         $set: { 
-          slackFileId: fileInfo.id,
+          slackFileID: fileInfo.id,
           slackPrivateFileURL: fileInfo.url_private 
         } 
       },
@@ -138,3 +138,18 @@ export const invalidateRefreshToken = async (userId: string) => {
     throw new Error('Failed to invalidate refresh token');
   }
 };
+
+export const deleteUploadedFileReferences = async (userID: string, fileID?: string[], sessionID?: string) => {
+  try {
+    if (sessionID) {
+      await UploadedFileReference.deleteMany({ userID, sessionID });
+      console.log(`Deleted ${fileID?.length} file references from session ${sessionID} successfully`);
+    } else {
+      await UploadedFileReference.deleteMany({ userID, slackFileID: { $in: fileID } });
+      console.log(`Deleted ${fileID?.length} file references successfully`);
+    }
+  } catch (error) {
+    console.error('Error deleting file references:', error);
+    throw error;
+  }
+}
