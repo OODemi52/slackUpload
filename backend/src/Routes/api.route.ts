@@ -1,7 +1,6 @@
 import express, { Router } from 'express';
-import { api, getChannels, uploadFiles, uploadFinalFiles, getImagesUrls, getImagesProxy } from '../Controllers/api.controller';
 import { verifyJWT } from '../Middleware/jwt.middleware';
-import handleUploadedFiles from '../Utils/formidable.util';
+import { api, getChannels, uploadFiles, uploadFinalFiles, getImagesUrls, getImagesProxy, deleteFiles } from '../Controllers/api.controller';
 
 const router: Router = express.Router();
 
@@ -11,5 +10,6 @@ router.post('/uploadFiles', verifyJWT,/*handleUploadedFiles(),*/ uploadFiles);
 router.post('/uploadFinalFiles', verifyJWT,/*handleUploadedFiles(),*/ uploadFinalFiles);
 router.get('/getImagesUrls', verifyJWT,/*handleUploadedFiles(),*/ getImagesUrls);
 router.get('/getImagesProxy', verifyJWT,/*handleUploadedFiles(),*/ getImagesProxy);
+router.delete('/deleteFiles', verifyJWT,/*handleUploadedFiles(),*/ getImagesProxy);
 
 export default router;
