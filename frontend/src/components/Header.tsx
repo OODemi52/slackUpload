@@ -2,8 +2,15 @@ import React from "react";
 import { Heading, Flex, Box } from "@chakra-ui/react";
 import logo from "../assets/SSLOGO_NOBG.png";
 import Logout from "./Logout";
+import MultipleSelect from "./MultipleSelect";
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onToggleSelectMode: () => void;
+  isSelectMode: boolean;
+}
+
+const Header: React.FC<HeaderProps> = ({ onToggleSelectMode }) => {  {/* Add isSelectMode */}
+<Logout />
   return (
     <Box
       as="header"
@@ -26,7 +33,10 @@ const Header: React.FC = () => {
             SlackShots
           </Heading>
         </Flex>
-        <Logout />
+          <Flex align="center">
+            <MultipleSelect onToggleSelectMode={onToggleSelectMode} /> {/* Replace with delete, download, and cancel buttons when selected */}
+            <Logout />
+        </Flex>
       </Flex>
     </Box>
   );

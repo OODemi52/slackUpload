@@ -25,6 +25,7 @@ const Dashboard: React.FC = () => {
   const [startUpload, setStartUpload] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadAttempted, setUploadAttempted] = useState(false);
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   const toast = useToast();
 
@@ -64,6 +65,10 @@ const Dashboard: React.FC = () => {
     });
   }, [toast]);
 
+  const toggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode);
+  };
+
   return (
     <Box
       justifyContent="center"
@@ -97,7 +102,7 @@ const Dashboard: React.FC = () => {
         >
           {/* Header */}
           <GridItem gridArea="header" bg="#282828" mb="1px">
-            <Header />
+            <Header onToggleSelectMode={toggleSelectMode} isSelectMode={isSelectMode} />
           </GridItem>
 
           {/* Main Content */}
@@ -116,6 +121,7 @@ const Dashboard: React.FC = () => {
             onUploadComplete={handleUploadComplete}
             onUploadFail={handleUploadFail}
             uploadAttempted={uploadAttempted}
+            isSelectMode={isSelectMode}
           />
           </GridItem>
 

@@ -54,6 +54,7 @@ const Logout: React.FC = () => {
             cursor: "pointer",
             marginRight: "2rem",
           }}
+          aria-label="Logout"
         >
           <svg
             fill="#FF0000"

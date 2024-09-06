@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 import { Grid, Box, AlertDialog, AlertDialogOverlay, AlertDialogContent, Image } from "@chakra-ui/react";
 import ImageCard from "./ImageCard";
 import AuthContext from '../context/AuthContext';
+import DeletionConfirmation from "./DeletionConfirmation";
 
 interface ImageProps {
   src: string;
@@ -11,17 +12,21 @@ interface ImageProps {
 }
 
 interface UploadGridProps {
-  pics: { url: string; name: string }[];
+  pics: { url: string; name: string; fileID: string }[];
   onScroll: (event: React.UIEvent<HTMLElement>) => void;
   onUploadComplete?: () => void;
+  isSelectMode: boolean;
 }
 
-const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplete }) => {
+const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplete, isSelectMode }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [isOpen, setIsOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const { accessToken } = useContext(AuthContext);
+  
 
   const onClose = () => setIsOpen(false);
 
@@ -66,6 +71,17 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
     setImageDimensions({ width, height });
   };
 
+  const handleImageSelect = (fileID: string) => {
+    setSelectedImages(prev => 
+      prev.includes(fileID) ? prev.filter(id => id !== fileID) : [...prev, fileID]
+    );
+  };
+
+  const handleConfirmDelete = () => {
+    console.log(`Delete ${selectedImages}`);
+    setIsDeleteConfirmationOpen(false);
+  }
+
   useEffect(() => {
     if (onUploadComplete) {
       onUploadComplete();
@@ -79,12 +95,17 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
         gap={4}
         p={4}
       >
-        {pics.map((pic, index) => (
+        {pics.map((pic) => (
           <ImageCard
-            key={index}
+            key={pic.fileID}
             url={pic.url}
             name={pic.name}
+            fileID={pic.fileID}
             onClick={() => handleImageClick(pic)}
+            onDelete={(fileID) => {console.log(`Delete ${fileID}`)}}
+            isSelectMode={isSelectMode}
+            isSelected={selectedImages.includes(pic.fileID)}
+            onSelect={handleImageSelect}
           />
         ))}
       </Grid>
@@ -117,6 +138,14 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
         </AlertDialogOverlay>
       </AlertDialog>
       )}
+
+      <DeletionConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => setIsDeleteConfirmationOpen(false)}
+        onConfirm={handleConfirmDelete}
+        itemName={`${selectedImages.length} file${selectedImages.length !== 1 ? 's' : ''}`}
+      />
+
     </Box>
   );
 };

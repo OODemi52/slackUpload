@@ -1,18 +1,25 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
-import { Box, Image, Checkbox, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
+import { Box, Image, Checkbox, Menu, MenuButton, MenuList, MenuItem, useDisclosure } from '@chakra-ui/react';
 import AuthContext from '../context/AuthContext';
+import DeletionConfirmation from './DeletionConfirmation';
 
 interface ImageCardProps {
   url: string;
   name: string;
+  fileID: string;
   onClick: () => void;
+  onDelete: (fileID: string) => void;
+  isSelectMode: boolean;
+  isSelected: boolean;
+  onSelect: (fileID: string) => void;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDelete, isSelectMode, isSelected, onSelect }) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const imageRef = useRef<HTMLDivElement | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const { accessToken } = useContext(AuthContext);
 
@@ -75,8 +82,13 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
   };
 
   const handleDelete = () => {
-    // Placeholder for delete functionality
-    console.log('Delete functionality not implemented yet');
+    onOpen();
+  };
+
+  const confirmDelete = (deleteFrom: 'slack' | 'app' | 'both') => {
+    onDelete(fileID);
+    onClose();
+    console.log(`Deleting from ${deleteFrom}`);
   };
 
   return (
@@ -104,7 +116,9 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
         size="md"
         borderColor="whiteAlpha.500"
         borderRadius="md"
-        display="none"
+        display={isSelectMode ? "block" : "none"}
+        isChecked={isSelected}
+        onChange={() => onSelect(fileID)}
       />
       {imageUrl && (
         <>
@@ -160,6 +174,12 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, onClick }) => {
           />
         </>
       )}
+      <DeletionConfirmation
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={confirmDelete}
+        itemName={name}
+      />
     </Box>
   );
 };
