@@ -82,17 +82,22 @@ export const updateUploadedFileReferenceWithSlackPrivateUrlAndFileId = async (us
 export const paginateSlackPrivateUrls = async (userID: string, page: number = 1, limit: number = 10) => {
   try {
     const skip = (page - 1) * limit;
-    const slackPrivateFileUrls = await UploadedFileReference.find({ userID, slackPrivateFileURL: { $ne: null } })
+    const slackPrivateFileUrls = await UploadedFileReference.find({ 
+        userID, 
+        $and: [
+          { slackPrivateFileURL: { $ne: null } },
+          { slackPrivateFileURL: { $ne: '' } }
+        ]
+      })
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit);
-
     return slackPrivateFileUrls;
   } catch (error) {
     console.error('Error reading file references:', error);
     throw error;
   }
-}
+};
 
 export const writeUser = async (userAuthData: UserAuthData) => {
   const { tokenType, scope, botUserId, appId, team, enterprise, authedUser } = userAuthData;

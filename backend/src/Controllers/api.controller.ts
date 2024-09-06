@@ -60,6 +60,7 @@ export const getImagesUrls = async (request: express.Request, response: express.
     .map(fileReference => ({
       url: fileReference.slackPrivateFileURL,
       name: fileReference.name,
+      fileID: fileReference.slackFileID,
     }));
   response.json(urls);
 };
