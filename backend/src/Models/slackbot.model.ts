@@ -1,25 +1,9 @@
 import dotenv from 'dotenv';
-import fs from 'fs';
-import { updateUploadedFileReferenceWithSlackPrivateUrl } from '../Utils/db.util';
+import { ParsedFile } from '../types/file';
 import { WebClient } from '@slack/web-api';
+import { updateUploadedFileReferenceWithSlackPrivateUrlAndFileId } from '../Utils/db.util';
 
 dotenv.config();
-
-interface FormidableFile {
-  size: number;
-  path: string;
-  name: string;
-  type: string;
-  lastModifiedDate?: Date;
-}
-
-interface UploadedFile {
-  size: number;
-  path: string;
-  name: string;
-  type: string;
-  lastModifiedDate?: Date;
-};
 
 export default class SlackBot {
   private channel: string;
@@ -31,7 +15,6 @@ export default class SlackBot {
   }
 
   private async setupClient(accessToken: string | undefined): Promise<WebClient> {
-    //const slackToken = await getParameterValue('SLACK_TOKEN'); // For local testing
     return new WebClient(accessToken);
   }
 
@@ -46,38 +29,49 @@ export default class SlackBot {
     }
   }
 
-  private async deleteFile(file: UploadedFile): Promise<void> {
+  async deleteFilesFromSlack(fileIDs: any): Promise<void> {
     try {
-      await fs.promises.unlink(file.path);
-      console.log(`Successfully deleted file ${file.path}`);
-    } catch (unlinkErr) {
-      console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
+      const client = await this.clientPromise;
+      await Promise.all(fileIDs.map(async (file: any) => {
+        await client.files.delete({
+          file: file.id,
+        });
+      }));
+    } catch (error) {
+      console.error(`Error deleting files: ${error}`);
+      throw error;
     }
   }
 
-  async batchAndUploadFiles(uploadedFiles: UploadedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string): Promise<void> {
-    const sortedFiles = uploadedFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
+  async batchAndUploadFiles(parsedFiles: ParsedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string): Promise<ParsedFile[]> {
+    const sortedFiles = parsedFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    const processedFiles: ParsedFile[] = [];
+    
+  
     for (let i = 0; i < sortedFiles.length; i += messageBatchSize) {
       const batchFiles = sortedFiles.slice(i, i + messageBatchSize);
-
+  
       const files_upload = batchFiles.map(file => ({
         filename: file.name,
         file: file.path
       }));
-
-      const privateUrls = await this.uploadFilesToSlackChannel(files_upload, comment);
-
-      await Promise.all(privateUrls.map(async (url, index) => {
+  
+      const privateUrlsAndFileIds = await this.uploadFilesToSlackChannel(files_upload, comment);
+  
+      await Promise.all(privateUrlsAndFileIds.map(async (fileInfo, index) => {
         const file = batchFiles[index];
-        await updateUploadedFileReferenceWithSlackPrivateUrl(userID, sessionID, file.name, url);
+        console.log(`Updating file reference for file: ${file.name}`);
+        await updateUploadedFileReferenceWithSlackPrivateUrlAndFileId(userID, sessionID, file.name, fileInfo);
+        processedFiles.push(file);
       }));
-
-      await Promise.all(batchFiles.map(file => this.deleteFile(file)));
+  
+      console.log(`Processed batch ${i / messageBatchSize + 1} of ${Math.ceil(sortedFiles.length / messageBatchSize)}`);
     }
+  
+    return processedFiles;
   }
   
-  private async uploadFilesToSlackChannel(file_uploads: { filename: string, file: string }[], comment: string): Promise<string[]> {
+  private async uploadFilesToSlackChannel(file_uploads: { filename: string, file: string }[], comment: string): Promise<{ id: string; url_private: string; }[]> {
     try {
       const currentDate = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
@@ -98,10 +92,15 @@ export default class SlackBot {
         file_uploads: file_uploads,
       });
 
-      const privateUrls = response.files.flatMap((fileGroup: { files: { url_private: any; }[]; }) => 
-        fileGroup.files.map((file: { url_private: any; }) => file.url_private)
+      const privateUrlsWithFileIds = response.files.flatMap((fileGroup: { files: { id: string; url_private: string; }[] }) =>
+        fileGroup.files.map((file: { id: string; url_private: string; }) => ({
+          id: file.id,
+          url_private: file.url_private
+        }))
       );
-      return privateUrls;
+      
+      return privateUrlsWithFileIds;
+
     } catch (error: any) {
       console.error(`Error uploading files to Slack: ${error.message}`);
       throw error;

@@ -10,6 +10,7 @@ interface IUploadedFileReference extends Document {
     lastModifiedDate?: Date;
     isUploaded: boolean;
     slackPrivateFileURL?: string;
+    slackFileID?: string;
 }
 
 const uploadedFileReferenceSchema = new Schema({
@@ -21,7 +22,8 @@ const uploadedFileReferenceSchema = new Schema({
     type: { type: String, required: true },
     lastModifiedDate: { type: Date },
     isUploaded: { type: Boolean, default: false },
-    slackPrivateFileURL: { type: String }
+    slackPrivateFileURL: { type: String },
+    slackFileID: { type: String }
 }, { timestamps: true });
 
 

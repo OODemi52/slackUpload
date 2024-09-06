@@ -18,10 +18,11 @@ interface MainContentProps {
   onUploadComplete: () => void;
   onUploadFail: () => void;
   uploadAttempted: boolean;
+  isSelectMode: boolean;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, startUpload, onUploadComplete, onUploadFail, uploadAttempted }) => {
-  const [pics, setPics] = useState<{ url: string; name: string }[]>([]);
+const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, startUpload, onUploadComplete, onUploadFail, uploadAttempted, isSelectMode }) => {
+  const [pics, setPics] = useState<{ url: string; name: string; fileID: string; }[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -114,7 +115,7 @@ const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, 
             <LogoAnimation />
           </Text>
         ) : pics.length ? (
-          <UploadGrid pics={pics} onScroll={handleScroll} />
+          <UploadGrid pics={pics} onScroll={handleScroll} isSelectMode={isSelectMode} />
         ) : (
           <Text color="#404040" fontSize="xxx-large" textAlign="center" mt="auto" mb="auto">
             Upload Images To Get Started!
