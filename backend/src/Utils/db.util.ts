@@ -58,7 +58,6 @@ export const readAllUploadedFileReferencesBySession = async (sessionID: string) 
 
 export const updateUploadedFileReferenceWithSlackPrivateUrlAndFileId = async (userID: string, sessionID: string, fileName: string, fileInfo: { id: string; url_private: string }) => {
   try {
-    console.log(`Updating file reference for userID: ${userID}, sessionID: ${sessionID}, fileName: ${fileName}, fileInfo: ${JSON.stringify(fileInfo)}`);
     const updated = await UploadedFileReference.findOneAndUpdate(
       { userID, sessionID, name: fileName },
       { 

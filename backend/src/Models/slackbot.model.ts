@@ -38,7 +38,6 @@ export default class SlackBot {
   
     for (let i = 0; i < sortedFiles.length; i += messageBatchSize) {
       const batchFiles = sortedFiles.slice(i, i + messageBatchSize);
-      console.log(`Processing batch ${i / messageBatchSize + 1} with ${batchFiles.length} files`);
   
       const files_upload = batchFiles.map(file => ({
         filename: file.name,
@@ -81,16 +80,12 @@ export default class SlackBot {
         file_uploads: file_uploads,
       });
 
-      console.log('Response', response.files[0].files[0].id);
-
       const privateUrlsWithFileIds = response.files.flatMap((fileGroup: { files: { id: string; url_private: string; }[] }) =>
         fileGroup.files.map((file: { id: string; url_private: string; }) => ({
           id: file.id,
           url_private: file.url_private
         }))
       );
-
-      console.log('Private URLs with file IDs', privateUrlsWithFileIds);
       
       return privateUrlsWithFileIds;
 
