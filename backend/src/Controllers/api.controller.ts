@@ -1,11 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import express from 'express';
-import SlackBot from '../Models/slackbot.model';
-import { IncomingForm } from 'formidable';
-import { readUser, writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls } from '../Utils/db.util';
 import axios from 'axios';
+import express from 'express';
+import { IncomingForm } from 'formidable';
+import SlackBot from '../Models/slackbot.model';
+import { UploadedFile, ParsedFile } from '../types/file';
 import { getParameterValue } from '../Config/awsParams.config';
+import { readUser, writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls } from '../Utils/db.util';
 
 interface FormFields {
   channel: string[];
@@ -15,26 +16,15 @@ interface FormFields {
   messageBatchSize: string[];
 }
 
-interface File {
-  map: any;
-  size: number;
-  filepath: string;
-  originalFilename: string;
-  mimetype: string;
-  lastModifiedDate?: Date;
-}
-
-interface Request {
-  user?: string;
-  userId?: string;
-}
-
 export const api = async (request: express.Request, response: express.Response) => {
   response.status(400).send('Something went wrong, you should not be here!');
 }
 
 export const getChannels = async (request: express.Request, response: express.Response) => {
-  request.user = request.user as string;
+
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
+  }
 
   const user = await readUser(request.user as string);
   const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
@@ -50,15 +40,14 @@ export const getChannels = async (request: express.Request, response: express.Re
 };
 
 export const getImagesUrls = async (request: express.Request, response: express.Response) => {
-  
+
   const { page = '1', limit = '10' } = request.query as { page: string, limit: string };
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
 
   if (!request.userId) {
     return response.status(400).send('UserID is required');
   }
-
-  const pageNumber = parseInt(page, 10);
-  const limitNumber = parseInt(limit, 10);
 
   const fileReferences = await paginateSlackPrivateUrls(request.userId as string, pageNumber, limitNumber);
   
@@ -74,10 +63,15 @@ export const getImagesUrls = async (request: express.Request, response: express.
 };
 
 export const getImagesProxy = async (request: express.Request, response: express.Response) => {
-  const { imageUrl, name } = request.query;
+
+  const { imageUrl } = request.query;
   
   if (!imageUrl) {
     return response.status(400).send('Image URL is required');
+  }
+
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
   }
 
   try {
@@ -117,27 +111,34 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
-  form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
+  form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
     if (err) {
       console.error(`Error processing upload: ${err}`);
       return response.status(500).json({ error: 'Error processing upload' });
     }
+
+    if (!Array.isArray(files.files)) {
+      return response.status(400).send('Invalid files format.');
+    }
   
     try {
-      const slackbot = new SlackBot(fields.channel[0]);
 
-      const uploadedFiles = files.files.map((file: File) => ({
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+      
+      const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
         name: file.originalFilename,
         path: file.filepath,
         size: file.size,
         sessionID: fields.sessionID[0], // is returned as array, so access the first element
-        userID: request.userId, // is returned as array, so access the first element
+        userID: request.userId as string,
         type: file.mimetype,
         lastModifiedDate: file.lastModifiedDate,
         isUploaded: false
       }));
 
-      await Promise.all(uploadedFiles.map((file: any) => writeUploadedFileReference(file)));
+      await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
       response.status(200).json({ message: 'Files processed successfully' });
 
     } catch (error) {
@@ -168,7 +169,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
-  form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: File }) => {
+  form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
 
     if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
       return response.status(404).send('No fields or files found');
@@ -179,29 +180,50 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
       return response.status(500).json({ error: 'Error processing upload' });
     }
 
+    async function deleteFile(file: ParsedFile): Promise<void> {
+      if (!file.path) {
+        console.error(`No file path provided for file: ${file.name}`);
+        return;
+      }
+      console.log(`Attempting to delete file: ${file.path}`);
+      try {
+        await fs.promises.unlink(file.path);
+        console.log(`Successfully deleted file ${file.path}`);
+      } catch (unlinkErr) {
+        console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
+      }
+    }
+
     try {
-  
       const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
 
-      const uploadedFiles = files.files.map((file: File) => ({
+      if (!Array.isArray(files.files)) {
+        return response.status(400).send('Invalid files format.');
+      }
+
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+      
+      const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
         name: file.originalFilename,
         path: file.filepath,
         size: file.size,
         sessionID: fields.sessionID[0], // is returned as array, so access the first element
-        userID: request.userId,
+        userID: request.userId as string,
         type: file.mimetype,
         lastModifiedDate: file.lastModifiedDate,
         isUploaded: false
       }));
   
-      if (uploadedFiles.length === 0) {
+      if (parsedFiles.length === 0) {
         return response.status(400).send('No files to upload.');
       }
 
-      await Promise.all(uploadedFiles.map((file: any) => writeUploadedFileReference(file)));
-
+      await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-      await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0]);
+      const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0]);
+      await Promise.all(processedFiles.map(file => deleteFile(file)));
       response.status(200).json({ message: 'Final files uploaded successfully!' });
     } catch (error) {
       console.trace(`Error uploading files: ${error}`);

@@ -4,10 +4,9 @@ import User from "../Models/user.model";
 
 // Want to implemet crud methods
 /* Currently needs to be implemented (delete as you go) :
+  - deleteUploadedFileReference
 
     Implement in the future
-    - updateUploadedFile
-    - deleteUploadedFile
     - readAllSizes
     - readAllUsers
     etc.
@@ -57,21 +56,27 @@ export const readAllUploadedFileReferencesBySession = async (sessionID: string) 
     }
 };
 
-export const updateUploadedFileReferenceWithSlackPrivateUrl = async (userID: string, sessionID: string, fileName: string, url: string) => {
+export const updateUploadedFileReferenceWithSlackPrivateUrlAndFileId = async (userID: string, sessionID: string, fileName: string, fileInfo: { id: string; url_private: string }) => {
   try {
-      const updated = await UploadedFileReference.findOneAndUpdate(
-          { userID, sessionID, name: fileName },
-          { $set: { slackPrivateFileURL: url } },
-          { new: true }
-      );
-      if (updated) {
-          console.log(`Updated file reference with URL for file: ${fileName}`);
-      } else {
-          console.log(`No matching file reference found for file: ${fileName}`);
-      }
+    console.log(`Updating file reference for userID: ${userID}, sessionID: ${sessionID}, fileName: ${fileName}, fileInfo: ${JSON.stringify(fileInfo)}`);
+    const updated = await UploadedFileReference.findOneAndUpdate(
+      { userID, sessionID, name: fileName },
+      { 
+        $set: { 
+          slackFileId: fileInfo.id,
+          slackPrivateFileURL: fileInfo.url_private 
+        } 
+      },
+      { new: true }
+    );
+    if (updated) {
+      console.log(`Updated file reference with Slack URL for file: ${fileName}`);
+    } else {
+      console.log(`No matching file reference found for file: ${fileName}`);
+    }
   } catch (error) {
-      console.error('Error updating file reference with URL:', error);
-      throw error;
+    console.error('Error updating file reference with URL:', error);
+    throw error;
   }
 };
 
@@ -100,30 +105,6 @@ export const writeUser = async (userAuthData: UserAuthData) => {
   return userDoc;
 };
 
-/*
-export const readUser = async (userId: string, teamId: string) => {
-  try {
-    const user = await User.findOne({ slackUserId: userId, teamID: teamId });
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return user;
-  } catch (error) {
-    console.error('Error reading user:', error);
-    throw error;
-  }
-};
-*/
-
-export const updateWithRefreshToken  = async (userId: string, refreshToken: string | undefined) => {
-  try {
-    await User.findOneAndUpdate({ _id: userId }, { refreshToken })
-  } catch (error) {
-    console.error('Error updating user with refresh token:', error);
-    throw error;
-  }
-}
-
 export const readUser = async (userId: string) => {
   try {
     const userData = await User.findById(userId);
@@ -138,6 +119,16 @@ export const readUser = async (userId: string) => {
     throw error;
   }
 };
+
+
+export const updateWithRefreshToken  = async (userId: string, refreshToken: string | undefined) => {
+  try {
+    await User.findOneAndUpdate({ _id: userId }, { refreshToken })
+  } catch (error) {
+    console.error('Error updating user with refresh token:', error);
+    throw error;
+  }
+}
 
 export const invalidateRefreshToken = async (userId: string) => {
   try {
