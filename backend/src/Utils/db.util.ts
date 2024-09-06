@@ -139,7 +139,7 @@ export const invalidateRefreshToken = async (userId: string) => {
   }
 };
 
-export const deleteUploadedFileReferences = async (userId: string, fileID: string[]) => {
+export const anonymizeUploadedFileReferences = async (userId: string, fileID: string[]) => {
   if (!fileID.length) {
     console.log('No file references to delete');
     return;

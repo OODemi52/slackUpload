@@ -6,7 +6,7 @@ import { IncomingForm } from 'formidable';
 import SlackBot from '../Models/slackbot.model';
 import { UploadedFile, ParsedFile } from '../types/file';
 import { getParameterValue } from '../Config/awsParams.config';
-import { readUser, writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls, deleteUploadedFileReferences } from '../Utils/db.util';
+import { readUser, writeUploadedFileReference, readAllUploadedFileReferencesBySession, paginateSlackPrivateUrls, anonymizeUploadedFileReferences } from '../Utils/db.util';
 
 interface FormFields {
   channel: string[];
@@ -230,3 +230,31 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   });
 }
 
+export const deleteFiles = async (request: express.Request, response: express.Response) => {
+
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
+  }
+
+  const fileIDs = request.body.fileIDs as { fileIDs: string[] };
+
+  if (!fileIDs || !Array.isArray(fileIDs)) {
+    return response.status(400).send('Invalid file IDs');
+  }
+
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
+  }
+
+  try {
+    const user = await readUser(request.user as string);
+    const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+    const slackbot = new SlackBot('', slackAccessToken);
+    await slackbot.deleteFilesFromSlack(fileIDs);
+    const deleted  = await anonymizeUploadedFileReferences(request.userId as string, fileIDs);
+    response.status(200).json({ message: `${deleted} files deleted successfully.` });
+  } catch (error) { 
+    console.error(`Error deleting files: ${error}`);
+    response.status(500).json({ error: 'Internal Server Error' });
+  }
+};
