@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
 import LandingPage from "./components/LandingPage";
 import AuthCallback from "./components/AuthCallback";
@@ -9,25 +9,22 @@ import AuthContext from "./context/AuthContext";
 const queryClient = new QueryClient();
 
 function App() {
-  const [accessToken, setAccessToken] = useState<string | null>("");
-  const [isTokenProcessed, setIsTokenProcessed] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     const brodChannel = new BroadcastChannel('auth_channel');
   
     brodChannel.onmessage = (event) => {
-      if (event.data.type === 'auth-success' && !isTokenProcessed) {
+      if (event.data.type === 'auth-success') {
         setAccessToken(event.data.accessToken);
         console.log("Received access token via BroadcastChannel.");
-        setIsTokenProcessed(true);
-        window.location.reload();
       }
     };
   
     return () => {
       brodChannel.close();
     };
-  }, [isTokenProcessed]);
+  }, []);
 
   useEffect(() => {
     const refreshAccessToken = async () => {
@@ -35,6 +32,10 @@ function App() {
         const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "ngrok-skip-browser-warning": "true"
+          },
         });
   
         if (!response.ok) {
@@ -50,8 +51,11 @@ function App() {
         console.error(error);
       }
     };
-    refreshAccessToken();
-  }, []);
+    
+    if (!accessToken) {
+      refreshAccessToken();
+    }
+  }, [accessToken]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -59,7 +63,8 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
-            <Route path="/authCallback" element={<AuthCallback />} /> 
+            <Route path="/authCallback" element={<AuthCallback />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </AuthContext.Provider>

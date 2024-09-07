@@ -30,6 +30,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDel
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "ngrok-skip-browser-warning": "true",
           },
         }
       );

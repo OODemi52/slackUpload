@@ -1,5 +1,6 @@
 # Ignore .env files
 .env
+local-parameters.json
 
 # Ignore node_modules directory
 node_modules/

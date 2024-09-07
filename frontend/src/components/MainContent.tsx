@@ -36,6 +36,7 @@ const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, 
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
+              "ngrok-skip-browser-warning": "true"
             },
           }
         );

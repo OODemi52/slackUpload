@@ -102,6 +102,7 @@ export const callback = async (request: express.Request, response: express.Respo
       const clientProtocol = await getParameterValue('CLIENT_PROTOCOL');
 
       const clientRedirectUrl = `${clientProtocol}://${clientHost}/authCallback?accessToken=${accessToken}`;
+
       return response.redirect(clientRedirectUrl);
     } else {
       console.error('Error obtaining access token:', tokenResponse.data.error);
