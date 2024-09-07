@@ -18,6 +18,7 @@ const SlackAuth: React.FC = () => {
   return (
     <>
       {(
+        <button aria-label="Add to Slack">
         <img
           alt="Add to Slack"
           className="slack-button"
@@ -26,6 +27,7 @@ const SlackAuth: React.FC = () => {
           src="https://platform.slack-edge.com/img/add_to_slack.png"
           onClick={handleSignIn}
         />
+        </button>
       )}
     </>
   );

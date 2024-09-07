@@ -37,6 +37,7 @@ const UploadGrid: React.FC<UploadGridProps> = ({ pics, onScroll, onUploadComplet
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "ngrok-skip-browser-warning": "true",
           },
         }
       );

@@ -27,6 +27,7 @@ uploads
 
 # Ignore files related to API keys
 .env
+local-parameters.json
 
 # Ignore AWS EC2 PEM files
 *.pem
