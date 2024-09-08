@@ -18,6 +18,8 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDel
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isMenuListHovered, setIsMenuListHovered] = useState<boolean>(false);
   const imageRef = useRef<HTMLDivElement | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -92,6 +94,29 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDel
     console.log(`Deleting from ${deleteFrom}`);
   };
 
+  const handleMouseEnterButton = () => {
+    setIsHovered(true);
+    setIsMenuOpen(true);
+  };
+
+  const handleMouseLeaveButton = () => {
+    if (!isMenuListHovered) {
+      setIsHovered(false);
+      setIsMenuOpen(false);
+    }
+  };
+
+  const handleMouseEnterMenuList = () => {
+    setIsMenuListHovered(true);
+    setIsMenuOpen(true);
+  };
+
+  const handleMouseLeaveMenuList = () => {
+    setIsMenuListHovered(false);
+    setIsHovered(false);
+    setIsMenuOpen(false);
+  };
+
   return (
     <Box
       display="flex"
@@ -123,7 +148,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDel
       />
       {imageUrl && (
         <>
-          <Menu colorScheme="dark" size="md">
+          <Menu colorScheme="dark" size="md" isOpen={isMenuOpen}>
             <MenuButton
               as="button"
               style={{
@@ -138,6 +163,8 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDel
                 border: 'none',
                 cursor: 'pointer',
               }}
+              onMouseEnter={handleMouseEnterButton}
+              onMouseLeave={handleMouseLeaveButton}
             >
               {isHovered && (
                 <svg
@@ -157,9 +184,9 @@ const ImageCard: React.FC<ImageCardProps> = ({ url, name, fileID, onClick, onDel
                 </svg>
               )}
             </MenuButton>
-            <MenuList>
-              <MenuItem onClick={handleDownload}>Download</MenuItem>
-              <MenuItem onClick={handleDelete} color="red">Delete</MenuItem>
+            <MenuList bgGradient="linear(to bottom right, #202020, #080808)" border="1px solid #202020" dropShadow="0px 4px 4px rgba(0, 0, 0, 1)" mr={4} onMouseEnter={handleMouseEnterMenuList} onMouseLeave={handleMouseLeaveMenuList}>
+              <MenuItem onClick={handleDownload} color="white" bg="transparent" _hover={{bg: "rgba(255, 255, 255, 0.05)"}}>Download</MenuItem>
+              <MenuItem onClick={handleDelete} color="red" bg="transparent" _hover={{bg: "rgba(255, 255, 255, 0.05)"}}>Delete</MenuItem>
             </MenuList>
           </Menu>
           <Image

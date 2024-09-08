@@ -58,8 +58,9 @@ const FileTypeSelector: React.FC<FileTypeSelectorProps> = ({
           }),
           option: (provided) => ({
             ...provided,
-            backgroundColor: "#080808",
+            backgroundColor: "transparent",
             color: "white",
+            _hover: { bg: "rgba(255, 255, 255, 0.05)" },
           }),
           placeholder: (provided) => ({
             ...provided,
@@ -87,7 +88,16 @@ const FileTypeSelector: React.FC<FileTypeSelectorProps> = ({
           }),
           menuList: (provided) => ({
             ...provided,
-            backgroundColor: "#080808",
+            bgGradient: "linear(to bottom right, #202020, #080808)",
+            color: "white",
+            borderColor: "#202020",
+            dropShadow: "0px 4px 4px rgba(0, 0, 0, 1)",
+            _focus: {
+              borderColor: "white",
+            },
+          }),
+          clearIndicator: (provided) => ({
+            ...provided,
             color: "white",
           }),
         }}
