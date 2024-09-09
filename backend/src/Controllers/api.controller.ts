@@ -56,7 +56,7 @@ export const getImagesUrls = async (request: express.Request, response: express.
   }
 
   const urls = fileReferences
-    .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '')
+    .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '' && fileReference.slackFileID && fileReference.slackFileID !== '')
     .map(fileReference => ({
       url: fileReference.slackPrivateFileURL,
       name: fileReference.name,
