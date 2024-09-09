@@ -191,6 +191,7 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
           </Button>
           <Button
             bg="#FF0000"
+            color="white"
             ml={3}
             onClick={handleConfirm}
             boxShadow="0 3px 3px rgba(0, 0, 0, 0.6)"
