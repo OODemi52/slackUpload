@@ -19,10 +19,26 @@ interface MainContentProps {
   onUploadFail: () => void;
   uploadAttempted: boolean;
   isSelectMode: boolean;
+  setIsSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedImages: string[];
+  setSelectedImages: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, startUpload, onUploadComplete, onUploadFail, uploadAttempted, isSelectMode }) => {
-  const [pics, setPics] = useState<{ url: string; name: string; fileID: string; }[]>([]);
+const MainContent: React.FC<MainContentProps> = ({
+  isUploading,
+  uploadComplete,
+  startUpload,
+  onUploadComplete,
+  onUploadFail,
+  uploadAttempted,
+  isSelectMode,
+  setIsSelectMode,
+  selectedImages,
+  setSelectedImages,
+}) => {
+  const [pics, setPics] = useState<
+    { url: string; name: string; fileID: string }[]
+  >([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -73,17 +89,16 @@ const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, 
         setPage(1);
         fetchUrls(1);
       }, 500);
-  
+
       return () => clearTimeout(timer);
     }
   }, [uploadComplete, onUploadComplete, fetchUrls]);
-  
+
   useEffect(() => {
     if (uploadAttempted && !uploadComplete && !isUploading && !startUpload) {
       onUploadFail();
     }
   }, [uploadAttempted, uploadComplete, isUploading, startUpload, onUploadFail]);
-
 
   const handleScroll = useCallback(
     (event: React.UIEvent<HTMLElement>) => {
@@ -112,13 +127,32 @@ const MainContent: React.FC<MainContentProps> = ({ isUploading, uploadComplete, 
         onScroll={handleScroll}
       >
         {isUploading ? (
-          <Text color="#404040" fontSize="xxx-large" textAlign="center" mt="auto" mb="auto">
+          <Text
+            color="#404040"
+            fontSize="xxx-large"
+            textAlign="center"
+            mt="auto"
+            mb="auto"
+          >
             <LogoAnimation />
           </Text>
         ) : pics.length ? (
-          <UploadGrid pics={pics} onScroll={handleScroll} isSelectMode={isSelectMode} />
+          <UploadGrid
+            pics={pics}
+            onScroll={handleScroll}
+            isSelectMode={isSelectMode}
+            setIsSelectMode={setIsSelectMode}
+            selectedImages={selectedImages}
+            setSelectedImages={setSelectedImages}
+          />
         ) : (
-          <Text color="#404040" fontSize="xxx-large" textAlign="center" mt="auto" mb="auto">
+          <Text
+            color="#404040"
+            fontSize="xxx-large"
+            textAlign="center"
+            mt="auto"
+            mb="auto"
+          >
             Upload Images To Get Started!
           </Text>
         )}

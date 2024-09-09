@@ -13,7 +13,6 @@ interface FormState {
 }
 
 const Dashboard: React.FC = () => {
-
   const [formState, setFormState] = useState<FormState>({
     files: null,
     channel: "",
@@ -26,11 +25,12 @@ const Dashboard: React.FC = () => {
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadAttempted, setUploadAttempted] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   const toast = useToast();
 
   const handleFormStateChange = useCallback((newState: Partial<FormState>) => {
-    setFormState(prevState => ({ ...prevState, ...newState }));
+    setFormState((prevState) => ({ ...prevState, ...newState }));
   }, []);
 
   const handleUploadComplete = useCallback(() => {
@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
     setIsUploading(false);
     setUploadComplete(false);
     setUploadAttempted(false);
-  
+
     toast({
       title: "Upload Complete",
       description: "Your files have been uploaded successfully.",
@@ -48,13 +48,13 @@ const Dashboard: React.FC = () => {
       position: "top",
     });
   }, [toast]);
-  
+
   const handleUploadFail = useCallback(() => {
     setStartUpload(false);
     setIsUploading(false);
     setUploadComplete(false);
     setUploadAttempted(false);
-  
+
     toast({
       title: "Upload Failed",
       description: "There was an issue uploading your files.",
@@ -67,16 +67,11 @@ const Dashboard: React.FC = () => {
 
   const toggleSelectMode = () => {
     setIsSelectMode(!isSelectMode);
+    setSelectedImages([]);
   };
 
   return (
-    <Box
-      justifyContent="center"
-      minW="100vw"
-      w="100vw"
-      maxH="100vh"
-      h="95%"
-    >
+    <Box justifyContent="center" minW="100vw" w="100vw" maxH="100vh" h="95%">
       <Box
         display="flex"
         justifyContent="center"
@@ -102,7 +97,11 @@ const Dashboard: React.FC = () => {
         >
           {/* Header */}
           <GridItem gridArea="header" bg="#282828" mb="1px">
-            <Header onToggleSelectMode={toggleSelectMode} isSelectMode={isSelectMode} />
+            <Header
+              onToggleSelectMode={toggleSelectMode}
+              isSelectMode={isSelectMode}
+              selectedImages={selectedImages}
+            />
           </GridItem>
 
           {/* Main Content */}
@@ -113,16 +112,19 @@ const Dashboard: React.FC = () => {
             boxShadow="inset 0 0 8px rgba(0, 0, 0, 0.6)"
             minH={{ base: "65vh", md: "auto" }}
           >
-           <MainContent
-            formState={formState}
-            isUploading={isUploading}
-            startUpload={startUpload}
-            uploadComplete={uploadComplete}
-            onUploadComplete={handleUploadComplete}
-            onUploadFail={handleUploadFail}
-            uploadAttempted={uploadAttempted}
-            isSelectMode={isSelectMode}
-          />
+            <MainContent
+              formState={formState}
+              isUploading={isUploading}
+              startUpload={startUpload}
+              uploadComplete={uploadComplete}
+              onUploadComplete={handleUploadComplete}
+              onUploadFail={handleUploadFail}
+              uploadAttempted={uploadAttempted}
+              setIsSelectMode={setIsSelectMode}
+              isSelectMode={isSelectMode}
+              selectedImages={selectedImages}
+              setSelectedImages={setSelectedImages}
+            />
           </GridItem>
 
           {/* Aside */}
