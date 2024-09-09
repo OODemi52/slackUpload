@@ -45,7 +45,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getChannels`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "ngrok-skip-browser-warning": "true",
         },
       });
       const data = await response.json();

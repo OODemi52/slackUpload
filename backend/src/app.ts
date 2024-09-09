@@ -12,7 +12,7 @@ import healthRouter from './Routes/health.route';
 export const app: express.Application = express();
 
 // CORS
-const allowedOrigins = ["https://www.slackshots.app", "https://slackshots.app", "https://rightly-loyal-condor.ngrok-free.app", "https://www.rightly-loyal-condor.ngrok-free.app", "http://127.0.0.1:5173", "http://localhost:5173", "http://127.0.0.1:5174", "http://localhost:5174", "http://127.0.0.1:3000", "http://localhost:3000", "http://127.0.0.1:3001", "http://localhost:3001"];
+const allowedOrigins = ["https://www.slackshots.app", "https://slackshots.app"];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -24,7 +24,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning' ],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(timeout('420s'));

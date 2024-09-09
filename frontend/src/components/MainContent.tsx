@@ -52,7 +52,6 @@ const MainContent: React.FC<MainContentProps> = ({
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
-              "ngrok-skip-browser-warning": "true"
             },
           }
         );

@@ -61,7 +61,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "ngrok-skip-browser-warning": "true",
           },
         }
       );
