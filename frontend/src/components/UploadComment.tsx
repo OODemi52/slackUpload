@@ -28,6 +28,7 @@ const UploadComment: React.FC<UploadCommentProps> = ({ onCommentChange }) => {
         boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
         color="white"
         resize="none"
+        sx={{_placeholder: {color: "white"}}}
       />
     </Box>
   );
