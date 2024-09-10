@@ -28,7 +28,7 @@ interface ImageCardProps {
   isSelected: boolean;
   onSelect: (fileID: string) => void;
   openMenuId: string | null;
-  handleMenuToggle: (fileID: string) => void;
+  handleMenuToggle: (fileID: string | null) => void;
 }
 
 const ImageCard: React.FC<ImageCardProps> = ({

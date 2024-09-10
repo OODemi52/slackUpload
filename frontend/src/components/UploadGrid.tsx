@@ -42,14 +42,14 @@ const UploadGrid: React.FC<UploadGridProps> = ({
     width: 0,
     height: 0,
   });
-  const [isOpen, setIsOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const { accessToken } = useContext(AuthContext);
+  const [isImageOpen, setIsImageOpen] = useState(false);
+  const onImageClose = () => setIsImageOpen(false);
 
-  const onClose = () => setIsOpen(false);
 
   const handleImageClick = async (image: { url: string; name: string }) => {
 
@@ -72,7 +72,7 @@ const UploadGrid: React.FC<UploadGridProps> = ({
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
       setSelectedImage({ src: imageUrl, alt: image.name, width: 300, height: 300 });
-      setIsOpen(true);
+      setIsImageOpen(true);
     } catch (error) {
       console.error('Error fetching full-size image:', error);
     }
@@ -122,7 +122,7 @@ const UploadGrid: React.FC<UploadGridProps> = ({
     setIsDeleteConfirmationOpen(true);
   };
 
-  const handleMenuToggle = (fileID: string) => {
+  const handleMenuToggle = (fileID: string | null) => {
     setOpenMenuId((prevId) => (prevId === fileID ? null : fileID));
   };
 
@@ -131,14 +131,6 @@ const UploadGrid: React.FC<UploadGridProps> = ({
       onUploadComplete();
     }
   }, [pics, onUploadComplete]);
-
-  useEffect(() => {
-    console.log(isSelectMode);
-  }, [isSelectMode]);
-
-  useEffect(() => {
-    console.log(pics[0].fileID);
-  }, [pics]);
 
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>
@@ -169,9 +161,9 @@ const UploadGrid: React.FC<UploadGridProps> = ({
 
       {selectedImage && (
         <AlertDialog
-          isOpen={isOpen}
+          isOpen={isImageOpen}
           leastDestructiveRef={cancelRef}
-          onClose={onClose}
+          onClose={onImageClose}
           size="full"
         >
           <AlertDialogOverlay>
