@@ -7,7 +7,7 @@ interface DownloadManyButtonProps {
 
 const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
   isSelectMode,
-  //selectedImages,
+  selectedImages,
 }) => {
   const handleDownload = () => {
     {
@@ -32,17 +32,20 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
         color="white"
         bg="#080808"
         display={{ base: "none", md: "block" }}
+        isDisabled={selectedImages.length <= 0}
       >
         <button
           onClick={handleDownload}
           style={{
             background: "transparent",
             border: "none",
-            cursor: "pointer",
+            cursor: selectedImages.length > 0 ? "pointer" : "not-allowed",
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
+            opacity: selectedImages.length > 0 ? 1 : 0.2,
           }}
           aria-label="Download All Selected"
+          disabled={selectedImages.length <= 0}
         >
           <svg
             fill="white"

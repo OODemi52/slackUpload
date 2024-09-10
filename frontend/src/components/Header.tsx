@@ -131,7 +131,11 @@ const Header: React.FC<HeaderProps> = ({
                       isSelectMode={isSelectMode}
                       selectedImages={selectedImages}
                     />
-                    <Text color="white" fontSize="16px" fontWeight="bold">
+                    <Text
+                      color={selectedImages.length > 0 ? "#FF0000" : "white"}
+                      fontSize="16px"
+                      fontWeight="bold"
+                    >
                       Delete All Selected
                     </Text>
                   </MenuItem>
