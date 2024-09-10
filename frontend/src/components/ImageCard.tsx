@@ -14,6 +14,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  useOutsideClick,
 } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
 
@@ -46,6 +47,12 @@ const ImageCard: React.FC<ImageCardProps> = ({
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const imageRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useOutsideClick({
+    ref: menuRef,
+    handler: () => handleMenuToggle(null),
+  });
 
   const { accessToken } = useContext(AuthContext);
 
@@ -193,6 +200,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
           border="1px solid #202020"
           dropShadow="0px 4px 4px rgba(0, 0, 0, 1)"
           mr={4}
+          ref={menuRef}
         >
           <MenuItem
             onClick={handleDownload}
