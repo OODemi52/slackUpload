@@ -8,6 +8,7 @@ interface DeleteManyButtonProps {
 
 const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
   isSelectMode,
+  //selectedImages,
 }) => {
   const [strokeColor, setStrokeColor] = useState("white");
 
@@ -18,11 +19,11 @@ const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
   return (
     <>
       <Tooltip
-        label="Delete Multiple Images"
-        aria-label="Delete Multiple Images Button"
+        label="Delete All Selected"
         placement="bottom"
         color="white"
         bg="#FF0000"
+        display={{ base: "none", md: "block" }}
       >
         <button
           onClick={handleDelete}
@@ -33,7 +34,7 @@ const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
           }}
-          aria-label="Delete Multiple Images"
+          aria-label="Delete All Selected"
         >
           <svg
             width="18px"

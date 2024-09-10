@@ -42,9 +42,9 @@ const Logout: React.FC = () => {
     <>
       <Tooltip
         label="Logout"
-        aria-label="Logout Button"
         bg="#FF0000"
         placement="bottom"
+        display={{ base: "none", md: "block" }}
       >
         <button
           onClick={() => setIsOpen(true)}

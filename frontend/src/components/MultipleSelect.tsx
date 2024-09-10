@@ -16,10 +16,10 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
     <>
       <Tooltip
         label={isSelectMode ? "Deselect" : "Select Multiple Images"}
-        aria-label="Select Multiple Images Button"
         placement="bottom"
         color="white"
         bg="#080808"
+        display={{ base: "none", md: "block" }}
       >
         <button
           onClick={onToggleSelectMode}

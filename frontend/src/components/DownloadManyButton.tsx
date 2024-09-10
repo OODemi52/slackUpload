@@ -7,6 +7,7 @@ interface DownloadManyButtonProps {
 
 const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
   isSelectMode,
+  //selectedImages,
 }) => {
   const handleDownload = () => {
     {
@@ -26,11 +27,11 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
   return (
     <>
       <Tooltip
-        label="Download Multiple Images"
-        aria-label="Download Multiple Images Button"
+        label="Download All Selected"
         placement="bottom"
         color="white"
         bg="#080808"
+        display={{ base: "none", md: "block" }}
       >
         <button
           onClick={handleDownload}
@@ -41,7 +42,7 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
           }}
-          aria-label="Download Multiple Images"
+          aria-label="Download All Selected"
         >
           <svg
             fill="white"
