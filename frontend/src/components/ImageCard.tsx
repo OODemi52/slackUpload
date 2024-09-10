@@ -23,10 +23,10 @@ interface ImageCardProps {
   name: string;
   fileID: string;
   onClick: () => void;
-  onDelete: (fileID: string) => void;
+  onDelete: (fileID: string, url: string, name: string) => void;
   isSelectMode: boolean;
   isSelected: boolean;
-  onSelect: (fileID: string) => void;
+  onSelect: (fileID: string, url: string, name: string) => void;
   openMenuId: string | null;
   handleMenuToggle: (fileID: string | null) => void;
 }
@@ -118,9 +118,9 @@ const ImageCard: React.FC<ImageCardProps> = ({
   };
 
   const handleDelete = () => {
-    onDelete(fileID);
+    onDelete(fileID, url, name);
     handleMenuToggle(null);
-  }
+  };
 
   const handleMouseEnterButton = () => {
     setIsHovered(true);
@@ -152,14 +152,14 @@ const ImageCard: React.FC<ImageCardProps> = ({
           ? "0 0 .2rem whitesmoke, 0 0 .2rem whitesmoke, 0 0 0.6rem whitesmoke, inset 0 0 1.3rem whitesmoke;"
           : "none"
       }
-      onClick={() => isSelectMode && onSelect(fileID)}
+      onClick={() => isSelectMode && onSelect(fileID, url, name)}
       cursor={isSelectMode ? "pointer" : "default"}
     >
       {isSelectMode && (
         <Checkbox
           position="absolute"
           isChecked={isSelected}
-          onChange={() => onSelect(fileID)}
+          onChange={() => onSelect(fileID, url, name)}
           opacity={0}
           pointerEvents="none"
         />

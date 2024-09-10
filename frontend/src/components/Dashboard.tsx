@@ -25,7 +25,9 @@ const Dashboard: React.FC = () => {
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadAttempted, setUploadAttempted] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<
+    { url: string; fileID: string; deleteFlag: string; name: string }[]
+  >([]);
 
   const toast = useToast();
 

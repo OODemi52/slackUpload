@@ -20,8 +20,17 @@ interface MainContentProps {
   uploadAttempted: boolean;
   isSelectMode: boolean;
   setIsSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
-  selectedImages: string[];
-  setSelectedImages: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedImages: {
+    url: string;
+    fileID: string;
+    deleteFlag: string;
+    name: string;
+  }[];
+  setSelectedImages: React.Dispatch<
+    React.SetStateAction<
+      { url: string; fileID: string; deleteFlag: string; name: string }[]
+    >
+  >;
 }
 
 const MainContent: React.FC<MainContentProps> = ({

@@ -18,11 +18,15 @@ import Logout from "./Logout";
 import MultipleSelect from "./MultipleSelect";
 import DownloadManyButton from "./DownloadManyButton";
 import DeleteManyButton from "./DeleteManyButton";
-
 interface HeaderProps {
   onToggleSelectMode: () => void;
   isSelectMode: boolean;
-  selectedImages: string[];
+  selectedImages: {
+    url: string;
+    fileID: string;
+    deleteFlag: string;
+    name: string;
+  }[];
 }
 
 const Header: React.FC<HeaderProps> = ({

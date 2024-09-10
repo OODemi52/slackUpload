@@ -2,7 +2,12 @@ import { Tooltip } from "@chakra-ui/react";
 
 interface DownloadManyButtonProps {
   isSelectMode: boolean;
-  selectedImages: string[];
+  selectedImages: {
+    url: string;
+    fileID: string;
+    deleteFlag: string;
+    name: string;
+  }[];
 }
 
 const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({

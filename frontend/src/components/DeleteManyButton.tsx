@@ -3,7 +3,12 @@ import { Tooltip, useMediaQuery } from "@chakra-ui/react";
 
 interface DeleteManyButtonProps {
   isSelectMode: boolean;
-  selectedImages: string[];
+  selectedImages: {
+    url: string;
+    fileID: string;
+    deleteFlag: string;
+    name: string;
+  }[];
 }
 
 const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
