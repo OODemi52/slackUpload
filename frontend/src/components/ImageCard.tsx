@@ -14,10 +14,8 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  useDisclosure,
 } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
-import DeletionConfirmation from "./DeletionConfirmation";
 
 interface ImageCardProps {
   url: string;
@@ -48,7 +46,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const imageRef = useRef<HTMLDivElement | null>(null);
-  const { isOpen, onClose } = useDisclosure();
 
   const { accessToken } = useContext(AuthContext);
 
@@ -110,12 +107,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
       link.click();
       document.body.removeChild(link);
     }
-  };
-
-  const confirmDelete = (deleteFrom: "slack" | "app" | "both") => {
-    onDelete(fileID);
-    onClose();
-    console.log(`Deleting from ${deleteFrom}`);
   };
 
   const handleMouseEnterButton = () => {
@@ -231,12 +222,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
         opacity={isHovered ? 0.8 : 1}
         loading="lazy"
         onClick={onClick}
-      />
-      <DeletionConfirmation
-        isOpen={isOpen}
-        onClose={onClose}
-        onConfirm={confirmDelete}
-        itemName={name}
       />
     </Box>
   );
