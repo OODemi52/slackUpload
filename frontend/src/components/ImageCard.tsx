@@ -114,7 +114,13 @@ const ImageCard: React.FC<ImageCardProps> = ({
       link.click();
       document.body.removeChild(link);
     }
+    handleMenuToggle(null);
   };
+
+  const handleDelete = () => {
+    onDelete(fileID);
+    handleMenuToggle(null);
+  }
 
   const handleMouseEnterButton = () => {
     setIsHovered(true);
@@ -211,7 +217,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
             Download
           </MenuItem>
           <MenuItem
-            onClick={() => onDelete(fileID)}
+            onClick={handleDelete}
             color="red"
             bg="transparent"
             _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
