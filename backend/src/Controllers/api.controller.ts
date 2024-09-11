@@ -275,17 +275,12 @@ export const deleteFiles = async (request: express.Request, response: express.Re
     };
 
     switch (files[0].deleteFlag) {
-      case 'slack':
-        await deleteFromSlack();
-        console.log(`${files.length} files deleted from Slack successfully.`);
-        response.status(200).json({ message: `${files.length} files deleted from Slack successfully.` });
-        break;
-      case 'app':
+      case 'a':
         const deletedFromApp = await deleteFromApp();
         console.log(`${deletedFromApp?.toString()} files deleted from Slackshots successfully.`);
         response.status(200).json({ message: `${deletedFromApp?.toString()} files deleted from Slackshots successfully.` });
         break;
-      case 'both':
+      case 'b':
         await deleteFromSlack();
         const deletedFromBoth = await deleteFromApp();
         console.log(`${deletedFromBoth?.toString()} files deleted from both Slack and Slackshots successfully.`);
