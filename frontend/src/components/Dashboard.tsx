@@ -121,7 +121,8 @@ const Dashboard: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [accessToken, isLoading]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accessToken]
   );
 
   useEffect(() => {
