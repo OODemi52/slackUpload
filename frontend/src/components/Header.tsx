@@ -40,8 +40,6 @@ const Header: React.FC<HeaderProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const toast = useToast();
 
-  const date = new Date();
-
   const { accessToken } = useContext(AuthContext);
 
   const handleDownloadMany = useCallback(async () => {
@@ -54,6 +52,8 @@ const Header: React.FC<HeaderProps> = ({
         url: image.url,
         name: image.name || `image_${image.fileID}.jpg`,
       }));
+
+      const date = new Date();
 
       const response = await fetch(
         `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/downloadFiles`,
@@ -100,12 +100,12 @@ const Header: React.FC<HeaderProps> = ({
     } finally {
       setIsDownloading(false);
     }
-  }, [selectedImages, isDownloading, toast]);
+  }, [selectedImages, isDownloading, accessToken, toast]);
 
   const handleDeleteMany = useCallback(() => {
     // Implement delete logic here
     console.log("Deleting selected images");
-  }, [selectedImages]);
+  }, []);
 
   return (
     <Box
