@@ -37,7 +37,7 @@ interface UploadGridProps {
   >;
   isDeleteConfirmationOpen: boolean;
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirmDelete: (deleteFlag: "slack" | "app" | "both") => void;
+  onConfirmDelete: (deleteFlag: "a" | "b") => void;
 }
 
 const UploadGrid: React.FC<UploadGridProps> = ({

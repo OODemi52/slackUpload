@@ -145,7 +145,7 @@ const Dashboard: React.FC = () => {
   }, [fetchUrls]);
 
 
-  const handleConfirmDelete = async (deleteFlag: "slack" | "app" | "both") => {
+  const handleConfirmDelete = async (deleteFlag: "a" | "b") => {
     try {
       const filesToDelete = selectedImages.map((image) => ({
         id: image.fileID,

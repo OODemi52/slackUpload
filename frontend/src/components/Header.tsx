@@ -33,7 +33,7 @@ interface HeaderProps {
   setIsSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
   isDeleteConfirmationOpen: boolean;
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirmDelete: (deleteFlag: "slack" | "app" | "both") => void;
+  onConfirmDelete: (deleteFlag: "a" | "b") => void;
 }
 
 const Header: React.FC<HeaderProps> = ({

@@ -31,7 +31,7 @@ interface MainContentProps {
   >;
   isDeleteConfirmationOpen: boolean;
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirmDelete: (deleteFlag: "slack" | "app" | "both") => void;
+  onConfirmDelete: (deleteFlag: "a" | "b") => void;
   pics: { url: string; name: string; fileID: string }[];
   hasMore: boolean;
   onLoadMore: () => void;

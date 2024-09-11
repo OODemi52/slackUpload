@@ -18,7 +18,7 @@ import Spacer from "./Spacer";
 interface DeletionConfirmationProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (deleteFlag: "slack" | "app" | "both") => void;
+  onConfirm: (deleteFlag: "a" | "b") => void;
   itemName: string;
 }
 
@@ -28,9 +28,7 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
   onConfirm,
   itemName,
 }) => {
-  const [deleteFlag, setDeleteFlag] = React.useState<"slack" | "app" | "both">(
-    "both"
-  );
+  const [deleteFlag, setDeleteFlag] = React.useState<"a" | "b">("b");
 
   const handleConfirm = () => {
     onConfirm(deleteFlag);
@@ -69,13 +67,13 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
           >
             <RadioGroup
               onChange={(value) => {
-                setDeleteFlag(value as "slack" | "app" | "both");
+                setDeleteFlag(value as "a" | "b");
                 console.log(value);
               }}
               value={deleteFlag}
             >
               <Stack spacing={2}>
-                {["slack", "app", "both"].map((value) => (
+              {["a", "b"].map((value) => (
                   <Box key={value} position="relative">
                     <Radio
                       value={value}
@@ -102,9 +100,8 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
                       padding="8px"
                       cursor="pointer"
                     >
-                      {value === "slack" && "Delete from Slack only"}
-                      {value === "app" && "Delete from SlackShots only"}
-                      {value === "both" && "Delete from both"}
+                       {value === "a" && "Delete from SlackShots only"}
+                       {value === "b" && "Delete from Slack and SlackShots"}
                     </Box>
                   </Box>
                 ))}
