@@ -135,9 +135,12 @@ const UploadGrid: React.FC<UploadGridProps> = ({
   useEffect(() => {
     if (onUploadComplete) {
       onUploadComplete();
-      refreshImages();
     }
-  }, [onUploadComplete, refreshImages]);
+  }, [onUploadComplete]);
+  
+  useEffect(() => {
+    refreshImages();
+  }, [refreshImages]);
 
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>

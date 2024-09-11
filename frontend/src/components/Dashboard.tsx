@@ -209,9 +209,6 @@ const Dashboard: React.FC = () => {
       setSelectedImages([]);
       setIsSelectMode(false);
 
-      // Refresh the image list here
-      // You might need to implement a function to refresh the images
-      // refreshImages();
     } catch (error) {
       console.error("Error deleting files:", error);
       toast({
