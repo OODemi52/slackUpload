@@ -235,42 +235,69 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
 }
 
 export const deleteFiles = async (request: express.Request, response: express.Response) => {
-
   if (!request.userId) {
     return response.status(400).send('UserID is required');
   }
 
-  const fileIDs = request.body.fileIDs as { fileIDs: string[] };
+  const files = request.body.files as { id: string; deleteFlag: string; }[];
 
-  if (!fileIDs || !Array.isArray(fileIDs)) {
-    return response.status(400).send('Invalid file IDs');
-  }
-
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
+  if (!files || !Array.isArray(files) || files.length === 0) {
+    console.log('Invalid file data');
+    return response.status(400).send('Invalid file data');
   }
 
   try {
     const user = await readUser(request.user as string);
+    if (!user) {
+      return response.status(404).send('User not found');
+    }
+
     const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+    if (!slackAccessToken) {
+      return response.status(500).send('Failed to retrieve Slack access token');
+    }
+
     const slackbot = new SlackBot('', slackAccessToken);
-    await slackbot.deleteFilesFromSlack(fileIDs);
-    const deleted  = await anonymizeUploadedFileReferences(request.userId as string, fileIDs);
-    response.status(200).json({ message: `${deleted} files deleted successfully.` });
-  } catch (error) { 
+    const fileIDs = files.map(file => file.id);
+
+    const deleteFromSlack = async () => await slackbot.deleteFilesFromSlack(fileIDs);
+    const deleteFromApp = async () => await anonymizeUploadedFileReferences(request.userId as string, fileIDs);
+
+    switch (files[0].deleteFlag) {
+      case 'slack':
+        await deleteFromSlack();
+        response.status(200).json({ message: `${files.length} files deleted from Slack successfully.` });
+        break;
+      case 'app':
+        const deletedFromApp = await deleteFromApp();
+        response.status(200).json({ message: `${deletedFromApp} files deleted from Slackshots successfully.` });
+        break;
+      case 'both':
+        await deleteFromSlack();
+        const deletedFromBoth = await deleteFromApp();
+        response.status(200).json({ message: `${deletedFromBoth} files deleted from both Slack and Slackshots successfully.` });
+        break;
+      default:
+        console.log('Invalid delete flag');
+        return response.status(400).send('Invalid delete flag');
+    }
+  } catch (error) {
     console.error(`Error deleting files: ${error}`);
     response.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
 export const downloadFiles = async (request: express.Request, response: express.Response) => {
+
   console.log('Downloading files request received');
+
   if (!request.userId) {
     console.log('UserID is required');
     return response.status(400).send('UserID is required');
   }
 
   const files = request.body.files as { url: string; name: string }[];
+
   if (!files || !Array.isArray(files) || files.length === 0) {
     console.log('Invalid file data');
     return response.status(400).send('Invalid file data');
