@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
       const response = await fetch(
         `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/deleteFiles`,
         {
-          method: "POST",
+          method: "DELETE",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
