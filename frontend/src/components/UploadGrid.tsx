@@ -35,6 +35,9 @@ interface UploadGridProps {
       { url: string; fileID: string; deleteFlag: string; name: string }[]
     >
   >;
+  isDeleteConfirmationOpen: boolean;
+  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onConfirmDelete: (deleteFlag: "slack" | "app" | "both") => void;
 }
 
 const UploadGrid: React.FC<UploadGridProps> = ({
@@ -42,17 +45,18 @@ const UploadGrid: React.FC<UploadGridProps> = ({
   onScroll,
   onUploadComplete,
   isSelectMode,
-  setIsSelectMode,
+  //setIsSelectMode,
   selectedImages,
   setSelectedImages,
+  isDeleteConfirmationOpen,
+  setIsDeleteConfirmationOpen,
+  onConfirmDelete,
 }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
   const [imageDimensions, setImageDimensions] = useState({
     width: 0,
     height: 0,
   });
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const { accessToken } = useContext(AuthContext);
@@ -117,25 +121,8 @@ const UploadGrid: React.FC<UploadGridProps> = ({
     );
   };
 
-  const handleConfirmDelete = (deleteFrom: "slack" | "app" | "both") => {
-    const updatedSelectedImages = selectedImages.map((img) => ({
-      ...img,
-      deleteFlag: deleteFrom,
-    }));
-
-    // Implement delete API call
-    console.log(`Deleting ${updatedSelectedImages.length} images`);
-    console.log("Images to delete:", updatedSelectedImages);
-
-    setIsDeleteConfirmationOpen(false);
-    setSelectedImages([]);
-    setIsSelectMode(false);
-    // Add deletion success toast here
-    // Refresh UI to load images without deleted ones
-  };
-
   const handleSingleDelete = (fileID: string, url: string, name: string) => {
-    setSelectedImages([{ fileID, url, deleteFlag: "both", name }]);
+    setSelectedImages([{ fileID, url, name, deleteFlag: "both" }]);
     setIsDeleteConfirmationOpen(true);
   };
 
@@ -215,7 +202,7 @@ const UploadGrid: React.FC<UploadGridProps> = ({
       <DeletionConfirmation
         isOpen={isDeleteConfirmationOpen}
         onClose={() => setIsDeleteConfirmationOpen(false)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={onConfirmDelete}
         itemName={`${selectedImages.length} file${selectedImages.length !== 1 ? "s" : ""}`}
       />
     </Box>

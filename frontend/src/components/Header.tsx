@@ -20,6 +20,7 @@ import Logout from "./Logout";
 import MultipleSelect from "./MultipleSelect";
 import DownloadManyButton from "./DownloadManyButton";
 import DeleteManyButton from "./DeleteManyButton";
+import DeletionConfirmation from "./DeletionConfirmation";
 interface HeaderProps {
   onToggleSelectMode: () => void;
   isSelectMode: boolean;
@@ -29,21 +30,30 @@ interface HeaderProps {
     deleteFlag: string;
     name: string;
   }[];
+  setIsSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
+  isDeleteConfirmationOpen: boolean;
+  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onConfirmDelete: (deleteFlag: "slack" | "app" | "both") => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   onToggleSelectMode,
   isSelectMode,
   selectedImages,
+  //setIsSelectMode,
+  isDeleteConfirmationOpen,
+  setIsDeleteConfirmationOpen,
+  onConfirmDelete,
 }) => {
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const toast = useToast();
 
   const { accessToken } = useContext(AuthContext);
 
   const handleDownloadMany = useCallback(async () => {
-    if (selectedImages.length === 0 || isDownloading) return;
+    if (selectedImages.length <= 0 || isDownloading || isDeleting) return;
 
     setIsDownloading(true);
 
@@ -87,25 +97,32 @@ const Header: React.FC<HeaderProps> = ({
         status: "success",
         duration: 3000,
         isClosable: true,
+        position: !isLargerThan768 ? "bottom" : "top",
       });
     } catch (error) {
       console.error("Error downloading images:", error);
       toast({
         title: "Download Failed",
-        description: "There was an error downloading the images.",
+        description: "There was an error downloading the selected images.",
         status: "error",
         duration: 3000,
         isClosable: true,
+        position: !isLargerThan768 ? "bottom" : "top",
       });
     } finally {
       setIsDownloading(false);
     }
-  }, [selectedImages, isDownloading, accessToken, toast]);
+  }, [selectedImages, isDownloading, isDeleting, accessToken, toast, isLargerThan768]);
 
-  const handleDeleteMany = useCallback(() => {
-    // Implement delete logic here
-    console.log("Deleting selected images");
-  }, []);
+  const handleDeleteMany = useCallback(async () => {
+    if (selectedImages.length <= 0 || isDownloading || isDeleting) return;
+
+    setIsDeleting(true);
+
+    setIsDeleteConfirmationOpen(true);
+
+    console.log(selectedImages);
+  }, [isDeleting, isDownloading, selectedImages, setIsDeleteConfirmationOpen]);
 
   return (
     <Box
@@ -246,6 +263,12 @@ const Header: React.FC<HeaderProps> = ({
           <Logout />
         </Flex>
       </Flex>
+      <DeletionConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => setIsDeleteConfirmationOpen(false)}
+        onConfirm={onConfirmDelete}
+        itemName={`${selectedImages.length} file${selectedImages.length !== 1 ? "s" : ""}`}
+      />
     </Box>
   );
 };

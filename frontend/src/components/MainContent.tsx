@@ -31,6 +31,9 @@ interface MainContentProps {
       { url: string; fileID: string; deleteFlag: string; name: string }[]
     >
   >;
+  isDeleteConfirmationOpen: boolean;
+  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onConfirmDelete: (deleteFlag: "slack" | "app" | "both") => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -44,6 +47,9 @@ const MainContent: React.FC<MainContentProps> = ({
   setIsSelectMode,
   selectedImages,
   setSelectedImages,
+  isDeleteConfirmationOpen,
+  setIsDeleteConfirmationOpen,
+  onConfirmDelete,
 }) => {
   const [pics, setPics] = useState<
     { url: string; name: string; fileID: string }[]
@@ -152,6 +158,9 @@ const MainContent: React.FC<MainContentProps> = ({
             setIsSelectMode={setIsSelectMode}
             selectedImages={selectedImages}
             setSelectedImages={setSelectedImages}
+            isDeleteConfirmationOpen={isDeleteConfirmationOpen}
+            setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
+            onConfirmDelete={onConfirmDelete}
           />
         ) : (
           <Text

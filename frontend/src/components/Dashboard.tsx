@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from "react";
-import { Grid, GridItem, Box, useToast } from "@chakra-ui/react";
+import React, { useState, useCallback, useContext } from "react";
+import { Grid, GridItem, Box, useToast,  useMediaQuery } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
+import AuthContext from "../context/AuthContext";
 
 interface FormState {
   files: FileList | null;
@@ -25,9 +26,14 @@ const Dashboard: React.FC = () => {
   const [uploadComplete, setUploadComplete] = useState(false);
   const [uploadAttempted, setUploadAttempted] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
+  const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+  useState(false);
   const [selectedImages, setSelectedImages] = useState<
     { url: string; fileID: string; deleteFlag: string; name: string }[]
   >([]);
+
+  const { accessToken } = useContext(AuthContext);
 
   const toast = useToast();
 
@@ -72,6 +78,60 @@ const Dashboard: React.FC = () => {
     setSelectedImages([]);
   };
 
+  const handleConfirmDelete = async (deleteFlag: "slack" | "app" | "both") => {
+    try {
+      const filesToDelete = selectedImages.map((image) => ({
+        id: image.fileID,
+        deleteFlag: deleteFlag,
+      }));
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/deleteFiles`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ files: filesToDelete }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Delete Complete",
+        description: result.message,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: !isLargerThan768 ? "bottom" : "top",
+      });
+
+      setIsDeleteConfirmationOpen(false);
+      setSelectedImages([]);
+      setIsSelectMode(false);
+
+      // Refresh the image list here
+      // You might need to implement a function to refresh the images
+      // refreshImages();
+    } catch (error) {
+      console.error("Error deleting files:", error);
+      toast({
+        title: "Deletion Failed",
+        description: "There was an error deleting the selected images.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: !isLargerThan768 ? "bottom" : "top",
+      });
+    }
+  };
+
   return (
     <Box justifyContent="center" minW="100vw" w="100vw" maxH="100vh" h="95%">
       <Box
@@ -103,6 +163,10 @@ const Dashboard: React.FC = () => {
               onToggleSelectMode={toggleSelectMode}
               isSelectMode={isSelectMode}
               selectedImages={selectedImages}
+              setIsSelectMode={setIsSelectMode}
+              isDeleteConfirmationOpen={isDeleteConfirmationOpen}
+              setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
+              onConfirmDelete={handleConfirmDelete}
             />
           </GridItem>
 
@@ -126,6 +190,9 @@ const Dashboard: React.FC = () => {
               isSelectMode={isSelectMode}
               selectedImages={selectedImages}
               setSelectedImages={setSelectedImages}
+              isDeleteConfirmationOpen={isDeleteConfirmationOpen}
+              setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
+              onConfirmDelete={handleConfirmDelete}
             />
           </GridItem>
 

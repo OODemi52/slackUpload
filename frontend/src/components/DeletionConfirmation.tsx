@@ -18,7 +18,7 @@ import Spacer from "./Spacer";
 interface DeletionConfirmationProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (deleteFrom: "slack" | "app" | "both") => void;
+  onConfirm: (deleteFlag: "slack" | "app" | "both") => void;
   itemName: string;
 }
 
@@ -28,12 +28,12 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
   onConfirm,
   itemName,
 }) => {
-  const [deleteFrom, setDeleteFrom] = React.useState<"slack" | "app" | "both">(
+  const [deleteFlag, setDeleteFlag] = React.useState<"slack" | "app" | "both">(
     "both"
   );
 
   const handleConfirm = () => {
-    onConfirm(deleteFrom);
+    onConfirm(deleteFlag);
     onClose();
   };
 
@@ -69,114 +69,45 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
           >
             <RadioGroup
               onChange={(value) => {
-                setDeleteFrom(value as "slack" | "app" | "both");
+                setDeleteFlag(value as "slack" | "app" | "both");
+                console.log(value);
               }}
-              value={deleteFrom}
+              value={deleteFlag}
             >
-              <Stack spacing={0}>
-                <Box position="relative">
-                  <Radio
-                    value="slack"
-                    sx={{
-                      position: "absolute",
-                      opacity: 0,
-                      zIndex: -1,
-                      _checked: {
-                        borderColor: "white",
-                        boxShadow: "0 0 0 1px white",
-                      },
-                    }}
-                    id="slack"
-                  />
-                  <label
-                    htmlFor="slack"
-                    style={{
-                      display: "block",
-                      backgroundColor:
-                        deleteFrom === "slack" ? "#282828" : "#202020",
-                      color: deleteFrom === "slack" ? "white" : "inherit",
-                      border:
-                        deleteFrom === "slack"
+              <Stack spacing={2}>
+                {["slack", "app", "both"].map((value) => (
+                  <Box key={value} position="relative">
+                    <Radio
+                      value={value}
+                      opacity={0}
+                      position="absolute"
+                      zIndex={1}
+                      width="100%"
+                      height="100%"
+                    />
+                    <Box
+                      as="label"
+                      htmlFor={value}
+                      display="block"
+                      backgroundColor={
+                        deleteFlag === value ? "#282828" : "#202020"
+                      }
+                      color={deleteFlag === value ? "white" : "inherit"}
+                      border={
+                        deleteFlag === value
                           ? "1px solid white"
-                          : "1px solid #282828",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Delete from Slack only
-                  </label>
-                </Box>
-
-                <Box position="relative">
-                  <Radio
-                    value="app"
-                    sx={{
-                      position: "absolute",
-                      opacity: 0,
-                      zIndex: -1,
-                      _checked: {
-                        borderColor: "white",
-                        boxShadow: "0 0 0 1px white",
-                      },
-                    }}
-                    id="app"
-                  />
-                  <label
-                    htmlFor="app"
-                    style={{
-                      display: "block",
-                      backgroundColor:
-                        deleteFrom === "app"
-                          ? "#282828"
-                          : "rgba(32, 32, 32, 1)",
-                      color: deleteFrom === "app" ? "white" : "inherit",
-                      border:
-                        deleteFrom === "app"
-                          ? "1px solid white"
-                          : "1px solid #282828",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Delete from SlackShots only
-                  </label>
-                </Box>
-
-                <Box position="relative">
-                  <Radio
-                    value="both"
-                    sx={{
-                      position: "absolute",
-                      opacity: 0,
-                      zIndex: -1,
-                      _checked: {
-                        borderColor: "white",
-                        boxShadow: "0 0 0 1px white",
-                      },
-                    }}
-                    id="both"
-                  />
-                  <label
-                    htmlFor="both"
-                    style={{
-                      display: "block",
-                      backgroundColor:
-                        deleteFrom === "both" ? "#282828" : "#202020",
-                      color: deleteFrom === "both" ? "white" : "inherit",
-                      border:
-                        deleteFrom === "both"
-                          ? "1px solid white"
-                          : "1px solid #282828",
-                      borderRadius: "4px",
-                      padding: "8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Delete from both
-                  </label>
-                </Box>
+                          : "1px solid #282828"
+                      }
+                      borderRadius="4px"
+                      padding="8px"
+                      cursor="pointer"
+                    >
+                      {value === "slack" && "Delete from Slack only"}
+                      {value === "app" && "Delete from SlackShots only"}
+                      {value === "both" && "Delete from both"}
+                    </Box>
+                  </Box>
+                ))}
               </Stack>
             </RadioGroup>
           </Box>
@@ -191,7 +122,6 @@ const DeletionConfirmation: React.FC<DeletionConfirmationProps> = ({
           </Button>
           <Button
             bg="#FF0000"
-            color="white"
             ml={3}
             onClick={handleConfirm}
             boxShadow="0 3px 3px rgba(0, 0, 0, 0.6)"
