@@ -264,12 +264,15 @@ export const deleteFiles = async (request: express.Request, response: express.Re
 };
 
 export const downloadFiles = async (request: express.Request, response: express.Response) => {
+  console.log('Downloading files request received');
   if (!request.userId) {
+    console.log('UserID is required');
     return response.status(400).send('UserID is required');
   }
 
   const files = request.body.files as { url: string; name: string }[];
   if (!files || !Array.isArray(files) || files.length === 0) {
+    console.log('Invalid file data');
     return response.status(400).send('Invalid file data');
   }
 
@@ -288,6 +291,7 @@ export const downloadFiles = async (request: express.Request, response: express.
 
     for (const file of files) {
       try {
+        console.log(`Processing file: ${file.name}`);
         const fileResponse = await axios.get(decodeURIComponent(file.url.toString()), {
           responseType: 'stream',
           headers: {
@@ -301,6 +305,7 @@ export const downloadFiles = async (request: express.Request, response: express.
         }
 
         zip.append(fileResponse.data, { name: file.name });
+        console.log(`File processed: ${file.name}`);
       } catch (error) {
         console.error(`Error processing file ${file.name}:`, error);
       }

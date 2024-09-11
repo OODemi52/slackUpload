@@ -50,7 +50,7 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
                 : "pointer",
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
-            opacity: selectedImages.length > 0 && !isDownloading ? 1 : 0.5,
+            opacity: selectedImages.length > 0 && !isDownloading ? 1 : 0.18,
           }}
           aria-label="Download All Selected"
           disabled={selectedImages.length <= 0}
