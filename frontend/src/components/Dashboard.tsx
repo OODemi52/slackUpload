@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import { Grid, GridItem, Box, useToast,  useMediaQuery } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
@@ -32,6 +32,11 @@ const Dashboard: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<
     { url: string; fileID: string; deleteFlag: string; name: string }[]
   >([]);
+  const [pics, setPics] = useState<
+    { url: string; name: string; fileID: string }[]
+  >([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -78,6 +83,69 @@ const Dashboard: React.FC = () => {
     setSelectedImages([]);
   };
 
+  const fetchUrls = useCallback(
+    async (page: number, limit: number = 16) => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${page}&limit=${limit}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "ngrok-skip-browser-warning": "true",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const imageUrls = await response.json();
+
+        setPics((prevPics) => [...prevPics, ...imageUrls]);
+
+        if (imageUrls.length < limit) {
+          setHasMore(false);
+        }
+      } catch (error) {
+        console.error("Error fetching pics:", error);
+      }
+    },
+    [accessToken]
+  );
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchUrls(page);
+    }
+  }, [page, fetchUrls, accessToken]);
+
+  useEffect(() => {
+    if (uploadComplete) {
+      const timer = setTimeout(() => {
+        handleUploadComplete();
+        setPics([]);
+        setPage(1);
+        fetchUrls(1);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadComplete, handleUploadComplete, fetchUrls]);
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchUrls(page);
+    }
+  }, [page, fetchUrls, accessToken]);
+
+  const refreshImages = useCallback(() => {
+    setPics([]);
+    setPage(1);
+    fetchUrls(1);
+  }, [fetchUrls]);
+
+
   const handleConfirmDelete = async (deleteFlag: "slack" | "app" | "both") => {
     try {
       const filesToDelete = selectedImages.map((image) => ({
@@ -102,6 +170,8 @@ const Dashboard: React.FC = () => {
       }
 
       const result = await response.json();
+
+      refreshImages();
 
       toast({
         title: "Delete Complete",
@@ -183,7 +253,6 @@ const Dashboard: React.FC = () => {
               isUploading={isUploading}
               startUpload={startUpload}
               uploadComplete={uploadComplete}
-              onUploadComplete={handleUploadComplete}
               onUploadFail={handleUploadFail}
               uploadAttempted={uploadAttempted}
               setIsSelectMode={setIsSelectMode}
@@ -193,6 +262,9 @@ const Dashboard: React.FC = () => {
               isDeleteConfirmationOpen={isDeleteConfirmationOpen}
               setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
               onConfirmDelete={handleConfirmDelete}
+              pics={pics}
+              hasMore={hasMore}
+              onLoadMore={() => setPage((prev) => prev + 1)}
             />
           </GridItem>
 
