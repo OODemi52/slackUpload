@@ -91,7 +91,6 @@ const Dashboard: React.FC = () => {
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
-              "ngrok-skip-browser-warning": "true",
             },
           }
         );
