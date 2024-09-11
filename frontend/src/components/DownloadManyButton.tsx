@@ -1,4 +1,4 @@
-import { Tooltip } from "@chakra-ui/react";
+import { Tooltip, useMediaQuery } from "@chakra-ui/react";
 
 interface DownloadManyButtonProps {
   isSelectMode: boolean;
@@ -10,6 +10,7 @@ interface DownloadManyButtonProps {
   }[];
   onDownload?: () => void;
   isDownloading: boolean;
+  isDeleting: boolean;
 }
 
 const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
@@ -17,7 +18,10 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
   selectedImages,
   onDownload,
   isDownloading,
+  isDeleting,
 }) => {
+  const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
+
   const handleClick = (e: React.MouseEvent) => {
     if (isDownloading) {
       return;
@@ -32,12 +36,18 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
   return (
     <>
       <Tooltip
-        label={isDownloading ? "Downloading..." : "Download All Selected"}
+        label={
+          isDownloading
+            ? "Downloading..."
+            : isDeleting
+              ? "Deleting..."
+              : "Download All Selected"
+        }
         placement="bottom"
         color="white"
         bg="#080808"
         display={{ base: "none", md: "block" }}
-        isDisabled={selectedImages.length <= 0 || isDownloading}
+        isDisabled={selectedImages.length <= 0 || isDownloading || isDeleting}
       >
         <button
           onClick={handleClick}
@@ -45,15 +55,22 @@ const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
             background: "transparent",
             border: "none",
             cursor:
-              selectedImages.length <= 0 || isDownloading
+              selectedImages.length <= 0 || isDownloading || isDeleting
                 ? "not-allowed"
                 : "pointer",
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
-            opacity: selectedImages.length > 0 && !isDownloading ? 1 : 0.18,
+            opacity: !isLargerThan768
+              ? selectedImages.length > 0 && !isDownloading
+                ? 1
+                : 0.55
+              : selectedImages.length > 0 && !isDownloading
+                ? 1
+                : 0.18,
           }}
           aria-label="Download All Selected"
           disabled={selectedImages.length <= 0}
+          onFocus={(e) => e.preventDefault()}
         >
           <svg
             fill="white"

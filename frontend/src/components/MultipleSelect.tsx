@@ -30,6 +30,7 @@ const MultipleSelect: React.FC<MultipleSelectProps> = ({
             marginRight: "2rem",
           }}
           aria-label="Select Multiple Images"
+          onFocus={(e) => e.preventDefault()}
         >
           <svg
             width="25px"

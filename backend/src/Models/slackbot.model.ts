@@ -32,11 +32,15 @@ export default class SlackBot {
   async deleteFilesFromSlack(fileIDs: any): Promise<void> {
     try {
       const client = await this.clientPromise;
-      await Promise.all(fileIDs.map(async (file: any) => {
+      console.log(`Deleting files: ${fileIDs}`);
+      
+      for (const fileID of fileIDs) {
         await client.files.delete({
-          file: file.id,
+          file: fileID,
         });
-      }));
+        console.log(`Deleted file with ID: ${fileID}`);
+      }
+      
     } catch (error) {
       console.error(`Error deleting files: ${error}`);
       throw error;

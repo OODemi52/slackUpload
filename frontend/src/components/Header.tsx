@@ -121,7 +121,7 @@ const Header: React.FC<HeaderProps> = ({
 
     setIsDeleteConfirmationOpen(true);
 
-    console.log(selectedImages);
+    setIsDeleting(false);
   }, [isDeleting, isDownloading, selectedImages, setIsDeleteConfirmationOpen]);
 
   return (
@@ -211,6 +211,7 @@ const Header: React.FC<HeaderProps> = ({
                       selectedImages={selectedImages}
                       onDownload={handleDownloadMany}
                       isDownloading={isDownloading}
+                      isDeleting={isDeleting}
                     />
                     <Text color="white" fontSize="16px" fontWeight="bold">
                       Download All Selected
@@ -226,6 +227,9 @@ const Header: React.FC<HeaderProps> = ({
                     <DeleteManyButton
                       isSelectMode={isSelectMode}
                       selectedImages={selectedImages}
+                      isDownloading={isDownloading}
+                      onDelete={handleDeleteMany}
+                      isDeleting={isDeleting}
                     />
                     <Text
                       color={selectedImages.length > 0 ? "#FF0000" : "white"}
@@ -247,10 +251,14 @@ const Header: React.FC<HeaderProps> = ({
                     selectedImages={selectedImages}
                     onDownload={handleDownloadMany}
                     isDownloading={isDownloading}
+                    isDeleting={isDeleting}
                   />
                   <DeleteManyButton
                     isSelectMode={isSelectMode}
                     selectedImages={selectedImages}
+                    isDownloading={isDownloading}
+                    onDelete={handleDeleteMany}
+                    isDeleting={isDeleting}
                   />
                 </>
               )}
@@ -265,7 +273,10 @@ const Header: React.FC<HeaderProps> = ({
       </Flex>
       <DeletionConfirmation
         isOpen={isDeleteConfirmationOpen}
-        onClose={() => setIsDeleteConfirmationOpen(false)}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setIsDeleting(false);
+        }}
         onConfirm={onConfirmDelete}
         itemName={`${selectedImages.length} file${selectedImages.length !== 1 ? "s" : ""}`}
       />

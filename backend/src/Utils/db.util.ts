@@ -144,19 +144,28 @@ export const invalidateRefreshToken = async (userId: string) => {
   }
 };
 
-export const anonymizeUploadedFileReferences = async (userId: string, fileID: string[]) => {
+export const anonymizeUploadedFileReferences = async (userID: string, fileID: string[]) => {
+
+  console.log('UserID:', userID);
+  console.log('FileIDs:', fileID);
+
   if (!fileID.length) {
     console.log('No file references to delete');
     return;
   }
 
   try {
+    const matchingDocuments = await UploadedFileReference.find({ 
+      userID, 
+      slackFileID: { $in: fileID }
+    });
+
       const result = await UploadedFileReference.updateMany(
-        { userId, slackFileID: { $in: fileID } },
+        { userID, slackFileID: { $in: fileID } },
         { $set: { name: null, slackFileID: null, slackPrivateFileURL: null } }
       );
       console.log(`Updated ${result.modifiedCount} file references successfully`);
-      return { modifiedCount: result.modifiedCount };
+      return result.modifiedCount;
     } 
   catch (error) {
     console.error('Error deleting file references:', error);

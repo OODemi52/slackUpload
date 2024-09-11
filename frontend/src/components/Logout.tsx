@@ -55,6 +55,7 @@ const Logout: React.FC = () => {
             marginRight: "2rem",
           }}
           aria-label="Logout"
+          onFocus={(e) => e.preventDefault()}
         >
           <svg
             fill="#FF0000"

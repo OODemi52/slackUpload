@@ -9,11 +9,17 @@ interface DeleteManyButtonProps {
     deleteFlag: string;
     name: string;
   }[];
+  isDownloading: boolean;
+  onDelete?: () => void;
+  isDeleting: boolean;
 }
 
 const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
   isSelectMode,
   selectedImages,
+  isDownloading,
+  onDelete,
+  isDeleting,
 }) => {
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
   const [strokeColor, setStrokeColor] = useState("white");
@@ -26,8 +32,15 @@ const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
     }
   }, [isLargerThan768, selectedImages]);
 
-  const handleDelete = () => {
-    //Implement batch delete logic later
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDeleting) {
+      return;
+    } else {
+      e.stopPropagation();
+      if (onDelete) {
+        onDelete();
+      }
+    }
   };
 
   const handleMouseEnter = () => {
@@ -45,27 +58,40 @@ const DeleteManyButton: React.FC<DeleteManyButtonProps> = ({
   return (
     <>
       <Tooltip
-        label="Delete All Selected"
+        label={
+          isDeleting
+            ? "Deleting..."
+            : isDownloading
+              ? "Downloading..."
+              : "Delete All Selected"
+        }
         placement="bottom"
         color="white"
-        bg="#FF0000"
+        bg={isDeleting || isDownloading ? "#080808" : "#FF0000"}
         display={{ base: "none", md: "block" }}
-        isDisabled={selectedImages.length <= 0}
+        isDisabled={selectedImages.length <= 0 || isDeleting || isDownloading}
       >
         <button
-          onClick={handleDelete}
+          onClick={handleClick}
           style={{
             background: "transparent",
             border: "none",
-            cursor: selectedImages.length > 0 ? "pointer" : "not-allowed",
+            cursor:
+              selectedImages.length <= 0 || isDeleting || isDownloading
+                ? "not-allowed"
+                : "pointer",
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
-            opacity: selectedImages.length > 0 ? 1 : 0.5,
+            opacity:
+              selectedImages.length > 0 && (!isDeleting || !isDownloading)
+                ? 1
+                : 0.5,
           }}
           aria-label="Delete All Selected"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           disabled={selectedImages.length <= 0}
+          onFocus={(e) => e.preventDefault()}
         >
           <svg
             width="18px"
