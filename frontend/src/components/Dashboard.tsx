@@ -121,15 +121,8 @@ const Dashboard: React.FC = () => {
         setIsLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [accessToken]
+    [accessToken, isLoading]
   );
-
-  useEffect(() => {
-    if (accessToken) {
-      fetchUrls(page);
-    }
-  }, [page, fetchUrls, accessToken]);
 
   useEffect(() => {
     if (uploadComplete) {
@@ -286,7 +279,6 @@ const Dashboard: React.FC = () => {
               pics={pics}
               hasMore={hasMore}
               onLoadMore={handleLoadMore}
-              refreshImages={refreshImages}
             />
           </GridItem>
 

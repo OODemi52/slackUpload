@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useRef, useContext } from "react";
 import {
   Grid,
   Box,
@@ -21,7 +21,6 @@ interface ImageProps {
 interface UploadGridProps {
   pics: { url: string; name: string; fileID: string }[];
   onScroll: (event: React.UIEvent<HTMLElement>) => void;
-  onUploadComplete?: () => void;
   isSelectMode: boolean;
   setIsSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
   selectedImages: {
@@ -38,13 +37,11 @@ interface UploadGridProps {
   isDeleteConfirmationOpen: boolean;
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirmDelete: (deleteFlag: "a" | "b") => void;
-  refreshImages: () => void;
 }
 
 const UploadGrid: React.FC<UploadGridProps> = ({
   pics,
   onScroll,
-  onUploadComplete,
   isSelectMode,
   //setIsSelectMode,
   selectedImages,
@@ -52,7 +49,6 @@ const UploadGrid: React.FC<UploadGridProps> = ({
   isDeleteConfirmationOpen,
   setIsDeleteConfirmationOpen,
   onConfirmDelete,
-  refreshImages,
 }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
   const [imageDimensions, setImageDimensions] = useState({
@@ -131,16 +127,6 @@ const UploadGrid: React.FC<UploadGridProps> = ({
   const handleMenuToggle = (fileID: string | null) => {
     setOpenMenuId((prevId) => (prevId === fileID ? null : fileID));
   };
-
-  useEffect(() => {
-    if (onUploadComplete) {
-      onUploadComplete();
-    }
-  }, [onUploadComplete]);
-  
-  useEffect(() => {
-    refreshImages();
-  }, [refreshImages]);
 
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>
