@@ -37,6 +37,7 @@ const Dashboard: React.FC = () => {
   >([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -84,10 +85,12 @@ const Dashboard: React.FC = () => {
   };
 
   const fetchUrls = useCallback(
-    async (page: number, limit: number = 16) => {
+    async (pageNum: number, limit: number = 16) => {
+      if (isLoading) return;
+      setIsLoading(true);
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${page}&limit=${limit}`,
+          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${pageNum}&limit=${limit}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -100,17 +103,25 @@ const Dashboard: React.FC = () => {
         }
 
         const imageUrls = await response.json();
-
-        setPics((prevPics) => [...prevPics, ...imageUrls]);
+        setPics((prevPics) => {
+          const newPics = [...prevPics, ...imageUrls];
+          const uniquePics = newPics.filter(
+            (pic, index, self) =>
+              index === self.findIndex((t) => t.fileID === pic.fileID)
+          );
+          return uniquePics;
+        });
 
         if (imageUrls.length < limit) {
           setHasMore(false);
         }
       } catch (error) {
         console.error("Error fetching pics:", error);
+      } finally {
+        setIsLoading(false);
       }
     },
-    [accessToken]
+    [accessToken, isLoading]
   );
 
   useEffect(() => {
@@ -133,14 +144,27 @@ const Dashboard: React.FC = () => {
   }, [uploadComplete, handleUploadComplete, fetchUrls]);
 
   useEffect(() => {
-    if (accessToken) {
+    if (accessToken && page === 1) {
       fetchUrls(page);
     }
-  }, [page, fetchUrls, accessToken]);
+  }, [accessToken, fetchUrls, page]);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !isLoading) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  }, [hasMore, isLoading]);
+
+  useEffect(() => {
+    if (page > 1) {
+      fetchUrls(page);
+    }
+  }, [page, fetchUrls]);
 
   const refreshImages = useCallback(() => {
     setPics([]);
     setPage(1);
+    setHasMore(true);
     fetchUrls(1);
   }, [fetchUrls]);
 
@@ -263,7 +287,8 @@ const Dashboard: React.FC = () => {
               onConfirmDelete={handleConfirmDelete}
               pics={pics}
               hasMore={hasMore}
-              onLoadMore={() => setPage((prev) => prev + 1)}
+              onLoadMore={handleLoadMore}
+              refreshImages={refreshImages}
             />
           </GridItem>
 

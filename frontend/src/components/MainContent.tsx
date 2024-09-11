@@ -35,6 +35,7 @@ interface MainContentProps {
   pics: { url: string; name: string; fileID: string }[];
   hasMore: boolean;
   onLoadMore: () => void;
+  refreshImages: () => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -53,6 +54,7 @@ const MainContent: React.FC<MainContentProps> = ({
   pics,
   hasMore,
   onLoadMore,
+  refreshImages,
 }) => {
 
   useEffect(() => {
@@ -66,8 +68,8 @@ const MainContent: React.FC<MainContentProps> = ({
       const { target } = event;
       if (
         (target as HTMLElement).scrollHeight -
-          (target as HTMLElement).scrollTop ===
-          (target as HTMLElement).clientHeight &&
+        (target as HTMLElement).scrollTop <=
+        (target as HTMLElement).clientHeight + 100 &&
         hasMore
       ) {
         onLoadMore();
@@ -108,6 +110,7 @@ const MainContent: React.FC<MainContentProps> = ({
             isDeleteConfirmationOpen={isDeleteConfirmationOpen}
             setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
             onConfirmDelete={onConfirmDelete}
+            refreshImages={refreshImages}
           />
         ) : (
           <Text

@@ -38,6 +38,7 @@ interface UploadGridProps {
   isDeleteConfirmationOpen: boolean;
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirmDelete: (deleteFlag: "a" | "b") => void;
+  refreshImages: () => void;
 }
 
 const UploadGrid: React.FC<UploadGridProps> = ({
@@ -51,6 +52,7 @@ const UploadGrid: React.FC<UploadGridProps> = ({
   isDeleteConfirmationOpen,
   setIsDeleteConfirmationOpen,
   onConfirmDelete,
+  refreshImages,
 }) => {
   const [selectedImage, setSelectedImage] = useState<ImageProps | null>(null);
   const [imageDimensions, setImageDimensions] = useState({
@@ -133,8 +135,9 @@ const UploadGrid: React.FC<UploadGridProps> = ({
   useEffect(() => {
     if (onUploadComplete) {
       onUploadComplete();
+      refreshImages();
     }
-  }, [pics, onUploadComplete]);
+  }, [onUploadComplete, refreshImages]);
 
   return (
     <Box maxH="900px" overflowY="scroll" onScroll={onScroll}>
