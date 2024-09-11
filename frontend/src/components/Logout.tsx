@@ -105,7 +105,7 @@ const Logout: React.FC = () => {
               <Button ref={cancelRef} onClick={onClose} boxShadow="0 3px 3px rgba(0, 0, 0, 0.6)">
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={onConfirmLogout} ml={3} boxShadow="0 3px 3px rgba(0, 0, 0, 0.6)">
+              <Button bg="#FF0000" color="white" onClick={onConfirmLogout} ml={3} boxShadow="0 3px 3px rgba(0, 0, 0, 0.6)">
                 Logout
               </Button>
             </AlertDialogFooter>
