@@ -23,7 +23,9 @@
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.529.1",
     "@slack/web-api": "^6.9.0",
+    "@types/archiver": "^6.0.2",
     "@types/connect-timeout": "^0.0.39",
+    "archiver": "^7.0.1",
     "aws-sdk": "^2.1555.0",
     "axios": "^1.6.7",
     "connect-timeout": "^1.9.0",

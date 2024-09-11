@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import express from 'express';
+import archiver from 'archiver';
 import { IncomingForm } from 'formidable';
 import SlackBot from '../Models/slackbot.model';
 import { UploadedFile, ParsedFile } from '../types/file';
@@ -258,6 +259,57 @@ export const deleteFiles = async (request: express.Request, response: express.Re
     response.status(200).json({ message: `${deleted} files deleted successfully.` });
   } catch (error) { 
     console.error(`Error deleting files: ${error}`);
+    response.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const downloadFiles = async (request: express.Request, response: express.Response) => {
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
+  }
+
+  const files = request.body.files as { url: string; name: string }[];
+  if (!files || !Array.isArray(files) || files.length === 0) {
+    return response.status(400).send('Invalid file data');
+  }
+
+  try {
+    const user = await readUser(request.user as string);
+    const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+    const zip = archiver('zip', {
+      zlib: { level: 9 }
+    });
+
+    response.setHeader('Content-Type', 'application/zip');
+    response.setHeader('Content-Disposition', `attachment; filename=slack_files.zip`);
+
+    zip.pipe(response);
+
+    for (const file of files) {
+      try {
+        const fileResponse = await axios.get(decodeURIComponent(file.url.toString()), {
+          responseType: 'stream',
+          headers: {
+            Authorization: `Bearer ${slackAccessToken}`,
+          },
+        });
+
+        if (!fileResponse.data) {
+          console.error(`Failed to fetch file: ${file.url}`);
+          continue;
+        }
+
+        zip.append(fileResponse.data, { name: file.name });
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error);
+      }
+    }
+
+    await zip.finalize();
+
+  } catch (error) {
+    console.error(`Error downloading files: ${error}`);
     response.status(500).json({ error: 'Internal Server Error' });
   }
 };
