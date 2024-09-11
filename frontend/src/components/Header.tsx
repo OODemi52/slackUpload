@@ -1,4 +1,6 @@
-import React from "react";
+import { useState, useCallback, useContext } from "react";
+import { useToast } from "@chakra-ui/react";
+import AuthContext from "../context/AuthContext";
 import {
   Heading,
   Flex,
@@ -35,6 +37,75 @@ const Header: React.FC<HeaderProps> = ({
   selectedImages,
 }) => {
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const toast = useToast();
+
+  const date = new Date();
+
+  const { accessToken } = useContext(AuthContext);
+
+  const handleDownloadMany = useCallback(async () => {
+    if (selectedImages.length === 0 || isDownloading) return;
+
+    setIsDownloading(true);
+
+    try {
+      const filesToDownload = selectedImages.map((image) => ({
+        url: image.url,
+        name: image.name || `image_${image.fileID}.jpg`,
+      }));
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/downloadFiles`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ files: filesToDownload }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = `SS_images_${filesToDownload.length}_files_${date.toISOString().replace(/[:.]/g, "-")}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download Complete",
+        description: `Successfully downloaded ${selectedImages.length} images.`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Error downloading images:", error);
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading the images.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [selectedImages, isDownloading, toast]);
+
+  const handleDeleteMany = useCallback(() => {
+    // Implement delete logic here
+    console.log("Deleting selected images");
+  }, [selectedImages]);
 
   return (
     <Box
@@ -116,10 +187,13 @@ const Header: React.FC<HeaderProps> = ({
                     bg="transparent"
                     _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
                     isDisabled={selectedImages.length > 0 ? false : true}
+                    onClick={handleDownloadMany}
                   >
                     <DownloadManyButton
                       isSelectMode={isSelectMode}
                       selectedImages={selectedImages}
+                      onDownload={handleDownloadMany}
+                      isDownloading={isDownloading}
                     />
                     <Text color="white" fontSize="16px" fontWeight="bold">
                       Download All Selected
@@ -130,6 +204,7 @@ const Header: React.FC<HeaderProps> = ({
                     bg="transparent"
                     _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
                     isDisabled={selectedImages.length > 0 ? false : true}
+                    onClick={handleDeleteMany}
                   >
                     <DeleteManyButton
                       isSelectMode={isSelectMode}
@@ -153,6 +228,8 @@ const Header: React.FC<HeaderProps> = ({
                   <DownloadManyButton
                     isSelectMode={isSelectMode}
                     selectedImages={selectedImages}
+                    onDownload={handleDownloadMany}
+                    isDownloading={isDownloading}
                   />
                   <DeleteManyButton
                     isSelectMode={isSelectMode}

@@ -8,46 +8,49 @@ interface DownloadManyButtonProps {
     deleteFlag: string;
     name: string;
   }[];
+  onDownload?: () => void;
+  isDownloading: boolean;
 }
 
 const DownloadManyButton: React.FC<DownloadManyButtonProps> = ({
   isSelectMode,
   selectedImages,
+  onDownload,
+  isDownloading,
 }) => {
-  const handleDownload = () => {
-    {
-      /* if (imageUrl) {
-            const link = document.createElement('a');
-            link.href = imageUrl;
-            link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        // Need to modify to logic to download images together
-     */
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDownloading) {
+      return;
+    } else {
+      e.stopPropagation();
+      if (onDownload) {
+        onDownload();
+      }
     }
   };
 
   return (
     <>
       <Tooltip
-        label="Download All Selected"
+        label={isDownloading ? "Downloading..." : "Download All Selected"}
         placement="bottom"
         color="white"
         bg="#080808"
         display={{ base: "none", md: "block" }}
-        isDisabled={selectedImages.length <= 0}
+        isDisabled={selectedImages.length <= 0 || isDownloading}
       >
         <button
-          onClick={handleDownload}
+          onClick={handleClick}
           style={{
             background: "transparent",
             border: "none",
-            cursor: selectedImages.length > 0 ? "pointer" : "not-allowed",
+            cursor:
+              selectedImages.length <= 0 || isDownloading
+                ? "not-allowed"
+                : "pointer",
             marginRight: "2rem",
             display: isSelectMode ? "block" : "none",
-            opacity: selectedImages.length > 0 ? 1 : 0.2,
+            opacity: selectedImages.length > 0 && !isDownloading ? 1 : 0.5,
           }}
           aria-label="Download All Selected"
           disabled={selectedImages.length <= 0}
