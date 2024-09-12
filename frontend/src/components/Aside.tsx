@@ -30,7 +30,8 @@ interface AsideProps {
 
 interface Channel { 
   value: string;
-  label: string 
+  label: string;
+  isMember: boolean;
 }
 
 const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete, setUploadAttempted }) => {
@@ -49,16 +50,38 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       });
       const data = await response.json();
       const formattedChannels: Channel[] = data.map(
-        (channel: [string, string]) => ({
-          value: channel[0],
-          label: channel[1],
-        }),
-      );
+      (channel: { id: string, name: string, isMember: boolean }) => ({
+        value: channel.id,
+        label: channel.name,
+        isMember: channel.isMember,
+      }),
+    );
       setChannels(formattedChannels);
     } catch (error) {
       console.error("Error fetching channels:", error);
     }
   }, [accessToken]);
+
+  const handleAddBot = async (channelId: string) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/addBotToChannel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ channelId }),
+      });
+  
+      if (response.ok) {
+        fetchChannels();
+      } else {
+        console.error('Failed to add bot to channel');
+      }
+    } catch (error) {
+      console.error('Error adding bot to channel:', error);
+    }
+  };
 
   const handleFolderSelection = (files: FileList | null): void => {
     setFormState({ files });
@@ -240,6 +263,7 @@ const performUpload = useCallback(async () => {
             <ChannelSelector
               channels={channels}
               onChannelChange={handleChannelSelection}
+              onAddBot={handleAddBot}
             />
           </Box>
         </VStack>
@@ -309,6 +333,7 @@ const performUpload = useCallback(async () => {
           <ChannelSelector
             channels={channels}
             onChannelChange={handleChannelSelection}
+            onAddBot={handleAddBot}
           />
         </Box>
       </VStack>

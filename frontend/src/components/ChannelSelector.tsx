@@ -1,17 +1,19 @@
 import React, { useState } from "react";
-import { Box } from "@chakra-ui/react";
+import { Box, Button } from "@chakra-ui/react";
 import { Select } from "chakra-react-select";
 
-type Channel = { value: string; label: string };
+type Channel = { value: string; label: string, isMember: boolean };
 
 interface ChannelSelectorProps {
   channels: Channel[];
   onChannelChange: (channelId: string) => void;
+  onAddBot: (channelId: string) => void;
 }
 
 const ChannelSelector: React.FC<ChannelSelectorProps> = ({
   channels,
   onChannelChange,
+  onAddBot,
 }) => {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
@@ -91,6 +93,11 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
             }),
         }}
       />
+      {selectedChannel && !selectedChannel.isMember && (
+        <Button mt={2} onClick={() => onAddBot(selectedChannel.value)}>
+          Add Bot to Channel
+        </Button>
+      )}
     </Box>
   );
 };
