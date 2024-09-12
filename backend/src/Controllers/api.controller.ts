@@ -40,6 +40,28 @@ export const getChannels = async (request: express.Request, response: express.Re
   }
 };
 
+export const addBotToChannel = async (request: express.Request, response: express.Response) => {
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
+  }
+
+  const user = await readUser(request.user as string);
+  const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+  const { channelId } = request.body
+  if (!channelId) {
+    return response.status(400).send("Channel ID required")
+  }
+
+  try {
+    const slackbot = new SlackBot(channelId, slackAccessToken);
+    await slackbot.addBotToChannel(channelId);
+  } catch (error) {
+    console.error(`Error adding bot to channel: ${error}`);
+    response.status(500).json({ error: 'Failed to add bot to channel' });
+  }
+}
+
 export const getImagesUrls = async (request: express.Request, response: express.Response) => {
 
   const { page = '1', limit = '10' } = request.query as { page: string, limit: string };
