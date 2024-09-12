@@ -10,11 +10,11 @@ export default class SlackBot {
   private clientPromise: Promise<WebClient>;
 
   constructor(channel?: string, accessToken?: string) {
-    this.channel = channel || ''
-    this.clientPromise = this.setupClient(accessToken);
+    this.channel = channel || '';
+    this.clientPromise = this.setupClient(accessToken || '');
   }
 
-  private async setupClient(accessToken: string | undefined): Promise<WebClient> {
+  private async setupClient(accessToken: string): Promise<WebClient> {
     return new WebClient(accessToken);
   }
 
@@ -22,10 +22,41 @@ export default class SlackBot {
     try {
       const client = await this.clientPromise;
       const result = await client.conversations.list();
-      return result.channels?.map((channel) => [`${channel.id}`, `${channel.name}`]) ?? [];
+      const botId = (await client.auth.test()).bot_id;
+
+      const channels = await Promise.all(result.channels?.map(async (channel) => {
+        const isMember = channel.id && botId ? await this.isBotMemberOfChannel(channel.id, botId) : false;
+        return {
+          id: channel.id,
+          name: channel.name,
+          isMember: isMember
+        };
+      }) ?? []);
+      
+      return channels;
     } catch (error) {
       console.error(`Error fetching channels: ${error}`);
       return [];
+    }
+  }
+
+  async isBotMemberOfChannel(channelId: string, botId: string) {
+    try {
+      const members = await (await this.clientPromise).conversations.members({ channel: channelId });
+      return members.members?.includes(botId);
+    } catch (error) {
+      console.error(`Error checking bot membership: ${error}`);
+      return false;
+    }
+  }
+
+  async addBotToChannel(channelId: string) {
+    try {
+      const client = this.clientPromise;
+      await (await client).conversations.join({ channel: channelId });
+    } catch (error) {
+      console.error(`Error adding bot to channel: ${error}`);
+      throw error;
     }
   }
 
