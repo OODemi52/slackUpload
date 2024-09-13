@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as uuid from "uuid";
-import { Stack, VStack, Spacer, Box, Text, Divider, SimpleGrid } from "@chakra-ui/react";
+import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
 import FolderSelector from "./FolderSelector";
 import MessageBatchSize from "./MessageBatchSize";
@@ -38,8 +38,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
+  const [loadingBotChannels, setLoadingBotChannels] = useState<{ [key: string]: boolean }>({});
 
   const { accessToken } = useContext(AuthContext);
+
+  const toast = useToast();
 
   const fetchChannels = useCallback(async () => {
     try {
@@ -62,7 +65,44 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     }
   }, [accessToken]);
 
+  useEffect(() => {
+    setChannels([
+      {
+        value: "C0000001",
+        label: "Channel 1",
+        isMember: true,
+      },
+      {
+        value: "C0000002",
+        label: "Channel 2",
+        isMember: false,
+      },
+      {
+        value: "C0000003",
+        label: "Channel 3",
+        isMember: true,
+      },
+      {
+        value: "C0000004",
+        label: "Channel 4",
+        isMember: true,
+      },
+      {
+        value: "C0000005",
+        label: "Channel 5",
+        isMember: false,
+      },
+      {
+        value: "C0000006",
+        label: "Channel 6",
+        isMember: false,
+      },
+    ]);
+  }, [accessToken]);
+
+
   const handleAddBot = async (channelId: string) => {
+    setLoadingBotChannels(prev => ({ ...prev, [channelId]: true }));
     try {
       const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/addBotToChannel`, {
         method: 'POST',
@@ -78,8 +118,29 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       } else {
         console.error('Failed to add bot to channel');
       }
+
+      toast({
+        title: "Slackshots Added",
+        description: "Slackshots has been successfully added to the channel.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+
     } catch (error) {
       console.error('Error adding bot to channel:', error);
+
+      toast({
+        title: "Failed To Add Slackshots",
+        description: "There was an error adding Slackshots to the channel.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+    } finally {
+      setLoadingBotChannels(prev => ({ ...prev, [channelId]: false }));
     }
   };
 
@@ -256,14 +317,34 @@ const performUpload = useCallback(async () => {
         </VStack>
 
         <VStack align="stretch">
+          <HStack>
           <Text color="white" fontSize="18px" fontWeight="bold">
             Channel:
           </Text>
+          <Popover placement="top" size="xl">
+            <PopoverTrigger>
+              <Button size="xs" bgGradient="linear(to bottom right, #181818, #282828)" color="white" borderRadius={20} border="1px solid #282828" _hover={{border: "1px solid white"}} boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)" aria-label="Channel Seletector Info Popover">
+                ?
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              bgGradient="linear(to bottom right, #080808, #202020)" 
+              color="white" 
+              border="2px solid #282828"
+              boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
+              mr={8}
+            >
+              <PopoverHeader border="0"><Text color="white" fontSize="18px" fontWeight="bold">Add SlackShots To Channel</Text></PopoverHeader>
+              <PopoverBody justifyContent="center" textAlign="center">To upload files, first add SlackShots to the channel. Click the “+” next to a disabled channel or manually add the bot to the channel.</PopoverBody>
+            </PopoverContent>
+          </Popover>
+          </HStack>
           <Box>
             <ChannelSelector
               channels={channels}
               onChannelChange={handleChannelSelection}
               onAddBot={handleAddBot}
+              loadingBotChannels={loadingBotChannels}
             />
           </Box>
         </VStack>
@@ -321,19 +402,34 @@ const performUpload = useCallback(async () => {
         width={{ base: "100%", md: "15rem" }}
         display={{ base: "none", md: "flex" }}
       >
-        <Text
-          alignSelf="flex-start"
-          color="white"
-          fontSize="18px"
-          fontWeight="bold"
-        >
-          Channel:
-        </Text>
+        <HStack>
+          <Text color="white" fontSize="18px" fontWeight="bold">
+            Channel:
+          </Text>
+          <Popover placement="top" size="xl" matchWidth>
+            <PopoverTrigger>
+              <Button size="xs" bgGradient="linear(to bottom right, #181818, #282828)" color="white" borderRadius={20} border="1px solid #282828" _hover={{border: "1px solid white"}} boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)" aria-label="Channel Seletector Info Popover">
+                ?
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              bgGradient="linear(to bottom right, #080808, #202020)" 
+              color="white" 
+              border="2px solid #282828"
+              boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
+              mr={8}
+            >
+              <PopoverHeader border='0'>Add SlackShots To Channel</PopoverHeader>
+              <PopoverBody justifyContent="center" textAlign="center">To upload files to a channel, SlackShots must first be added to it. Click the “+” next to a disabled channel or manually add the bot to the channel.</PopoverBody>
+            </PopoverContent>
+          </Popover>
+          </HStack>
         <Box mt="1rem">
           <ChannelSelector
             channels={channels}
             onChannelChange={handleChannelSelection}
             onAddBot={handleAddBot}
+            loadingBotChannels={loadingBotChannels}
           />
         </Box>
       </VStack>

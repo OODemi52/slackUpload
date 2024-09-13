@@ -1,26 +1,74 @@
-import React, { useState } from "react";
-import { Box, Button } from "@chakra-ui/react";
-import { Select } from "chakra-react-select";
+import React, { useState, useCallback } from "react";
+import { Box, Flex, Button, Tooltip } from "@chakra-ui/react";
+import { Select, chakraComponents, OptionProps } from "chakra-react-select";
 
-type Channel = { value: string; label: string, isMember: boolean };
+type Channel = { value: string; label: string; isMember: boolean };
 
 interface ChannelSelectorProps {
   channels: Channel[];
   onChannelChange: (channelId: string) => void;
   onAddBot: (channelId: string) => void;
+  loadingBotChannels: { [key: string]: boolean };
+  
 }
 
 const ChannelSelector: React.FC<ChannelSelectorProps> = ({
   channels,
   onChannelChange,
   onAddBot,
+  loadingBotChannels,
 }) => {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
-  const handleChannelSelect = (channel: Channel) => {
-    setSelectedChannel(channel);
-    onChannelChange(channel.value);
-  };
+  const handleChannelSelect = useCallback(
+    (channel: Channel) => {
+      if (channel.isMember) {
+        setSelectedChannel(channel);
+        onChannelChange(channel.value);
+      }
+    },
+    [onChannelChange]
+  );
+
+  const CustomOption = React.memo(
+    ({ children, ...props }: OptionProps<Channel, false>) => {
+    const { data, innerProps, innerRef } = props;
+    return (
+      <chakraComponents.Option {...props} >
+        <Box flex="1">{children}</Box>
+        <Flex
+          ref={innerRef}
+          {...innerProps}
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          {!data.isMember && (
+            <Tooltip
+            label="Add SlackShots To This Channel"
+            color="white"
+            bg="#080808"
+            placement="right"
+            display={{ base: "none", md: "block" }}
+          >
+            <Button
+              size="xs"
+              color="white"
+              bg="#282828"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddBot(data.value);
+              }}
+              isLoading={loadingBotChannels[data.value]}
+              loadingText=""
+            >
+              +
+            </Button>
+            </Tooltip>
+          )}
+        </Flex>
+      </chakraComponents.Option>
+    );
+  });
 
   return (
     <Box>
@@ -32,8 +80,10 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
         onChange={(newValue: Channel | null) =>
           handleChannelSelect(newValue as Channel)
         }
-        
         value={selectedChannel}
+        components={{ Option: CustomOption }}
+        isOptionDisabled={(option) => !option.isMember}
+        selectedOptionStyle="check"
         chakraStyles={{
           control: (provided) => ({
             ...provided,
@@ -41,18 +91,12 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
             borderColor: "#202020",
             bgGradient: "linear(to bottom right, #080808, #202020)",
             boxShadow: "4px 4px 4px rgba(0, 0, 0, 0.5)",
-            "&:hover": { border: "1px solid white" }
+            "&:hover": { border: "1px solid white" },
           }),
           dropdownIndicator: (provided) => ({
             ...provided,
             bgGradient: "linear(to bottom right, #080808, #202020)",
             color: "white",
-          }),
-          option: (provided) => ({
-            ...provided,
-            backgroundColor: "transparent",
-            color: "white",
-            _hover: { bg: "rgba(255, 255, 255, 0.05)" },
           }),
           placeholder: (provided) => ({
             ...provided,
@@ -62,6 +106,13 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
             ...provided,
             backgroundColor: "#202020",
             overflow: "hidden",
+          }),
+          option: (provided, state) => ({
+            ...provided,
+            backgroundColor: "transparent",
+            color: state.isDisabled ? "rgba(255, 255, 255, 0.25)" : "white",
+            cursor: state.isDisabled ? "not-allowed" : "pointer",
+            _hover: { bg: "rgba(255, 255, 255, 0.05)" },
           }),
           multiValueLabel: (provided) => ({
             ...provided,
@@ -90,14 +141,9 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
           singleValue: (provided) => ({
             ...provided,
             color: "white",
-            }),
+          }),
         }}
       />
-      {selectedChannel && !selectedChannel.isMember && (
-        <Button mt={2} onClick={() => onAddBot(selectedChannel.value)}>
-          Add Bot to Channel
-        </Button>
-      )}
     </Box>
   );
 };
