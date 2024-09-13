@@ -52,7 +52,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         },
       });
       const data = await response.json();
-      console.log("Channels:", data);
       const formattedChannels: Channel[] = data.map(
       (channel: { id: string, name: string, isMember: boolean }) => ({
         value: channel.id,
@@ -60,7 +59,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         isMember: channel.isMember,
       }),
     );
-    console.log("Formatted Channels:", formattedChannels);
       setChannels(formattedChannels);
     } catch (error) {
       console.error("Error fetching channels:", error);
@@ -71,7 +69,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
 
   const handleAddBot = async (channelId: string) => {
-    console.log("Adding bot to channel:", channelId);
     setLoadingBotChannels(prev => ({ ...prev, [channelId]: true }));
     try {
       const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/addBotToChannel`, {
