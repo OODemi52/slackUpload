@@ -6,7 +6,7 @@ const SlackAuth: React.FC = () => {
     const width = 600, height = 600;
     const left = (window.innerWidth - width) / 2;
     const top = (window.innerHeight - height) / 2;
-    const url = `https://slack.com/oauth/v2/authorize?client_id=1667223032755.4207899647667&scope=channels:history,channels:read,chat:write,files:read,files:write,groups:history,groups:read,im:read,mpim:read,users:read,users:read.email&user_scope=`;
+    const url = `https://slack.com/oauth/v2/authorize?client_id=1667223032755.4207899647667&scope=channels:history,channels:read,chat:write,files:read,files:write,groups:history,groups:read,im:read,mpim:read,users:read,users:read.email,channels:join&user_scope=`;
 
     window.open(
       url,
