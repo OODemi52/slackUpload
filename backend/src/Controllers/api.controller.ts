@@ -56,6 +56,7 @@ export const addBotToChannel = async (request: express.Request, response: expres
   try {
     const slackbot = new SlackBot(channelId, slackAccessToken);
     await slackbot.addBotToChannel(channelId);
+    response.status(200).json({ message: 'Bot added to channel successfully' });
   } catch (error) {
     console.error(`Error adding bot to channel: ${error}`);
     response.status(500).json({ error: 'Failed to add bot to channel' });
