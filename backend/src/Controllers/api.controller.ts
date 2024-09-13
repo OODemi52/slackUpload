@@ -33,7 +33,6 @@ export const getChannels = async (request: express.Request, response: express.Re
   try {
       const slackbot = new SlackBot('', slackAccessToken);
       const channels = await slackbot.getChannels();
-      console.log(`Fetched channels from controller: ${channels}`);
       response.status(200).json(channels);
   } catch (error) {
       console.error(`Error fetching channels: ${error}`);

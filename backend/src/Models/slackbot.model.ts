@@ -22,31 +22,18 @@ export default class SlackBot {
     try {
       const client = await this.clientPromise;
       const result = await client.conversations.list();
-      const botId = (await client.auth.test()).bot_id;
 
       const channels = await Promise.all(result.channels?.map(async (channel) => {
-        const isMember = channel.id && botId ? await this.isBotMemberOfChannel(channel.id, botId) : false;
         return {
           id: channel.id,
           name: channel.name,
-          isMember: isMember
+          isMember: channel.is_member
         };
       }) ?? []);
-      console.log(`Fetched channels from bot: ${channels}`);
       return channels;
     } catch (error) {
       console.error(`Error fetching channels: ${error}`);
       return [];
-    }
-  }
-
-  async isBotMemberOfChannel(channelId: string, botId: string) {
-    try {
-      const members = await (await this.clientPromise).conversations.members({ channel: channelId });
-      return members.members?.includes(botId);
-    } catch (error) {
-      console.error(`Error checking bot membership: ${error}`);
-      return false;
     }
   }
 
