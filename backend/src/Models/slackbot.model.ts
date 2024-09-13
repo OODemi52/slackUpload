@@ -32,7 +32,7 @@ export default class SlackBot {
           isMember: isMember
         };
       }) ?? []);
-      
+      console.log(`Fetched channels from bot: ${channels}`);
       return channels;
     } catch (error) {
       console.error(`Error fetching channels: ${error}`);
