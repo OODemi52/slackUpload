@@ -167,13 +167,13 @@ useEffect(() => {
 }, [uploadComplete, handleUploadComplete, fetchUrls]);
 
   useEffect(() => {
-    console.log("DEV?:", import.meta.env.DEV)
+    console.log("DEV?:", import.meta.env.DEV);
     if (import.meta.env.DEV) {
       fetchMockUrls(page);
     } else if (accessToken && page === 1) {
       fetchUrls(page);
     }
-  }, [accessToken, fetchMockUrls, fetchUrls, page]);
+  });
 
   const handleLoadMore = useCallback(() => {
     if (hasMore && !isLoading) {
