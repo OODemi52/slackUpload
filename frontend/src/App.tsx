@@ -13,44 +13,48 @@ function App() {
   const [isTokenProcessed, setIsTokenProcessed] = useState(false);
 
   useEffect(() => {
-    const brodChannel = new BroadcastChannel('auth_channel');
+    if (!import.meta.env.DEV) {
+      const brodChannel = new BroadcastChannel('auth_channel');
   
-    brodChannel.onmessage = (event) => {
-      if (event.data.type === 'auth-success' && !isTokenProcessed) {
-        setAccessToken(event.data.accessToken);
-        console.log("Received access token via BroadcastChannel.");
-        setIsTokenProcessed(true);
-        window.location.reload();
-      }
-    };
+      brodChannel.onmessage = (event) => {
+        if (event.data.type === 'auth-success' && !isTokenProcessed) {
+          setAccessToken(event.data.accessToken);
+          console.log("Received access token via BroadcastChannel.");
+          setIsTokenProcessed(true);
+          window.location.reload();
+        }
+      };
   
-    return () => {
-      brodChannel.close();
-    };
+      return () => {
+        brodChannel.close();
+      };
+    }
   }, [isTokenProcessed]);
 
   useEffect(() => {
-    const refreshAccessToken = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/auth/refresh`, {
-          method: 'POST',
-          credentials: 'include',
-        });
+    if (!import.meta.env.DEV) {
+      const refreshAccessToken = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
   
-        if (!response.ok) {
-          throw new Error('Refresh token request failed. Try signing in again.');
+          if (!response.ok) {
+            throw new Error('Refresh token request failed. Try signing in again.');
+          }
+  
+          const data = await response.json();
+  
+          if (data.accessToken) {
+            setAccessToken(data.accessToken);
+          }
+        } catch (error) {
+          console.error(error);
         }
-  
-        const data = await response.json();
-  
-        if (data.accessToken) {
-          setAccessToken(data.accessToken);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    refreshAccessToken();
+      };
+      refreshAccessToken();
+    }
   }, []);
 
   return (
@@ -58,7 +62,7 @@ function App() {
       <AuthContext.Provider value={{ accessToken, setAccessToken }}>
         <Router>
           <Routes>
-            <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
+            <Route path="/" element={accessToken || import.meta.env.DEV ? <Dashboard /> : <LandingPage />} />
             <Route path="/authCallback" element={<AuthCallback />} /> 
           </Routes>
         </Router>

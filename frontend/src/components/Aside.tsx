@@ -8,6 +8,7 @@ import FileTypesSelector from "./FileTypesSelector";
 import UploadComment from "./UploadComment";
 import UploadButton from "./UploadButton";
 import AuthContext from "../context/AuthContext";
+import { getMockChannels } from '../mocks/mockChannelData';
 
 interface FormState {
   files: FileList | null;
@@ -64,9 +65,14 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       console.error("Error fetching channels:", error);
     }
   }, [accessToken]);
-
-
-
+  
+    useEffect(() => {
+      if (import.meta.env.DEV) {
+        setChannels(getMockChannels);
+      } else {
+        fetchChannels();
+      }
+    }, [accessToken, fetchChannels]);
 
   const handleAddBot = async (channelId: string) => {
     setLoadingBotChannels(prev => ({ ...prev, [channelId]: true }));
@@ -302,7 +308,7 @@ const performUpload = useCallback(async () => {
               mr={8}
             >
               <PopoverHeader border="0"><Text color="white" fontSize="18px" fontWeight="bold">Add SlackShots To Channel</Text></PopoverHeader>
-              <PopoverBody justifyContent="center" textAlign="center">To upload files, first add SlackShots to the channel. Click the “+” next to a disabled channel or manually add the bot to the channel.</PopoverBody>
+              <PopoverBody justifyContent="center" textAlign="center">To upload files to a channel, SlackShots must first be added to it. Click the "+" next to a disabled channel or manually add the bot to the channel.</PopoverBody>
             </PopoverContent>
           </Popover>
           </HStack>
@@ -386,8 +392,8 @@ const performUpload = useCallback(async () => {
               boxShadow="4px 4px 4px rgba(0, 0, 0, 0.5)"
               mr={8}
             >
-              <PopoverHeader border='0'>Add SlackShots To Channel</PopoverHeader>
-              <PopoverBody justifyContent="center" textAlign="center">To upload files to a channel, SlackShots must first be added to it. Click the “+” next to a disabled channel or manually add the bot to the channel.</PopoverBody>
+              <PopoverHeader border="0"><Text color="white" fontSize="18px" fontWeight="bold">Add SlackShots To Channel</Text></PopoverHeader>
+              <PopoverBody justifyContent="center" textAlign="center">To upload files to a channel, SlackShots must first be added to it. Click the "+" next to a disabled channel or manually add the bot to the channel.</PopoverBody>
             </PopoverContent>
           </Popover>
           </HStack>

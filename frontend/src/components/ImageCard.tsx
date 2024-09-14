@@ -59,23 +59,29 @@ const ImageCard: React.FC<ImageCardProps> = ({
   const isMenuOpen = !isSelectMode && openMenuId === fileID;
 
   const fetchImage = useCallback(async (permalink: string) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+    if (import.meta.env.DEV) {
+      setImageUrl(permalink);
+      setIsLoaded(true);
+    } else {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        setImageUrl(imageUrl);
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Error fetching image:', error);
       }
-      const blob = await response.blob();
-      const imageUrl = URL.createObjectURL(blob);
-      setImageUrl(imageUrl);
-    } catch (error) {
-      console.error('Error fetching image:', error);
     }
   }, [accessToken]);
 
@@ -85,7 +91,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
         const [entry] = entries;
         if (entry.isIntersecting && !isLoaded) {
           fetchImage(url);
-          setIsLoaded(true);
           observer.unobserve(imageRef.current!);
         }
       },

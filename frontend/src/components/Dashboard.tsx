@@ -4,6 +4,7 @@ import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
 import AuthContext from "../context/AuthContext";
+import { getMockImages } from '../mocks/mockImageData';
 
 interface FormState {
   files: FileList | null;
@@ -125,24 +126,54 @@ const Dashboard: React.FC = () => {
     [accessToken]
   );
 
-  useEffect(() => {
-    if (uploadComplete) {
-      const timer = setTimeout(() => {
-        handleUploadComplete();
-        setPics([]);
-        setPage(1);
-        fetchUrls(1);
-      }, 500);
+  const fetchMockUrls = useCallback((pageNum: number, limit: number = 16) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const imageUrls = getMockImages(pageNum, limit);
 
-      return () => clearTimeout(timer);
+      setPics((prevPics) => {
+        const newPics = [...prevPics, ...imageUrls];
+        const uniquePics = newPics.filter(
+          (pic, index, self) =>
+            index === self.findIndex((t) => t.fileID === pic.fileID)
+        );
+        return uniquePics;
+      });
+
+      if (imageUrls.length < limit) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error fetching mock pics:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [uploadComplete, handleUploadComplete, fetchUrls]);
+  },
+  [isLoading]
+);
+
+useEffect(() => {
+  if (uploadComplete) {
+    const timer = setTimeout(() => {
+      handleUploadComplete();
+      setPics([]);
+      setPage(1);
+      fetchUrls(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }
+}, [uploadComplete, handleUploadComplete, fetchUrls]);
 
   useEffect(() => {
-    if (accessToken && page === 1) {
+    console.log("DEV?:", import.meta.env.DEV)
+    if (import.meta.env.DEV) {
+      fetchMockUrls(page);
+    } else if (accessToken && page === 1) {
       fetchUrls(page);
     }
-  }, [accessToken, fetchUrls, page]);
+  }, [accessToken, fetchMockUrls, fetchUrls, page]);
 
   const handleLoadMore = useCallback(() => {
     if (hasMore && !isLoading) {
@@ -151,10 +182,14 @@ const Dashboard: React.FC = () => {
   }, [hasMore, isLoading]);
 
   useEffect(() => {
-    if (page > 1) {
+    if (import.meta.env.DEV) {
+      if (page > 1) {
+        fetchMockUrls(page);
+      }
+    } else if (page > 1) {
       fetchUrls(page);
     }
-  }, [page, fetchUrls]);
+  }, [page, fetchUrls, fetchMockUrls]);
 
   const refreshImages = useCallback(() => {
     setPics([]);
