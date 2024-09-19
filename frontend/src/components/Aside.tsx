@@ -281,7 +281,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         setUploadProgress(100)
       } else {
         await uploadBatch(batches[i]);
-        setUploadProgress(i+1/batches.length)
+        setUploadProgress((i+1/batches.length)*100)
       }
     }
 
@@ -305,9 +305,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     } else {
       const timer = setTimeout(() => {
         setShowProgress(false)
-      }, 1000);
-      setUploadProgress(0);
-  
+        setUploadProgress(0);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [isUploading]);
