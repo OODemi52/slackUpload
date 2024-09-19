@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as uuid from "uuid";
-import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast } from "@chakra-ui/react";
+import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast, Progress } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
 import FolderSelector from "./FolderSelector";
 import MessageBatchSize from "./MessageBatchSize";
@@ -40,6 +40,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
   const [loadingBotChannels, setLoadingBotChannels] = useState<{ [key: string]: boolean }>({});
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [showProgress, setShowProgress] = useState<boolean>(false);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -96,7 +98,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         title: "Slackshots Added",
         description: "Slackshots has been successfully added to the channel.",
         status: "success",
-        duration: 3000,
+        duration: null,
         isClosable: true,
         position: "top",
       });
@@ -108,7 +110,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         title: "Failed To Add Slackshots",
         description: "There was an error adding Slackshots to the channel.",
         status: "error",
-        duration: 3000,
+        duration: null,
         isClosable: true,
         position: "top",
       });
@@ -153,7 +155,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         largeFiles.push(file.name);
       }
     });
-  
+
     return { uploadableFiles, largeFiles };
   };
 
@@ -274,8 +276,14 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         await uploadLastBatch(batches[i]);
         setIsUploading(false);
         setUploadComplete(true);
+        const timer = setTimeout((setTotalFiles) => {
+          setTotalFiles(100)
+        }, 1000);
+    
+        return () => clearTimeout(timer);
       } else {
         await uploadBatch(batches[i]);
+        setUploadProgress(i+1/batches.length)
       }
     }
 
@@ -293,7 +301,29 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     fetchChannels();
   }, [fetchChannels]);
 
+  useEffect(() => {
+    if (!isUploading) {
+      setShowProgress(true);
+    } else {
+      setShowProgress(false);
+    }
+  }, [isUploading]);
+
   return (
+    <>
+    <Box
+      height={showProgress ? "8px" : "0px"}
+      transition="height 0.3s ease-in-out"
+      overflow="hidden"
+    >
+      <Progress
+        hasStripe
+        value={uploadProgress}
+        isAnimated
+        colorScheme="green"
+        height="8px"
+      />
+    </Box>
     <Stack
       spacing={4}
       align="stretch"
@@ -512,6 +542,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         />
       </Box>
     </Stack>
+    </>
   );
 };
 
