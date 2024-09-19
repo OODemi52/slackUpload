@@ -90,20 +90,24 @@ const Dashboard: React.FC = () => {
       if (isLoading) return;
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${pageNum}&limit=${limit}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+        let imageUrls;
+        if (import.meta.env.DEV) {
+          imageUrls = getMockImages(pageNum, limit);
+        } else {
+          const response = await fetch(
+            `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${pageNum}&limit=${limit}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          imageUrls = await response.json();
         }
-
-        const imageUrls = await response.json();
+  
         setPics((prevPics) => {
           const newPics = [...prevPics, ...imageUrls];
           const uniquePics = newPics.filter(
@@ -112,7 +116,7 @@ const Dashboard: React.FC = () => {
           );
           return uniquePics;
         });
-
+  
         if (imageUrls.length < limit) {
           setHasMore(false);
         }
@@ -124,33 +128,6 @@ const Dashboard: React.FC = () => {
     },
     [accessToken, isLoading]
   );
-
-  const fetchMockUrls = useCallback((pageNum: number, limit: number = 16) => {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      const imageUrls = getMockImages(pageNum, limit);
-
-      setPics((prevPics) => {
-        const newPics = [...prevPics, ...imageUrls];
-        const uniquePics = newPics.filter(
-          (pic, index, self) =>
-            index === self.findIndex((t) => t.fileID === pic.fileID)
-        );
-        return uniquePics;
-      });
-
-      if (imageUrls.length < limit) {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error("Error fetching mock pics:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  },
-  [isLoading]
-);
 
 useEffect(() => {
   console.log("Either: uploadComplete, handleUploadComplete, or fetchUrls changed")
@@ -166,38 +143,42 @@ useEffect(() => {
   }
 }, [uploadComplete, handleUploadComplete, fetchUrls]);
 
-  useEffect(() => {
-    console.log("Either accessToken, fetchMockUrls, fetchUrls, or page changed")
-    if (import.meta.env.DEV) {
-      fetchMockUrls(page);
-    } else if (accessToken && page === 1) {
-      fetchUrls(page);
-    }
-  },[accessToken, fetchMockUrls, fetchUrls, page]);
+useEffect(() => {
+  if (uploadComplete) {
+    const timer = setTimeout(() => {
+      handleUploadComplete();
+      setPics([]);
+      setPage(1);
+      fetchUrls(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }
+}, [uploadComplete, handleUploadComplete, fetchUrls]);
 
-  const handleLoadMore = useCallback(() => {
-    if (hasMore && !isLoading) {
-      setPage((prevPage) => prevPage + 1);
-    }
-  }, [hasMore, isLoading]);
+useEffect(() => {
+  if (accessToken && page === 1) {
+    fetchUrls(page);
+  }
+}, [accessToken, fetchUrls, page]);
 
-  useEffect(() => {
-    console.log("Either page, fetchURls, or fetchMockUrls changed")
-    if (import.meta.env.DEV) {
-      if (page > 1) {
-        fetchMockUrls(page);
-      }
-    } else if (page > 1) {
-      fetchUrls(page);
-    }
-  }, [page, fetchUrls, fetchMockUrls]);
+useEffect(() => {
+  if (page > 1) {
+    fetchUrls(page);
+  }
+}, [page, fetchUrls]);
 
-  const refreshImages = useCallback(() => {
-    setPics([]);
-    setPage(1);
-    setHasMore(true);
-    fetchUrls(1);
-  }, [fetchUrls]);
+const handleLoadMore = useCallback(() => {
+  if (hasMore && !isLoading) {
+    setPage((prevPage) => prevPage + 1);
+  }
+}, [hasMore, isLoading]);
+
+const refreshImages = useCallback(() => {
+  setPics([]);
+  setPage(1);
+  setHasMore(true);
+  fetchUrls(1);
+}, [fetchUrls]);
 
 
   const handleConfirmDelete = async (deleteFlag: "a" | "b") => {

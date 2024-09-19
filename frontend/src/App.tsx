@@ -9,11 +9,15 @@ import AuthContext from "./context/AuthContext";
 const queryClient = new QueryClient();
 
 function App() {
-  const [accessToken, setAccessToken] = useState<string | null>("");
+  const [accessToken, setAccessToken] = useState<string | null>(() => {
+    if (import.meta.env.DEV) {
+      return "mock-access-token";
+    }
+    return null;
+  });
   const [isTokenProcessed, setIsTokenProcessed] = useState(false);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) {
       const brodChannel = new BroadcastChannel('auth_channel');
   
       brodChannel.onmessage = (event) => {
@@ -28,11 +32,9 @@ function App() {
       return () => {
         brodChannel.close();
       };
-    }
   }, [isTokenProcessed]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) {
       const refreshAccessToken = async () => {
         try {
           const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/auth/refresh`, {
@@ -54,7 +56,6 @@ function App() {
         }
       };
       refreshAccessToken();
-    }
   }, []);
 
   return (
@@ -62,7 +63,7 @@ function App() {
       <AuthContext.Provider value={{ accessToken, setAccessToken }}>
         <Router>
           <Routes>
-            <Route path="/" element={accessToken || import.meta.env.DEV ? <Dashboard /> : <LandingPage />} />
+            <Route path="/" element={accessToken ? <Dashboard /> : <LandingPage />} />
             <Route path="/authCallback" element={<AuthCallback />} /> 
           </Routes>
         </Router>
