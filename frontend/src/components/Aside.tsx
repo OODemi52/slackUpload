@@ -156,6 +156,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       }
     });
 
+    console.log("Checked file sizes")
     return { uploadableFiles, largeFiles };
   };
 
@@ -201,6 +202,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       }
       currentBatch.push(file);
       currentBatchSize += file.size;
+      console.log("Pushed a batch")
     }
   
     if (currentBatch.length > 0) {
@@ -304,6 +306,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       const timer = setTimeout(() => {
         setShowProgress(false)
       }, 1000);
+      setUploadProgress(0);
   
       return () => clearTimeout(timer);
     }
