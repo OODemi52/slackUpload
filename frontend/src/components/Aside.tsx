@@ -298,7 +298,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   }, [fetchChannels]);
 
   useEffect(() => {
-    if (!isUploading) {
+    if (isUploading) {
       setShowProgress(true);
     } else {
       const timer = setTimeout(() => {
