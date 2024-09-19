@@ -126,11 +126,11 @@ const Dashboard: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [accessToken, isLoading]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accessToken]
   );
 
 useEffect(() => {
-  console.log("Either: uploadComplete, handleUploadComplete, or fetchUrls changed")
   if (uploadComplete) {
     const timer = setTimeout(() => {
       handleUploadComplete();
@@ -139,18 +139,6 @@ useEffect(() => {
       fetchUrls(1);
     }, 500);
 
-    return () => clearTimeout(timer);
-  }
-}, [uploadComplete, handleUploadComplete, fetchUrls]);
-
-useEffect(() => {
-  if (uploadComplete) {
-    const timer = setTimeout(() => {
-      handleUploadComplete();
-      setPics([]);
-      setPage(1);
-      fetchUrls(1);
-    }, 500);
     return () => clearTimeout(timer);
   }
 }, [uploadComplete, handleUploadComplete, fetchUrls]);
@@ -161,17 +149,17 @@ useEffect(() => {
   }
 }, [accessToken, fetchUrls, page]);
 
-useEffect(() => {
-  if (page > 1) {
-    fetchUrls(page);
-  }
-}, [page, fetchUrls]);
-
 const handleLoadMore = useCallback(() => {
   if (hasMore && !isLoading) {
     setPage((prevPage) => prevPage + 1);
   }
 }, [hasMore, isLoading]);
+
+useEffect(() => {
+  if (page > 1) {
+    fetchUrls(page);
+  }
+}, [page, fetchUrls]);
 
 const refreshImages = useCallback(() => {
   setPics([]);
