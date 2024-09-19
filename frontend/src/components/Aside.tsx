@@ -141,18 +141,57 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     setStartUpload(true);
   };
 
-const performUpload = useCallback(async () => {
+  const checkFileSizes = (files: File[]) => {
+    const maxFileSize = 9 * 1024 * 1024; // 9 MB
+    const uploadableFiles: File[] = [];
+    const largeFiles: string[] = [];
+  
+    files.forEach(file => {
+      if (file.size <= maxFileSize) {
+        uploadableFiles.push(file);
+      } else {
+        largeFiles.push(file.name);
+      }
+    });
+  
+    return { uploadableFiles, largeFiles };
+  };
+
+  const performUpload = useCallback(async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
     const maxBatchSize = 9 * 1024 * 1024; // 9 MB
+  
+    const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
+      file.name.toLowerCase().endsWith(selectedFileTypes.join(","))
+    );
+  
+    const { uploadableFiles, largeFiles } = checkFileSizes(filteredFiles);
+  
+    if (largeFiles.length > 0) {
+      toast({
+        title: "Single File Size Limit: 9 MB",
+        description: `The following files are larger than 9MB and can't be uploaded at the moment: ${largeFiles.join(", ")}. Support for larger files will be added soon!`,
+        status: "warning",
+        isClosable: true,
+        duration: null,
+      });
+
+      if (uploadableFiles.length > 0) {
+        toast({
+          title: "Uploadable Files",
+          description: `The following files will be uploaded: ${uploadableFiles.map(file => file.name).join(", ")}`,
+          status: "info",
+          isClosable: true,
+          duration: null,
+        });
+      }
+    }
+  
     let currentBatchSize = 0;
     let currentBatch: File[] = [];
     const batches: File[][] = [];
-
-    const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
-      file.name.toLowerCase().endsWith(selectedFileTypes.join(",")),
-    );
-
-    for (const file of filteredFiles) {
+  
+    for (const file of uploadableFiles) {
       if (currentBatchSize + file.size > maxBatchSize) {
         batches.push(currentBatch);
         currentBatch = [];
@@ -161,7 +200,7 @@ const performUpload = useCallback(async () => {
       currentBatch.push(file);
       currentBatchSize += file.size;
     }
-
+  
     if (currentBatch.length > 0) {
       batches.push(currentBatch);
     }
@@ -241,7 +280,7 @@ const performUpload = useCallback(async () => {
     }
 
     console.log("All batches uploaded successfully!");
-}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, accessToken, setIsUploading, setUploadComplete]);
+}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken, setIsUploading, setUploadComplete]);
 
   useEffect(() => {
     if (startUpload && formState.sessionID) {
