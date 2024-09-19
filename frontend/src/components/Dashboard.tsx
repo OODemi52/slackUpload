@@ -122,8 +122,7 @@ const Dashboard: React.FC = () => {
         setIsLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [accessToken]
+    [accessToken, isLoading]
   );
 
   const fetchMockUrls = useCallback((pageNum: number, limit: number = 16) => {
@@ -154,6 +153,7 @@ const Dashboard: React.FC = () => {
 );
 
 useEffect(() => {
+  console.log("Either: uploadComplete, handleUploadComplete, or fetchUrls changed")
   if (uploadComplete) {
     const timer = setTimeout(() => {
       handleUploadComplete();
@@ -167,13 +167,13 @@ useEffect(() => {
 }, [uploadComplete, handleUploadComplete, fetchUrls]);
 
   useEffect(() => {
-    console.log("DEV?:", import.meta.env.DEV);
+    console.log("Either accessToken, fetchMockUrls, fetchUrls, or page changed")
     if (import.meta.env.DEV) {
       fetchMockUrls(page);
     } else if (accessToken && page === 1) {
       fetchUrls(page);
     }
-  });
+  },[accessToken, fetchMockUrls, fetchUrls, page]);
 
   const handleLoadMore = useCallback(() => {
     if (hasMore && !isLoading) {
@@ -182,6 +182,7 @@ useEffect(() => {
   }, [hasMore, isLoading]);
 
   useEffect(() => {
+    console.log("Either page, fetchURls, or fetchMockUrls changed")
     if (import.meta.env.DEV) {
       if (page > 1) {
         fetchMockUrls(page);
