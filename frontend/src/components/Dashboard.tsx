@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
       if (isLoading) return;
       setIsLoading(true);
       try {
-        let imageUrls;
+        let imageUrls: { url: string; name: string; fileID: string }[];
         if (import.meta.env.DEV) {
           imageUrls = getMockImages(pageNum, limit);
         } else {
