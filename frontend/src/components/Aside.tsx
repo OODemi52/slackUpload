@@ -169,6 +169,15 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     );
   
     const { uploadableFiles, largeFiles } = checkFileSizes(filteredFiles);
+
+    let totalUploaded = 0;
+    const totalSize = uploadableFiles.reduce((sum, file) => sum + file.size, 0);
+
+    const updateProgress = (uploadedSize: number) => {
+      totalUploaded += uploadedSize;
+      const progress = (totalUploaded / totalSize) * 100;
+      setUploadProgress(Math.round(progress));
+    };
   
     if (largeFiles.length > 0) {
       toast({
@@ -255,22 +264,29 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         formData.append("files", file, file.name);
       });
 
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, {
-          method: "POST",
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-      } catch (error) {
-        console.error("Error uploading batch:", error);
-      }
-      console.log("Batch uploaded successfully!");
+    return new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
+        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+  
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            updateProgress(event.loaded);
+          }
+        };
+  
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            resolve();
+          } else {
+            reject(new Error(xhr.responseText));
+          }
+        };
+  
+        xhr.onerror = () => reject(new Error('Network error'));
+  
+        xhr.send(formData);
+      });
     };
 
     for (let i = 0; i < batches.length; i++) {
@@ -278,10 +294,9 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         await uploadLastBatch(batches[i]);
         setIsUploading(false);
         setUploadComplete(true);
-        setUploadProgress(100)
+        setUploadProgress(100);
       } else {
         await uploadBatch(batches[i]);
-        setUploadProgress((i+1/batches.length)*100)
       }
     }
 
