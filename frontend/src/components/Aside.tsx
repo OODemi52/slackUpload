@@ -41,9 +41,10 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
   const [loadingBotChannels, setLoadingBotChannels] = useState<{ [key: string]: boolean }>({});
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showProgress, setShowProgress] = useState<boolean>(false);
   const [currentUpload, setCurrentUpload] = useState<{ abort: () => void } | null>(null);
+  const [clientProgress, setClientProgress] = useState(0);
+  const [serverProgress, setServerProgress] = useState(0);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -177,11 +178,10 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       onmessage(event) {
         const data = JSON.parse(event.data);
         if (data.type === 'progress') {
-          setUploadProgress(data.progress);
+          setServerProgress(data.progress * 0.5);
         } else if (data.type === 'complete') {
           setIsUploading(false);
           setUploadComplete(true);
-          controller.abort();
         }
       },
       onclose() {
@@ -199,8 +199,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const cancelUpload = useCallback(() => {
     if (currentUpload) {
       currentUpload.abort();
-      setIsUploading(false);
-      setUploadProgress(0);
+      setClientProgress(0);
+        setServerProgress(0);
     }
   }, [currentUpload, setIsUploading]);
   */
@@ -224,8 +224,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
     const updateProgress = (uploadedSize: number) => {
       totalUploaded += uploadedSize;
-      const progress = (totalUploaded / totalSize) * 100;
-      setUploadProgress(Math.round(progress));
+      const progress = (totalUploaded / totalSize) * 50;
+      setClientProgress(Math.round(progress));
     };
   
     if (largeFiles.length > 0) {
@@ -386,7 +386,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     } else {
       const timer = setTimeout(() => {
         setShowProgress(false)
-        setUploadProgress(0);
+        setClientProgress(0);
+        setServerProgress(0);
       }, 1500);
       return () => clearTimeout(timer);
     }
@@ -401,7 +402,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     >
       <Progress
         hasStripe
-        value={uploadProgress}
+        value={clientProgress + serverProgress}
         isAnimated
         colorScheme="green"
         height="8px"

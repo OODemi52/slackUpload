@@ -280,7 +280,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
       const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
         const sendProgress = progressCallbacks.get(fields.sessionID[0]);
           if (sendProgress) {
-            sendProgress(progress);
+            sendProgress(progress * 100);
           }
       });
       await Promise.all(processedFiles.map(file => deleteFile(file)));
