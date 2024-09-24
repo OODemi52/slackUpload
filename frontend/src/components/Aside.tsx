@@ -195,6 +195,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     return controller;
   }, [accessToken, setIsUploading, setUploadComplete]);
 
+  /* Will implement after SSE is confirmed to be working
   const cancelUpload = useCallback(() => {
     if (currentUpload) {
       currentUpload.abort();
@@ -202,6 +203,10 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       setUploadProgress(0);
     }
   }, [currentUpload, setIsUploading]);
+  */
+  if (currentUpload) {
+    console.log("Current Upload")
+  }
 
 
   const performUpload = useCallback(async () => {
