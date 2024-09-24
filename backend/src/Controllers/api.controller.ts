@@ -277,7 +277,12 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
 
       await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-      const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0]);
+      const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
+        const sendProgress = progressCallbacks.get(fields.sessionID[0]);
+          if (sendProgress) {
+            sendProgress(progress);
+          }
+      });
       await Promise.all(processedFiles.map(file => deleteFile(file)));
       response.status(200).json({ message: 'Final files uploaded successfully!' });
     } catch (error) {
