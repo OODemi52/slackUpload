@@ -17,6 +17,8 @@ interface FormFields {
   messageBatchSize: string[];
 }
 
+const progressCallbacks = new Map<string, (progress: number) => void>();
+
 export const api = async (request: express.Request, response: express.Response) => {
   response.status(400).send('Something went wrong, you should not be here!');
 }
@@ -173,6 +175,34 @@ export const uploadFiles = async (request: express.Request, response: express.Re
     }
   });
 };
+
+export const uploadProgress = async(request: express.Request, response: express.Response) => {
+  if (!request.userId) {
+    return response.status(400).send('UserID is required');
+  }
+
+  const user = await readUser(request.user as string);
+  
+  const { sessionID } = request.body
+
+  response.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+
+  const sendProgress = (progress: number) => {
+    response.write(`data: ${JSON.stringify({ type: 'progress', progress })}\n\n`);
+  };
+
+  progressCallbacks.set(sessionID, sendProgress);
+
+  request.on('close', () => {
+    progressCallbacks.delete(sessionID);
+  });
+
+
+}
 
 export const uploadFinalFiles = async (request: express.Request, response: express.Response) => {
   // This function is similar to the one above. The differences are that 1.) in this function, the user's
