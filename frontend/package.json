@@ -14,6 +14,7 @@
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@uppy/core": "^3.8.0",
     "@uppy/dashboard": "^3.7.1",
     "@uppy/react": "^3.2.1",

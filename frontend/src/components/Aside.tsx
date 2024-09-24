@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as uuid from "uuid";
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast, Progress } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
 import FolderSelector from "./FolderSelector";
@@ -42,6 +43,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [loadingBotChannels, setLoadingBotChannels] = useState<{ [key: string]: boolean }>({});
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showProgress, setShowProgress] = useState<boolean>(false);
+  const [currentUpload, setCurrentUpload] = useState<{ abort: () => void } | null>(null);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -160,6 +162,48 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     return { uploadableFiles, largeFiles };
   };
 
+  const setupSSE = useCallback((sessionID: string) => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetchEventSource(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadProgress`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ sessionID }),
+      signal,
+      onmessage(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'progress') {
+          setUploadProgress(data.progress);
+        } else if (data.type === 'complete') {
+          setIsUploading(false);
+          setUploadComplete(true);
+          controller.abort();
+        }
+      },
+      onclose() {
+        console.log("SSE connection closed");
+      },
+      onerror(err) {
+        console.error("SSE error:", err);
+      }
+    });
+
+    return controller;
+  }, [accessToken, setIsUploading, setUploadComplete]);
+
+  const cancelUpload = useCallback(() => {
+    if (currentUpload) {
+      currentUpload.abort();
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  }, [currentUpload, setIsUploading]);
+
+
   const performUpload = useCallback(async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
     const maxBatchSize = 9 * 1024 * 1024; // 9 MB
@@ -263,45 +307,62 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       files.forEach((file) => {
         formData.append("files", file, file.name);
       });
-
-    return new Promise<void>((resolve, reject) => {
+    
+      return new Promise<{ abort: () => void }>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
         xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-  
+    
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             updateProgress(event.loaded);
           }
         };
-  
+    
         xhr.onload = () => {
           if (xhr.status === 200) {
-            resolve();
+            resolve({ abort: () => xhr.abort() });
           } else {
             reject(new Error(xhr.responseText));
           }
         };
-  
+    
         xhr.onerror = () => reject(new Error('Network error'));
-  
+    
         xhr.send(formData);
-      });
+    
+        resolve({
+          abort: () => {
+            xhr.abort();
+            reject(new Error('Upload cancelled'));
+          }
+        });
+    })
     };
 
     for (let i = 0; i < batches.length; i++) {
       if (i === batches.length - 1) {
         await uploadLastBatch(batches[i]);
-        setIsUploading(false);
-        setUploadComplete(true);
-        setUploadProgress(100);
+        const sseController = setupSSE(formState.sessionID);
+        setCurrentUpload(sseController);
       } else {
-        await uploadBatch(batches[i]);
+        try {
+          const upload = await uploadBatch(batches[i]);
+          setCurrentUpload(upload);
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Upload cancelled') {
+            console.log('Upload was cancelled');
+            break;
+          } else {
+            throw error;
+          }
+        }
       }
     }
 
+    setCurrentUpload(null);
     console.log("All batches uploaded successfully!");
-}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken, setIsUploading, setUploadComplete]);
+}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken, setupSSE]);
 
   useEffect(() => {
     if (startUpload && formState.sessionID) {
