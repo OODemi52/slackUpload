@@ -192,6 +192,7 @@ export const uploadProgress = async(request: express.Request, response: express.
   });
 
   const sendProgress = (progress: number) => {
+    console.log(`Sending progress update: ${progress}% || apiC`);
     response.write(`data: ${JSON.stringify({ type: 'progress', progress })}\n\n`);
   };
 
@@ -200,8 +201,6 @@ export const uploadProgress = async(request: express.Request, response: express.
   request.on('close', () => {
     progressCallbacks.delete(sessionID);
   });
-
-
 }
 
 export const uploadFinalFiles = async (request: express.Request, response: express.Response) => {
@@ -278,9 +277,12 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
       await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
       const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
+        console.log(`Progress callback received: ${progress}% || apiC`);
         const sendProgress = progressCallbacks.get(fields.sessionID[0]);
           if (sendProgress) {
             sendProgress(progress * 100);
+          } else {
+            console.log(`No progress callback found for session ${fields.sessionID[0]}`);
           }
       });
       await Promise.all(processedFiles.map(file => deleteFile(file)));

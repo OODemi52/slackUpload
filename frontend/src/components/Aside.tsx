@@ -178,6 +178,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       onmessage(event) {
         const data = JSON.parse(event.data);
         if (data.type === 'progress') {
+          console.log(`Server progress received: ${data.progress}%, scaled to: ${data.progress * 0.5}%`);
           setServerProgress(data.progress * 0.5);
         } else if (data.type === 'complete') {
           setIsUploading(false);
@@ -225,6 +226,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     const updateProgress = (uploadedSize: number) => {
       totalUploaded += uploadedSize;
       const progress = (totalUploaded / totalSize) * 50;
+      console.log(`Client progress updated: ${Math.round(progress)}%`);
       setClientProgress(Math.round(progress));
     };
   
@@ -346,8 +348,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     };
 
     for (let i = 0; i < batches.length; i++) {
+      console.log(`Uploading batch ${i + 1} of ${batches.length}`);
       if (i === batches.length - 1) {
+        console.log("Uploading final batch");
         await uploadLastBatch(batches[i]);
+        console.log("Setting up SSE for final batch");
         const sseController = setupSSE(formState.sessionID);
         setCurrentUpload(sseController);
       } else {
