@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { verifyJWT } from '../Middleware/jwt.middleware';
-import { api, getChannels, uploadFiles, uploadFinalFiles, getImagesUrls, getImagesProxy, deleteFiles, downloadFiles, addBotToChannel } from '../Controllers/api.controller';
+import { api, getChannels, uploadFiles, uploadFinalFiles, getImagesUrls, getImagesProxy, deleteFiles, downloadFiles, addBotToChannel, uploadProgress } from '../Controllers/api.controller';
 
 const router: Router = express.Router();
 
@@ -12,6 +12,7 @@ router.get('/getImagesUrls', verifyJWT, getImagesUrls);
 router.get('/getImagesProxy', verifyJWT, getImagesProxy);
 router.delete('/deleteFiles', verifyJWT, deleteFiles);
 router.post('/downloadFiles', verifyJWT, downloadFiles);
-router.post('/addBotToChannel', verifyJWT, addBotToChannel)
+router.post('/addBotToChannel', verifyJWT, addBotToChannel);
+router.post('/uploadProgress', verifyJWT, uploadProgress);
 
 export default router;
