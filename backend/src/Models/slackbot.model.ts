@@ -65,9 +65,11 @@ export default class SlackBot {
     }
   }
 
-  async batchAndUploadFiles(parsedFiles: ParsedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string): Promise<ParsedFile[]> {
+  async batchAndUploadFiles(parsedFiles: ParsedFile[], userID: string, sessionID: string, messageBatchSize: number, comment: string, progressCallback: (progress: number) => void): Promise<ParsedFile[]> {
     const sortedFiles = parsedFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
     const processedFiles: ParsedFile[] = [];
+    const totalFiles = sortedFiles.length;
+    let processedCount = 0;
     
   
     for (let i = 0; i < sortedFiles.length; i += messageBatchSize) {
@@ -85,6 +87,8 @@ export default class SlackBot {
         console.log(`Updating file reference for file: ${file.name}`);
         await updateUploadedFileReferenceWithSlackPrivateUrlAndFileId(userID, sessionID, file.name, fileInfo);
         processedFiles.push(file);
+        processedCount++;
+        progressCallback((processedCount / totalFiles) * 100);
       }));
   
       console.log(`Processed batch ${i / messageBatchSize + 1} of ${Math.ceil(sortedFiles.length / messageBatchSize)}`);
