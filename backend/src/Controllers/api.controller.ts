@@ -280,7 +280,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
         console.log(`Progress callback received: ${progress}% || apiC`);
         const sendProgress = progressCallbacks.get(fields.sessionID[0]);
           if (sendProgress) {
-            sendProgress(progress * 100);
+            sendProgress(progress);
           } else {
             console.log(`No progress callback found for session ${fields.sessionID[0]}`);
           }

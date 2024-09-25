@@ -185,10 +185,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
           console.log('Upload complete signal received');
           setIsUploading(false);
           setUploadComplete(true);
+          controller.abort();
         }
       },
       onclose() {
-        controller.abort()
+        controller.abort();
         console.log("SSE connection closed");
       },
       onerror(err) {
@@ -320,6 +321,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const progress = (event.loaded / event.total) * 100;
+            console.log("Client progress", progress)
             setClientProgress(progress);
           }
         };
