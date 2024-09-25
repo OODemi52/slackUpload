@@ -175,6 +175,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       },
       body: JSON.stringify({ sessionID }),
       signal,
+      openWhenHidden: true,
       onmessage(event) {
         const data = JSON.parse(event.data);
         console.log("Data type: ", data.type)
@@ -194,10 +195,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       },
       onerror(err) {
         console.error("SSE error:", err);
+        throw new Error(err);
       }
     });
 
-    return controller;
+    return () => controller.abort();
   }, [accessToken, setIsUploading, setUploadComplete]);
 
   /* Will implement after SSE is confirmed to be working
@@ -216,9 +218,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
   const performUpload = useCallback(async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
-
     const sseController = startSSE(formState.sessionID);
-    setCurrentUpload(sseController);
+    setCurrentUpload({ abort: sseController });
 
     const maxBatchSize = 9 * 1024 * 1024; // 9 MB
   
