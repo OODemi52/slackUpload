@@ -181,7 +181,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         if (data.type === 'progress') {
           console.log(`Server progress received: ${data.progress}%, scaled to: ${data.progress * 0.5}%`);
           setServerProgress(data.progress * 0.5);
-          console.log("Server progress updated: ", data.progress * 0.5)
         } else if (data.type === 'complete') {
           console.log('Upload complete signal received');
           setIsUploading(false);
@@ -226,10 +225,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     let totalUploaded = 0;
     const totalSize = uploadableFiles.reduce((sum, file) => sum + file.size, 0);
 
-    const updateProgress = (uploadedSize: number) => {
+    const updateClientProgress = (uploadedSize: number) => {
       totalUploaded += uploadedSize;
       const progress = (totalUploaded / totalSize) * 50;
       console.log(`Client progress updated: ${Math.round(progress)}%`);
+      console.log("Server progress updated: ", serverProgress)
       setClientProgress(Math.round(progress));
     };
   
@@ -325,7 +325,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
-            updateProgress(event.loaded);
+            updateClientProgress(event.loaded);
           }
         };
     
