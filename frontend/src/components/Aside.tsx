@@ -163,7 +163,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     return { uploadableFiles, largeFiles };
   };
 
-  const setupSSE = useCallback((sessionID: string) => {
+  const startSSE = useCallback((sessionID: string) => {
     const controller = new AbortController();
     const { signal } = controller;
 
@@ -179,8 +179,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         const data = JSON.parse(event.data);
         console.log("Data type: ", data.type)
         if (data.type === 'progress') {
-          console.log(`Server progress received: ${data.progress}%, scaled to: ${data.progress * 0.5}%`);
-          setServerProgress(data.progress * 0.5);
+          console.log(`Server progress received: ${data.progress}%`);
+          setServerProgress(data.progress);
         } else if (data.type === 'complete') {
           console.log('Upload complete signal received');
           setIsUploading(false);
@@ -188,6 +188,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         }
       },
       onclose() {
+        controller.abort()
         console.log("SSE connection closed");
       },
       onerror(err) {
@@ -214,6 +215,10 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
   const performUpload = useCallback(async () => {
     console.log("Performing upload with session ID:", formState.sessionID);
+
+    const sseController = startSSE(formState.sessionID);
+    setCurrentUpload(sseController);
+
     const maxBatchSize = 9 * 1024 * 1024; // 9 MB
   
     const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
@@ -221,17 +226,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     );
   
     const { uploadableFiles, largeFiles } = checkFileSizes(filteredFiles);
-
-    let totalUploaded = 0;
-    const totalSize = uploadableFiles.reduce((sum, file) => sum + file.size, 0);
-
-    const updateClientProgress = (uploadedSize: number) => {
-      totalUploaded += uploadedSize;
-      const progress = (totalUploaded / totalSize) * 50;
-      console.log(`Client progress updated: ${Math.round(progress)}%`);
-      console.log("Server progress updated: ", serverProgress)
-      setClientProgress(Math.round(progress));
-    };
   
     if (largeFiles.length > 0) {
       toast({
@@ -325,7 +319,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
-            updateClientProgress(event.loaded);
+            const progress = (event.loaded / event.total) * 100;
+            setClientProgress(progress);
           }
         };
     
@@ -352,30 +347,27 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
     for (let i = 0; i < batches.length; i++) {
       console.log(`Uploading batch ${i + 1} of ${batches.length}`);
-      if (i === batches.length - 1) {
-        console.log("Uploading final batch");
-        await uploadLastBatch(batches[i]);
-        console.log("Setting up SSE for final batch");
-        const sseController = setupSSE(formState.sessionID);
-        setCurrentUpload(sseController);
-      } else {
-        try {
+      try {
+        if (i === batches.length - 1) {
+          console.log("Uploading final batch");
+          await uploadLastBatch(batches[i]);
+        } else {
           const upload = await uploadBatch(batches[i]);
           setCurrentUpload(upload);
-        } catch (error) {
-          if (error instanceof Error && error.message === 'Upload cancelled') {
-            console.log('Upload was cancelled');
-            break;
-          } else {
-            throw error;
-          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message === 'Upload cancelled') {
+          console.log('Upload was cancelled');
+          break;
+        } else {
+          throw error;
         }
       }
     }
 
     setCurrentUpload(null);
     console.log("All batches uploaded successfully!");
-}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken, setupSSE]);
+}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken, startSSE]);
 
   useEffect(() => {
     if (startUpload && formState.sessionID) {
@@ -410,7 +402,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     >
       <Progress
         hasStripe
-        value={clientProgress + serverProgress}
+        value={(clientProgress + serverProgress) / 2}
+        max={100}
         isAnimated
         colorScheme="green"
         height="8px"
