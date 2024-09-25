@@ -177,10 +177,13 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       signal,
       onmessage(event) {
         const data = JSON.parse(event.data);
+        console.log("Data type: ", data.type)
         if (data.type === 'progress') {
           console.log(`Server progress received: ${data.progress}%, scaled to: ${data.progress * 0.5}%`);
           setServerProgress(data.progress * 0.5);
+          console.log("Server progress updated: ", data.progress * 0.5)
         } else if (data.type === 'complete') {
+          console.log('Upload complete signal received');
           setIsUploading(false);
           setUploadComplete(true);
         }
