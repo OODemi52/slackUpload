@@ -9,7 +9,6 @@ import FileTypesSelector from "./FileTypesSelector";
 import UploadComment from "./UploadComment";
 import UploadButton from "./UploadButton";
 import AuthContext from "../context/AuthContext";
-import { getMockChannels } from '../mocks/mockChannelData';
 
 interface FormState {
   files: FileList | null;
@@ -72,11 +71,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   }, [accessToken]);
   
     useEffect(() => {
-      if (import.meta.env.DEV) {
-        setChannels(getMockChannels);
-      } else {
         fetchChannels();
-      }
     }, [accessToken, fetchChannels]);
 
   const handleAddBot = async (channelId: string) => {

@@ -59,10 +59,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
   const isMenuOpen = !isSelectMode && openMenuId === fileID;
 
   const fetchImage = useCallback(async (permalink: string) => {
-    if (import.meta.env.DEV) {
-      setImageUrl(permalink);
-      setIsLoaded(true);
-    } else {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
@@ -82,7 +78,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
       } catch (error) {
         console.error('Error fetching image:', error);
       }
-    }
   }, [accessToken]);
 
   const observer = useMemo(() => {

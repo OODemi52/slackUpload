@@ -4,7 +4,6 @@ import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
 import AuthContext from "../context/AuthContext";
-import { getMockImages } from '../mocks/mockImageData';
 
 interface FormState {
   files: FileList | null;
@@ -90,10 +89,6 @@ const Dashboard: React.FC = () => {
       if (isLoading) return;
       setIsLoading(true);
       try {
-        let imageUrls: { url: string; name: string; fileID: string }[];
-        if (import.meta.env.DEV) {
-          imageUrls = getMockImages(pageNum, limit);
-        } else {
           const response = await fetch(
             `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${pageNum}&limit=${limit}`,
             {
@@ -102,11 +97,12 @@ const Dashboard: React.FC = () => {
               },
             }
           );
+
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          imageUrls = await response.json();
-        }
+          
+          const imageUrls: { url: string; name: string; fileID: string }[] = await response.json();
   
         setPics((prevPics) => {
           const newPics = [...prevPics, ...imageUrls];
