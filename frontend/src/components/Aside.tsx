@@ -371,6 +371,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       }
     }
 
+    maxClientProgress = 0;
     setCurrentUpload(null);
     console.log("All batches uploaded successfully!");
 }, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken]);
