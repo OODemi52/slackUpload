@@ -238,7 +238,7 @@ export const uploadProgress = async(request: express.Request, response: express.
 
   const sendProgress = (progress: number) => {
     console.log(`Sending progress update: ${progress}% || apiC`);
-    response.write(`data: ${JSON.stringify({ type: 'progress', progress })}\n\n`);
+    response.write(`data: ${JSON.stringify({ type: progress < 100.0 ? 'progress' : 'complete', progress })}\n\n`);
   };
 
   progressCallbacks.set(sessionID, sendProgress);

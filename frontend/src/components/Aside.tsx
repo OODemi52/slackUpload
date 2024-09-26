@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as uuid from "uuid";
 import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast, Progress } from "@chakra-ui/react";
 import ChannelSelector from "./ChannelSelector";
@@ -43,8 +43,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [currentUpload, setCurrentUpload] = useState<{ abort: () => void } | null>(null);
   const [clientProgress, setClientProgress] = useState(0);
   const [serverProgress, setServerProgress] = useState(0);
-
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -161,55 +159,52 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   };
 
   const startSSE = useCallback(async (sessionID: string) => {
-    abortControllerRef.current = new AbortController();
-
     const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadProgress`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ sessionID })
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ sessionID })
     });
-
+  
     if (!response.body) {
-        console.error("Response body is undefined");
-        return;
+      console.error("Response body is undefined");
+      return;
     }
-
+  
     const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-
+  
     let done = false;
     while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-
-        if (done) break;
-
-        if (value) {
-          try {
-            console.log("SSE Value", value);
-            if (value.startsWith('data: ')) {
-                const jsonString = value.slice(6);
-                const data = JSON.parse(jsonString);
-                if (data.type === 'progress') {
-                    console.log(`Server progress received: ${data.progress}%`);
-                    setServerProgress(data.progress);
-                } else if (data.type === 'complete') {
-                    console.log('Upload complete signal received');
-                    setIsUploading(false);
-                    setUploadComplete(true);
-                    break;
-                }
+      const { value, done: readerDone } = await reader.read();
+      done = readerDone;
+      
+      if (value) {
+        const messages = value.split('\n\n').filter(msg => msg.trim() !== '');
+        for (const message of messages) {
+          if (message.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(message.slice(6));
+              if (data.type === 'progress') {
+                console.log(`Server progress received: ${data.progress}%`);
+                setServerProgress(data.progress);
+              } else if (data.type === 'complete') {
+                console.log('Upload complete signal received');
+                setIsUploading(false);
+                setUploadComplete(true);
+                break;
+              }
+            } catch (error) {
+              console.error("Error parsing SSE message:", error);
             }
-        } catch (error) {
-            console.error("Error parsing SSE message:", error);
+          }
         }
-        }
+      }
     }
-
+  
     reader.releaseLock();
-}, [accessToken, setIsUploading, setUploadComplete]);
+  }, [accessToken, setIsUploading, setUploadComplete]);
 
   /* Will implement after SSE is confirmed to be working
   const cancelUpload = useCallback(() => {
