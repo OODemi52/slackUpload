@@ -187,10 +187,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
             try {
               const data = JSON.parse(message.slice(6));
               if (data.type === 'progress') {
-                console.log(`Server progress received: ${data.progress}%`);
                 setServerProgress(data.progress);
               } else if (data.type === 'complete') {
-                console.log('Upload complete signal received');
                 setIsUploading(false);
                 setUploadComplete(true);
                 break;
@@ -221,7 +219,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
 
   const performUpload = useCallback(async () => {
-    console.log("Performing upload with session ID:", formState.sessionID);
 
     const maxBatchSize = 9 * 1024 * 1024; // 9 MB
   
@@ -263,7 +260,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       }
       currentBatch.push(file);
       currentBatchSize += file.size;
-      console.log("Pushed a batch")
     }
   
     if (currentBatch.length > 0) {
@@ -320,12 +316,15 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
         xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+
+        let maxProgress = 0;
     
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const progress = (event.loaded / event.total) * 100;
-            console.log("Client progress", progress)
-            setClientProgress(progress);
+            maxProgress = Math.max(maxProgress, progress);
+            console.log("Client progress", maxProgress);
+            setClientProgress(maxProgress);
           }
         };
     
@@ -354,7 +353,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       console.log(`Uploading batch ${i + 1} of ${batches.length}`);
       try {
         if (i === batches.length - 1) {
-          console.log("Uploading final batch");
           await uploadLastBatch(batches[i]);
         } else {
           const upload = await uploadBatch(batches[i]);
@@ -407,6 +405,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       transition="height 0.3s ease-in-out"
       overflow="hidden"
     >
+      {(clientProgress + serverProgress) / 2}
       <Progress
         hasStripe
         value={(clientProgress + serverProgress) / 2}
