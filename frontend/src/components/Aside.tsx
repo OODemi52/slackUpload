@@ -300,6 +300,9 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     };
 
     const uploadBatch = async (files: File[]) => {
+
+      let maxProgress = 0;
+      
       const formData = new FormData();
       formData.append("channel", formState.channel);
       formData.append("sessionID", formState.sessionID);
@@ -316,8 +319,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
         xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-
-        let maxProgress = 0;
     
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
