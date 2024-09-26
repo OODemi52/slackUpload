@@ -234,6 +234,7 @@ export const uploadProgress = async(request: express.Request, response: express.
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive'
   });
+  response.flushHeaders()
 
   const sendProgress = (progress: number) => {
     console.log(`Sending progress update: ${progress}% || apiC`);
