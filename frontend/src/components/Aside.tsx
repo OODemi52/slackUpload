@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import * as uuid from "uuid";
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast, Progress } from "@chakra-ui/react";
@@ -44,6 +44,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [currentUpload, setCurrentUpload] = useState<{ abort: () => void } | null>(null);
   const [clientProgress, setClientProgress] = useState(0);
   const [serverProgress, setServerProgress] = useState(0);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const { accessToken } = useContext(AuthContext);
 
@@ -159,8 +161,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   };
 
   const startSSE = useCallback((sessionID: string) => {
-    const controller = new AbortController();
-    const { signal } = controller;
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
 
     fetchEventSource(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadProgress`, {
       method: 'POST',
@@ -171,6 +173,14 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       body: JSON.stringify({ sessionID }),
       signal,
       openWhenHidden: true,
+      async onopen(response) {
+        if (response.ok) {
+          console.log("Response ok");
+            return;
+        } else {
+            throw new Error();
+        }
+    },
       onmessage(event) {
         const data = JSON.parse(event.data);
         console.log("Data type: ", data.type)
@@ -181,12 +191,17 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
           console.log('Upload complete signal received');
           setIsUploading(false);
           setUploadComplete(true);
-          controller.abort();
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
         }
       },
       onclose() {
-        controller.abort();
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
         console.log("SSE connection closed");
+        throw new Error('Connection closed');
       },
       onerror(err) {
         console.error("SSE error:", err);
@@ -194,7 +209,12 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       }
     });
 
-    return () => controller.abort();
+    return () => {
+      console.log("abort called");
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [accessToken, setIsUploading, setUploadComplete]);
 
   /* Will implement after SSE is confirmed to be working

@@ -244,6 +244,7 @@ export const uploadProgress = async(request: express.Request, response: express.
 
   request.on('close', () => {
     progressCallbacks.delete(sessionID);
+    response.end();
   });
 }
 
