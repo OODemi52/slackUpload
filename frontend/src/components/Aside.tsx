@@ -389,6 +389,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     if (isUploading) {
       setShowProgress(true);
     } else {
+        setClientProgress(100);
+        setServerProgress(100);
       const timer = setTimeout(() => {
         setShowProgress(false)
         setClientProgress(0);
