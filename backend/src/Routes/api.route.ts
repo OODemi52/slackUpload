@@ -5,14 +5,27 @@ import { api, getChannels, uploadFiles, uploadFinalFiles, getImagesUrls, getImag
 const router: Router = express.Router();
 
 router.get('/', api);
-router.get('/getChannels', verifyJWT, getChannels);
-router.post('/uploadFiles', verifyJWT, uploadFiles);
-router.post('/uploadFinalFiles', verifyJWT, uploadFinalFiles);
-router.get('/getImagesUrls', verifyJWT, getImagesUrls);
-router.get('/getImagesProxy', verifyJWT, getImagesProxy);
-router.delete('/deleteFiles', verifyJWT, deleteFiles);
-router.post('/downloadFiles', verifyJWT, downloadFiles);
-router.post('/addBotToChannel', verifyJWT, addBotToChannel);
-router.post('/uploadProgress', verifyJWT, uploadProgress);
+
+if (process.env.NODE_ENV !== 'development') {
+    router.get('/getChannels', verifyJWT, getChannels);
+    router.post('/uploadFiles', verifyJWT, uploadFiles);
+    router.post('/uploadFinalFiles', verifyJWT, uploadFinalFiles);
+    router.get('/getImagesUrls', verifyJWT, getImagesUrls);
+    router.get('/getImagesProxy', verifyJWT, getImagesProxy);
+    router.delete('/deleteFiles', verifyJWT, deleteFiles);
+    router.post('/downloadFiles', verifyJWT, downloadFiles);
+    router.post('/addBotToChannel', verifyJWT, addBotToChannel);
+    router.post('/uploadProgress', verifyJWT, uploadProgress);
+  } else {
+    router.get('/getChannels', getChannels);
+    router.post('/uploadFiles', uploadFiles);
+    router.post('/uploadFinalFiles', uploadFinalFiles);
+    router.get('/getImagesUrls', getImagesUrls);
+    router.get('/getImagesProxy', getImagesProxy);
+    router.delete('/deleteFiles', deleteFiles);
+    router.post('/downloadFiles', downloadFiles);
+    router.post('/addBotToChannel', addBotToChannel);
+    router.post('/uploadProgress', uploadProgress);
+  }
 
 export default router;

@@ -25,12 +25,22 @@ export const api = async (request: express.Request, response: express.Response) 
 
 export const getChannels = async (request: express.Request, response: express.Response) => {
 
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
-  }
+  let slackAccessToken: string;
 
-  const user = await readUser(request.user as string);
-  const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+  if (process.env.NODE_ENV === 'development') {
+    slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+  } else {
+    if (!request.userId) {
+      return response.status(400).send('UserID is required');
+    }
+
+    const user = await readUser(request.user as string);
+    slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+    if (!slackAccessToken) {
+      return response.status(500).send('Failed to retrieve Slack access token');
+    }
+  }
 
   try {
       const slackbot = new SlackBot('', slackAccessToken);
@@ -43,12 +53,23 @@ export const getChannels = async (request: express.Request, response: express.Re
 };
 
 export const addBotToChannel = async (request: express.Request, response: express.Response) => {
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
-  }
+  
+  let slackAccessToken: string;
 
-  const user = await readUser(request.user as string);
-  const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+  if (process.env.NODE_ENV === 'development') {
+    slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+  } else {
+    if (!request.userId) {
+      return response.status(400).send('UserID is required');
+    }
+
+    const user = await readUser(request.user as string);
+    slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+    if (!slackAccessToken) {
+      return response.status(500).send('Failed to retrieve Slack access token');
+    }
+  }
 
   const { channelId } = request.body
   if (!channelId) {
@@ -66,46 +87,66 @@ export const addBotToChannel = async (request: express.Request, response: expres
 }
 
 export const getImagesUrls = async (request: express.Request, response: express.Response) => {
+  try{
+    let userId: string;
 
-  const { page = '1', limit = '10' } = request.query as { page: string, limit: string };
-  const pageNumber = parseInt(page, 10);
-  const limitNumber = parseInt(limit, 10);
+    if (process.env.NODE_ENV === 'development') {
+      userId = process.env.SS_USER_ID as string;
+    } else {
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+      userId = request.userId
+    }
 
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
+    const { page = '1', limit = '10' } = request.query as { page: string, limit: string };
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    const fileReferences = await paginateSlackPrivateUrls(userId as string, pageNumber, limitNumber);
+    
+    if (!fileReferences.length) {
+      return response.status(404).send('No file URLs found');
+    }
+
+    const urls = fileReferences
+      .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '' && fileReference.slackFileID && fileReference.slackFileID !== '')
+      .map(fileReference => ({
+        url: fileReference.slackPrivateFileURL,
+        name: fileReference.name,
+        fileID: fileReference.slackFileID,
+      }));
+    response.status(200).json(urls);
+  } catch(error) {
+    console.error(`Error trying to get image urls: ${error}`);
+    response.status(500).json({ error: 'Failed get image urls' });
   }
-
-  const fileReferences = await paginateSlackPrivateUrls(request.userId as string, pageNumber, limitNumber);
-  
-  if (!fileReferences.length) {
-    return response.status(404).send('No file URLs found');
-  }
-
-  const urls = fileReferences
-    .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '' && fileReference.slackFileID && fileReference.slackFileID !== '')
-    .map(fileReference => ({
-      url: fileReference.slackPrivateFileURL,
-      name: fileReference.name,
-      fileID: fileReference.slackFileID,
-    }));
-  response.json(urls);
 };
 
 export const getImagesProxy = async (request: express.Request, response: express.Response) => {
-
-  const { imageUrl } = request.query;
-  
-  if (!imageUrl) {
-    return response.status(400).send('Image URL is required');
-  }
-
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
-  }
-
   try {
-    const user = await readUser(request.user as string);
-    const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+    let slackAccessToken: string;
+
+    if (process.env.NODE_ENV === 'development') {
+      slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+    } else {
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+
+      const user = await readUser(request.userId);
+      slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+      if (!slackAccessToken) {
+        return response.status(500).send('Failed to retrieve Slack access token');
+      }
+    }
+
+    const { imageUrl } = request.query;
+    
+    if (!imageUrl) {
+      return response.status(400).send('Image URL is required');
+    }
 
     const axiosResponse = await axios.get(decodeURIComponent(imageUrl.toString()), {
       responseType: 'stream',
@@ -151,8 +192,15 @@ export const uploadFiles = async (request: express.Request, response: express.Re
     }
   
     try {
-      if (!request.userId) {
-        return response.status(400).send('UserID is required');
+      let userId: string;
+
+      if (process.env.NODE_ENV === 'development') {
+        userId = process.env.SS_USER_ID as string;
+      } else {
+        if (!request.userId) {
+          return response.status(400).send('UserID is required');
+        }
+        userId = request.userId;
       }
       
       const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
@@ -160,11 +208,12 @@ export const uploadFiles = async (request: express.Request, response: express.Re
         path: file.filepath,
         size: file.size,
         sessionID: fields.sessionID[0], // is returned as array, so access the first element
-        userID: request.userId as string,
+        userID: userId,
         type: file.mimetype,
         lastModifiedDate: file.lastModifiedDate,
         isUploaded: false
       }));
+      console.log(parsedFiles);
 
       await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
       response.status(200).json({ message: 'Files processed successfully' });
@@ -177,11 +226,6 @@ export const uploadFiles = async (request: express.Request, response: express.Re
 };
 
 export const uploadProgress = async(request: express.Request, response: express.Response) => {
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
-  }
-
-  const user = await readUser(request.user as string);
   
   const { sessionID } = request.body
 
@@ -247,16 +291,30 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
     }
 
     try {
-      const user = await readUser(request.user as string);
-      const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+      let userId: string;
+      let slackAccessToken: string;
+
+      if (process.env.NODE_ENV === 'development') {
+        userId = process.env.SS_USER_ID as string;
+        slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+      } else {
+        if (!request.userId) {
+          return response.status(400).send('UserID is required');
+        }
+
+        userId = request.userId;
+        const user = await readUser(request.userId);
+        slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+        if (!slackAccessToken) {
+          return response.status(500).send('Failed to retrieve Slack access token');
+        }
+      }
+
       const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
 
       if (!Array.isArray(files.files)) {
         return response.status(400).send('Invalid files format.');
-      }
-
-      if (!request.userId) {
-        return response.status(400).send('UserID is required');
       }
       
       const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
@@ -264,7 +322,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
         path: file.filepath,
         size: file.size,
         sessionID: fields.sessionID[0], // is returned as array, so access the first element
-        userID: request.userId as string,
+        userID: userId,
         type: file.mimetype,
         lastModifiedDate: file.lastModifiedDate,
         isUploaded: false
@@ -276,7 +334,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
 
       await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-      const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, request.userId ?? '', fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
+      const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, userId, fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
         console.log(`Progress callback received: ${progress}% || apiC`);
         const sendProgress = progressCallbacks.get(fields.sessionID[0]);
           if (sendProgress) {
@@ -295,86 +353,87 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
 }
 
 export const deleteFiles = async (request: express.Request, response: express.Response) => {
-  if (!request.userId) {
-    console.log('UserID is required');
-    return response.status(400).send('UserID is required');
-  }
-
+  
   const files = request.body.files as { id: string; deleteFlag: string; }[];
-  console.log("Files Object: ", files);
-  console.log("Fitst Files Array: ", files[0]);
 
   if (!files || !Array.isArray(files) || files.length === 0) {
-    console.log('Invalid file data');
     return response.status(400).send('Invalid file data');
   }
 
   try {
-    const user = await readUser(request.user as string);
-    if (!user) {
-      console.log('User not found');
-      return response.status(404).send('User not found');
-    }
+    let userId: string;
+    let slackAccessToken: string;
 
-    const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
-    if (!slackAccessToken) {
-      console.log('Failed to retrieve Slack access token');
-      return response.status(500).send('Failed to retrieve Slack access token');
+    if (process.env.NODE_ENV === 'development') {
+      userId = process.env.SS_USER_ID as string;
+      slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+    } else {
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+
+      userId = request.userId;
+      const user = await readUser(request.userId);
+      slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+      if (!slackAccessToken) {
+        return response.status(500).send('Failed to retrieve Slack access token');
+      }
     }
 
     const slackbot = new SlackBot('', slackAccessToken);
     const fileIDs = files.map(file => file.id);
 
     const deleteFromSlack = async () => {
-      console.log('Deleting files from Slack');
       await slackbot.deleteFilesFromSlack(fileIDs);
     };
     const deleteFromApp = async (): Promise<number | undefined> => {
-      console.log('Deleting files from Slackshots');
-      return await anonymizeUploadedFileReferences(request.userId as string, fileIDs);
+      return await anonymizeUploadedFileReferences(userId, fileIDs);
     };
 
     switch (files[0].deleteFlag) {
       case 'a':
         const deletedFromApp = await deleteFromApp();
-        console.log(`${deletedFromApp?.toString()} files deleted from Slackshots successfully.`);
         response.status(200).json({ message: `${deletedFromApp?.toString()} files deleted from Slackshots successfully.` });
         break;
       case 'b':
         await deleteFromSlack();
         const deletedFromBoth = await deleteFromApp();
-        console.log(`${deletedFromBoth?.toString()} files deleted from both Slack and Slackshots successfully.`);
         response.status(200).json({ message: `${deletedFromBoth?.toString()} files deleted from both Slack and Slackshots successfully.` });
         break;
       default:
-        console.log('Invalid delete flag');
         return response.status(400).send('Invalid delete flag');
     }
   } catch (error) {
-    console.error(`Error deleting files: ${error}`);
     response.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
 export const downloadFiles = async (request: express.Request, response: express.Response) => {
 
-  console.log('Downloading files request received');
-
-  if (!request.userId) {
-    console.log('UserID is required');
-    return response.status(400).send('UserID is required');
-  }
-
   const files = request.body.files as { url: string; name: string }[];
 
   if (!files || !Array.isArray(files) || files.length === 0) {
-    console.log('Invalid file data');
     return response.status(400).send('Invalid file data');
   }
 
   try {
-    const user = await readUser(request.user as string);
-    const slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+    let slackAccessToken: string;
+
+    if (process.env.NODE_ENV === 'development') {
+      slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+    } else {
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+
+      const user = await readUser(request.userId);
+      slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+      if (!slackAccessToken) {
+        return response.status(500).send('Failed to retrieve Slack access token');
+      }
+    }
 
     const zip = archiver('zip', {
       zlib: { level: 9 }
