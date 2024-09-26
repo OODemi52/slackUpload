@@ -188,6 +188,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
         if (value) {
             try {
+              console.log("SSE Value", value)
                 const data = JSON.parse(value);
                 if (data.type === 'progress') {
                     console.log(`Server progress received: ${data.progress}%`);
