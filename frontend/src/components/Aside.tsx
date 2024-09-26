@@ -187,9 +187,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         if (done) break;
 
         if (value) {
-            try {
-              console.log("SSE Value", value)
-                const data = JSON.parse(value);
+          try {
+            console.log("SSE Value", value);
+            if (value.startsWith('data: ')) {
+                const jsonString = value.slice(6);
+                const data = JSON.parse(jsonString);
                 if (data.type === 'progress') {
                     console.log(`Server progress received: ${data.progress}%`);
                     setServerProgress(data.progress);
@@ -199,9 +201,10 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
                     setUploadComplete(true);
                     break;
                 }
-            } catch (error) {
-                console.error("Error parsing SSE message:", error);
             }
+        } catch (error) {
+            console.error("Error parsing SSE message:", error);
+        }
         }
     }
 
