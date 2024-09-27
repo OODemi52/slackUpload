@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
-import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
 import LandingPage from "./components/LandingPage";
 import AuthCallback from "./components/AuthCallback";
 import AuthContext from "./context/AuthContext";
-
-const queryClient = new QueryClient();
 
 function App() {
   const [accessToken, setAccessToken] = useState<string | null>(() => {
@@ -59,7 +56,6 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ accessToken, setAccessToken }}>
         <Router>
           <Routes>
@@ -68,7 +64,6 @@ function App() {
           </Routes>
         </Router>
       </AuthContext.Provider>
-    </QueryClientProvider>
   );
 }
 
