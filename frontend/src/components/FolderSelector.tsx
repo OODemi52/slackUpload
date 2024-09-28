@@ -59,7 +59,6 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({
     } else {
       onFileChange(null);
     }
-    console.log(files);
   };
 
   return (
