@@ -9,6 +9,7 @@ import UploadComment from "./UploadComment";
 import UploadButton from "./UploadButton";
 import AuthContext from "../context/AuthContext";
 import { useChannels } from "../hooks/useChannels";
+import { useAddBot } from "../hooks/useAddBot";
 
 interface FormState {
   files: FileList | null;
@@ -30,10 +31,10 @@ interface AsideProps {
 }
 
 const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete, setUploadAttempted }) => {
-  const { data: channels, /*isLoading: channelsLoading, error: channelsError,*/ refetch: refetchChannels } = useChannels();
+  const { data: channels, /*isLoading: channelsLoading, error: channelsError, refetch: refetchChannels*/} = useChannels();
+  const addBotMutation = useAddBot();
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
-  const [loadingBotChannels, setLoadingBotChannels] = useState<{ [key: string]: boolean }>({});
   const [showProgress, setShowProgress] = useState<boolean>(false);
   const [currentUpload, setCurrentUpload] = useState<{ abort: () => void } | null>(null);
   const [clientProgress, setClientProgress] = useState(0);
@@ -45,22 +46,9 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
 
   const handleAddBot = async (channelId: string) => {
-    setLoadingBotChannels(prev => ({ ...prev, [channelId]: true }));
     try {
-      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/addBotToChannel`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ channelId }),
-      });
-  
-      if (response.ok) {
-        refetchChannels();
-      } else {
-        console.error('Failed to add bot to channel');
-      }
+
+      await addBotMutation.mutateAsync(channelId);
 
       toast({
         title: "Slackshots Added",
@@ -72,7 +60,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       });
 
     } catch (error) {
-      console.error('Error adding bot to channel:', error);
 
       toast({
         title: "Failed To Add Slackshots",
@@ -82,8 +69,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         isClosable: true,
         position: "top",
       });
-    } finally {
-      setLoadingBotChannels(prev => ({ ...prev, [channelId]: false }));
+
     }
   };
 
@@ -113,6 +99,11 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   };
 
   const checkFileSizes = (files: File[]) => {
+
+    if (files.length === 0) {
+      throw new Error("No files selected");
+    }
+
     const maxFileSize = 9 * 1024 * 1024; // 9 MB
     const uploadableFiles: File[] = [];
     const largeFiles: string[] = [];
@@ -125,8 +116,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       }
     });
 
-    console.log("Checked file sizes")
     return { uploadableFiles, largeFiles };
+
   };
 
   const startSSE = useCallback(async (sessionID: string) => {
@@ -448,7 +439,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
               channels={channels}
               onChannelChange={handleChannelSelection}
               onAddBot={handleAddBot}
-              loadingBotChannels={loadingBotChannels}
+              loadingBotChannels={addBotMutation.isPending}
             />
           </Box>
         </VStack>
@@ -533,7 +524,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
             channels={channels}
             onChannelChange={handleChannelSelection}
             onAddBot={handleAddBot}
-            loadingBotChannels={loadingBotChannels}
+            loadingBotChannels={addBotMutation.isPending}
           />
         </Box>
       </VStack>

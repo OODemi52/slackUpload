@@ -12,16 +12,11 @@ interface ChannelSelectorProps {
   channels: ChannelOption[];
   onChannelChange: (channelId: string) => void;
   onAddBot: (channelId: string) => void;
-  loadingBotChannels: { [key: string]: boolean };
+  loadingBotChannels: boolean ;
   
 }
 
-const ChannelSelector: React.FC<ChannelSelectorProps> = ({
-  channels,
-  onChannelChange,
-  onAddBot,
-  loadingBotChannels,
-}) => {
+const ChannelSelector: React.FC<ChannelSelectorProps> = ({ channels, onChannelChange, onAddBot, loadingBotChannels }) => {
   const [selectedChannel, setSelectedChannel] = useState<ChannelOption | null>(null);
 
   const handleChannelSelect = useCallback(
@@ -62,7 +57,7 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
                 e.stopPropagation();
                 onAddBot(data.value);
               }}
-              isLoading={loadingBotChannels[data.value]}
+              isLoading={loadingBotChannels}
               loadingText=""
             >
               +
