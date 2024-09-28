@@ -2,10 +2,14 @@ import React, { useState, useCallback } from "react";
 import { Box, Flex, Button, Tooltip } from "@chakra-ui/react";
 import { Select, chakraComponents, OptionProps } from "chakra-react-select";
 
-type Channel = { value: string; label: string; isMember: boolean };
+type ChannelOption = { 
+  value: string;
+  label: string;
+  isMember: boolean;
+};
 
 interface ChannelSelectorProps {
-  channels: Channel[];
+  channels: ChannelOption[];
   onChannelChange: (channelId: string) => void;
   onAddBot: (channelId: string) => void;
   loadingBotChannels: { [key: string]: boolean };
@@ -18,10 +22,10 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
   onAddBot,
   loadingBotChannels,
 }) => {
-  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<ChannelOption | null>(null);
 
   const handleChannelSelect = useCallback(
-    (channel: Channel) => {
+    (channel: ChannelOption) => {
       if (channel.isMember) {
         setSelectedChannel(channel);
         onChannelChange(channel.value);
@@ -31,7 +35,7 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
   );
 
   const CustomOption = React.memo(
-    ({ children, ...props }: OptionProps<Channel, false>) => {
+    ({ children, ...props }: OptionProps<ChannelOption, false>) => {
     const { data, innerProps, innerRef } = props;
     return (
       <chakraComponents.Option {...props} >
@@ -77,8 +81,8 @@ const ChannelSelector: React.FC<ChannelSelectorProps> = ({
         placeholder="Select Channel"
         menuPlacement="top"
         isSearchable={false}
-        onChange={(newValue: Channel | null) =>
-          handleChannelSelect(newValue as Channel)
+        onChange={(newValue: ChannelOption | null) =>
+          handleChannelSelect(newValue as ChannelOption)
         }
         value={selectedChannel}
         components={{ Option: CustomOption }}

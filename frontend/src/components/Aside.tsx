@@ -8,6 +8,7 @@ import FileTypesSelector from "./FileTypesSelector";
 import UploadComment from "./UploadComment";
 import UploadButton from "./UploadButton";
 import AuthContext from "../context/AuthContext";
+import { useChannels } from "../hooks/useChannels";
 
 interface FormState {
   files: FileList | null;
@@ -28,14 +29,8 @@ interface AsideProps {
   setUploadAttempted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-interface Channel { 
-  value: string;
-  label: string;
-  isMember: boolean;
-}
-
 const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete, setUploadAttempted }) => {
-  const [channels, setChannels] = useState<Channel[]>([]);
+  const { data: channels, /*isLoading: channelsLoading, error: channelsError,*/ refetch: refetchChannels } = useChannels();
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
   const [fileSelection, setFileSelection] = useState<string>("");
   const [loadingBotChannels, setLoadingBotChannels] = useState<{ [key: string]: boolean }>({});
@@ -48,30 +43,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
   const toast = useToast();
 
-  const fetchChannels = useCallback(async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getChannels`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const data = await response.json();
-      const formattedChannels: Channel[] = data.map(
-      (channel: { id: string, name: string, isMember: boolean }) => ({
-        value: channel.id,
-        label: channel.name,
-        isMember: channel.isMember,
-      }),
-    );
-      setChannels(formattedChannels);
-    } catch (error) {
-      console.error("Error fetching channels:", error);
-    }
-  }, [accessToken]);
-  
-    useEffect(() => {
-        fetchChannels();
-    }, [accessToken, fetchChannels]);
 
   const handleAddBot = async (channelId: string) => {
     setLoadingBotChannels(prev => ({ ...prev, [channelId]: true }));
@@ -86,7 +57,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       });
   
       if (response.ok) {
-        fetchChannels();
+        refetchChannels();
       } else {
         console.error('Failed to add bot to channel');
       }
@@ -383,9 +354,6 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     }
   }, [formState.sessionID, performUpload, setStartUpload, startUpload]);
 
-  useEffect(() => {
-    fetchChannels();
-  }, [fetchChannels]);
 
   useEffect(() => {
     if (isUploading) {
