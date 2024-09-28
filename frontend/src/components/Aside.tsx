@@ -30,6 +30,8 @@ interface AsideProps {
   setUploadAttempted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const MAX_FILE_BATCH_SIZE = 9 * 1024 * 1024; // 9 MB
+
 const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete, setUploadAttempted }) => {
   const { data: channels, /*isLoading: channelsLoading, error: channelsError, refetch: refetchChannels*/} = useChannels();
   const addBotMutation = useAddBot();
@@ -39,88 +41,143 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const [currentUpload, setCurrentUpload] = useState<{ abort: () => void } | null>(null);
   const [clientProgress, setClientProgress] = useState(0);
   const [serverProgress, setServerProgress] = useState(0);
+  const [maxClientProgress, setMaxClientProgress] = useState(0);
 
   const { accessToken } = useContext(AuthContext);
 
   const toast = useToast();
 
 
-  const handleAddBot = async (channelId: string) => {
-    try {
+  const checkFileSizes = useCallback((files: File[]) => {
+    const uploadableFiles = files.filter(file => file.size <= MAX_FILE_BATCH_SIZE);
+    const largeFiles = files.filter(file => file.size > MAX_FILE_BATCH_SIZE).map(file => file.name);
+    return { uploadableFiles, largeFiles };
+  }, []);
 
-      await addBotMutation.mutateAsync(channelId);
+  const createBatches = useCallback( (files: File[]): File[][] => {
+    const batches: File[][] = [];
+    let currentBatch: File[] = [];
+    let currentBatchSize = 0;
 
-      toast({
-        title: "Slackshots Added",
-        description: "Slackshots has been successfully added to the channel.",
-        status: "success",
-        duration: null,
-        isClosable: true,
-        position: "top",
-      });
-
-    } catch (error) {
-
-      toast({
-        title: "Failed To Add Slackshots",
-        description: "There was an error adding Slackshots to the channel.",
-        status: "error",
-        duration: null,
-        isClosable: true,
-        position: "top",
-      });
-
-    }
-  };
-
-  const handleFolderSelection = (files: FileList | null): void => {
-    setFormState({ files });
-  };
-  
-  const handleChannelSelection = (channel: string) => {
-    setFormState({ channel });
-  };
-  
-  const handleCommentChange = (uploadComment: string) => {
-    setFormState({ uploadComment });
-  };
-  
-  const handleMessageBatchSizeChange = (messageBatchSize: number) => {
-    setFormState({ messageBatchSize });
-  };
-  
-  const handleFileUpload = async (): Promise<void> => {
-    setIsUploading(true);
-    setUploadAttempted(true);
-    const newSessionID = uuid.v4();
-    setFormState({ sessionID: newSessionID });
-    setStartUpload(true);
-    startSSE(newSessionID);
-  };
-
-  const checkFileSizes = (files: File[]) => {
-
-    if (files.length === 0) {
-      throw new Error("No files selected");
-    }
-
-    const maxFileSize = 9 * 1024 * 1024; // 9 MB
-    const uploadableFiles: File[] = [];
-    const largeFiles: string[] = [];
-  
     files.forEach(file => {
-      if (file.size <= maxFileSize) {
-        uploadableFiles.push(file);
-      } else {
-        largeFiles.push(file.name);
+      if (currentBatchSize + file.size > MAX_FILE_BATCH_SIZE) {
+        batches.push(currentBatch);
+        currentBatch = [];
+        currentBatchSize = 0;
       }
+      currentBatch.push(file);
+      currentBatchSize += file.size;
     });
 
-    return { uploadableFiles, largeFiles };
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
+    }
 
-  };
+    return batches;
+  },[]);
 
-  const startSSE = useCallback(async (sessionID: string) => {
+  const createFormData = useCallback( (files: File[], formState: FormState) => {
+    const formData = new FormData();
+    formData.append("channel", formState.channel);
+    formData.append("sessionID", formState.sessionID);
+    formData.append("comment", formState.uploadComment);
+    formData.append("messageBatchSize", formState.messageBatchSize.toString());
+    files.forEach((file) => {
+      formData.append("files", file, file.name);
+    });
+    return formData;
+  }, []);
+
+  const uploadBatch = useCallback( async (files: File[]) => {
+
+    const formData = createFormData(files, formState);
+  
+    return new Promise<{ abort: () => void }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          resolve({ abort: () => xhr.abort() });
+        } else {
+          reject(new Error(xhr.responseText));
+        }
+      };
+  
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setMaxClientProgress(prevProgress => Math.max(prevProgress, progress));
+          setClientProgress(maxClientProgress);
+        }
+      };
+  
+      xhr.onerror = () => reject(new Error('Network error'));
+  
+      xhr.send(formData);
+  
+      resolve({
+        abort: () => {
+          xhr.abort();
+          reject(new Error('Upload cancelled'));
+        }
+      });
+
+  })
+  }, [accessToken, createFormData, formState, maxClientProgress]);
+
+  const uploadLastBatch = useCallback( async (files: File[]) => {
+    
+    const formData = createFormData(files, formState);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFinalFiles`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+    } catch (error) {
+      console.error("Error uploading final batch:", error);
+    }
+  }, [accessToken, createFormData, formState]);
+
+  const uploadBatches = useCallback( async (batches: File[][]) => {
+    for (let i = 0; i < batches.length; i++) {
+      try {
+        if (i === batches.length - 1) {
+          await uploadLastBatch(batches[i]);
+        } else {
+          const upload = await uploadBatch(batches[i]);
+          setCurrentUpload(upload);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message === 'Upload cancelled') {
+          toast({
+            title: "Upload Cancelled",
+            description: `User cancelled the upload process.`,
+            status: "info",
+            isClosable: true,
+            duration: 5000,
+          });
+          break;
+        } else {
+          throw new Error(`Error uploading batches ${error}`);
+        }
+      }
+    }
+  }, [toast, uploadBatch, uploadLastBatch])
+
+  const startProgressStream = useCallback(async (sessionID: string) => {
     const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadProgress`, {
       method: 'POST',
       headers: {
@@ -167,7 +224,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     reader.releaseLock();
   }, [accessToken, setIsUploading, setUploadComplete]);
 
-  /* Will implement after SSE is confirmed to be working
+    /* Will implement after SSE is confirmed to be working
   const cancelUpload = useCallback(() => {
     if (currentUpload) {
       currentUpload.abort();
@@ -176,16 +233,8 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     }
   }, [currentUpload, setIsUploading]);
   */
-  if (currentUpload) {
-    console.log("Current Upload")
-  }
-
 
   const performUpload = useCallback(async () => {
-    console.log("Performing upload with session ID:", formState.sessionID);
-
-    const maxBatchSize = 9 * 1024 * 1024; // 9 MB
-    let maxClientProgress= 0;
   
     const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
       file.name.toLowerCase().endsWith(selectedFileTypes.join(","))
@@ -212,131 +261,76 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         });
       }
     }
-  
-    let currentBatchSize = 0;
-    let currentBatch: File[] = [];
-    const batches: File[][] = [];
-  
-    for (const file of uploadableFiles) {
-      if (currentBatchSize + file.size > maxBatchSize) {
-        batches.push(currentBatch);
-        currentBatch = [];
-        currentBatchSize = 0;
-      }
-      currentBatch.push(file);
-      currentBatchSize += file.size;
-      console.log("Pushed a batch")
-    }
-  
-    if (currentBatch.length > 0) {
-      batches.push(currentBatch);
+
+    const batches = createBatches(uploadableFiles);
+
+    try {
+      await uploadBatches(batches);
+      setCurrentUpload(null);
+      console.log("All batches uploaded successfully!");
+    } catch (error) {
+      throw new Error(`Error uploading files ${error}`)
     }
 
-    const uploadLastBatch = async (files: File[]) => {
-      const formData = new FormData();
-      formData.append("channel", formState.channel);
-      formData.append("sessionID", formState.sessionID);
-      formData.append("comment", formState.uploadComment);
-      formData.append(
-        "messageBatchSize",
-        formState.messageBatchSize.toString(),
-      );
-      files.forEach((file) => {
-        formData.append("files", file, file.name);
+}, [formState.files, checkFileSizes, createBatches, selectedFileTypes, toast, uploadBatches]);
+
+
+  const handleFolderSelection = (files: FileList | null): void => {
+    setFormState({ files });
+  };
+  
+  const handleChannelSelection = (channel: string) => {
+    setFormState({ channel });
+  };
+  
+  const handleCommentChange = (uploadComment: string) => {
+    setFormState({ uploadComment });
+  };
+  
+  const handleMessageBatchSizeChange = (messageBatchSize: number) => {
+    setFormState({ messageBatchSize });
+  };
+
+  const handleAddBot = async (channelId: string) => {
+    try {
+
+      await addBotMutation.mutateAsync(channelId);
+
+      toast({
+        title: "Slackshots Added",
+        description: "Slackshots has been successfully added to the channel.",
+        status: "success",
+        duration: null,
+        isClosable: true,
+        position: "top",
       });
 
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFinalFiles`,
-          {
-            method: "POST",
-            body: formData,
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          },
-        );
+    } catch (error) {
 
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-      } catch (error) {
-        console.error("Error uploading final batch:", error);
-      }
-    };
-
-    const uploadBatch = async (files: File[]) => {
-      const formData = new FormData();
-      formData.append("channel", formState.channel);
-      formData.append("sessionID", formState.sessionID);
-      formData.append("comment", formState.uploadComment);
-      formData.append(
-        "messageBatchSize",
-        formState.messageBatchSize.toString(),
-      );
-      files.forEach((file) => {
-        formData.append("files", file, file.name);
+      toast({
+        title: "Failed To Add Slackshots",
+        description: "There was an error adding Slackshots to the channel.",
+        status: "error",
+        duration: null,
+        isClosable: true,
+        position: "top",
       });
-    
-      return new Promise<{ abort: () => void }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
-        xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-    
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = (event.loaded / event.total) * 100;
-            maxClientProgress = Math.max(maxClientProgress, progress);
-            console.log("Client progress", maxClientProgress);
-            setClientProgress(maxClientProgress);
-          }
-        };
-    
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            resolve({ abort: () => xhr.abort() });
-          } else {
-            reject(new Error(xhr.responseText));
-          }
-        };
-    
-        xhr.onerror = () => reject(new Error('Network error'));
-    
-        xhr.send(formData);
-    
-        resolve({
-          abort: () => {
-            xhr.abort();
-            reject(new Error('Upload cancelled'));
-          }
-        });
-    })
-    };
 
-    for (let i = 0; i < batches.length; i++) {
-      console.log(`Uploading batch ${i + 1} of ${batches.length}`);
-      try {
-        if (i === batches.length - 1) {
-          console.log("Uploading final batch");
-          await uploadLastBatch(batches[i]);
-        } else {
-          const upload = await uploadBatch(batches[i]);
-          setCurrentUpload(upload);
-        }
-      } catch (error) {
-        if (error instanceof Error && error.message === 'Upload cancelled') {
-          console.log('Upload was cancelled');
-          break;
-        } else {
-          throw error;
-        }
-      }
     }
+  };
+  
+  const handleFileUpload = useCallback(() => {
+    setIsUploading(true);
+    setUploadAttempted(true);
+    const newSessionID = uuid.v4();
+    setFormState({ sessionID: newSessionID });
+    setStartUpload(true);
+    startProgressStream(newSessionID);
+  }, [setIsUploading, setUploadAttempted, setFormState, setStartUpload, startProgressStream]);
 
-    maxClientProgress = 0;
-    setCurrentUpload(null);
-    console.log("All batches uploaded successfully!");
-}, [formState.sessionID, formState.files, formState.channel, formState.uploadComment, formState.messageBatchSize, selectedFileTypes, toast, accessToken]);
+  if (currentUpload) {
+    console.log("Current Upload")
+  }
 
   useEffect(() => {
     if (startUpload && formState.sessionID) {
