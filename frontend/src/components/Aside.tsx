@@ -272,11 +272,12 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
       throw new Error(`Error uploading files ${error}`)
     }
 
-}, [formState.files, checkFileSizes, createBatches, selectedFileTypes, toast, uploadBatches]);
+  }, [formState.files, checkFileSizes, createBatches, selectedFileTypes, toast, uploadBatches]);
 
 
   const handleFolderSelection = (files: FileList | null): void => {
     setFormState({ files });
+    console.log(files)
   };
   
   const handleChannelSelection = (channel: string) => {

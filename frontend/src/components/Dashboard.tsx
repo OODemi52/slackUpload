@@ -4,6 +4,8 @@ import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
 import AuthContext from "../context/AuthContext";
+import { useDeleteImages } from "../hooks/useDeleteImages";
+
 
 interface FormState {
   files: FileList | null;
@@ -14,6 +16,7 @@ interface FormState {
 }
 
 const Dashboard: React.FC = () => {
+  const deleteImagesMutation = useDeleteImages();
   const [formState, setFormState] = useState<FormState>({
     files: null,
     channel: "",
@@ -166,29 +169,14 @@ const refreshImages = useCallback(() => {
 
 
   const handleConfirmDelete = async (deleteFlag: "a" | "b") => {
+    
+    const filesToDelete = selectedImages.map((image) => ({
+      id: image.fileID,
+      deleteFlag: deleteFlag,
+    }));
+
     try {
-      const filesToDelete = selectedImages.map((image) => ({
-        id: image.fileID,
-        deleteFlag: deleteFlag,
-      }));
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/deleteFiles`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ files: filesToDelete }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await deleteImagesMutation.mutateAsync(filesToDelete);
 
       refreshImages();
 
