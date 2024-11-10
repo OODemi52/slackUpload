@@ -43,10 +43,13 @@ const Dashboard: React.FC = () => {
 
   const toast = useToast();
 
+  console.log(isImageUrlsError, imageUrlsError, refetchImageUrls);
+
   const handleFormStateChange = useCallback((newState: Partial<FormState>) => {
     setFormState((prevState) => ({ ...prevState, ...newState }));
   }, []);
 
+  /*
   const handleUploadComplete = useCallback(() => {
     setStartUpload(false);
     setIsUploading(false);
@@ -63,6 +66,7 @@ const Dashboard: React.FC = () => {
       position: "top",
     });
   }, [toast, refetchImageUrls]);
+  */
 
   const handleUploadFail = useCallback(() => {
     setStartUpload(false);
