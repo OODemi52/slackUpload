@@ -99,24 +99,30 @@ export const getImagesUrls = async (request: express.Request, response: express.
       userId = request.userId
     }
 
-    const { page = '1', limit = '10' } = request.query as { page: string, limit: string };
+    const { page = '1', limit = '16' } = request.query as { page: string, limit: string };
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
     const fileReferences = await paginateSlackPrivateUrls(userId as string, pageNumber, limitNumber);
     
     if (!fileReferences.length) {
-      return response.status(404).send('No file URLs found');
+      console.log("Nothing")
+      return response.status(200).json({ imageUrls: [], nextPage: null });
     }
 
-    const urls = fileReferences
-      .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '' && fileReference.slackFileID && fileReference.slackFileID !== '')
-      .map(fileReference => ({
-        url: fileReference.slackPrivateFileURL,
-        name: fileReference.name,
-        fileID: fileReference.slackFileID,
-      }));
-    response.status(200).json(urls);
+    const imageUrls = fileReferences
+    .filter(fileReference => fileReference.slackPrivateFileURL && fileReference.slackPrivateFileURL !== '' && fileReference.slackFileID && fileReference.slackFileID !== '')
+    .map(fileReference => ({
+      url: fileReference.slackPrivateFileURL,
+      name: fileReference.name,
+      fileID: fileReference.slackFileID,
+    }));
+
+    const nextPage = imageUrls.length === limitNumber ? pageNumber + 1 : null;
+
+    console.log("Image URLs: ", imageUrls.length)
+
+    response.status(200).json({ imageUrls, nextPage });
   } catch(error) {
     console.error(`Error trying to get image urls: ${error}`);
     response.status(500).json({ error: 'Failed get image urls' });
@@ -171,17 +177,26 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   // to the file path on the server. 
 
   const form = new IncomingForm() as any;
+
+  form.multiples = true;
+
   const uploadDirPath = path.join(__dirname, '../../uploads');
 
   if (!fs.existsSync(uploadDirPath)) {
     fs.mkdirSync(uploadDirPath);
   }
+
   form.uploadDir = uploadDirPath;
   form.keepExtensions = true;
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
   form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
+
+    if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
+      return response.status(404).send('No fields or files found');
+    }
+
     if (err) {
       console.error(`Error processing upload: ${err}`);
       return response.status(500).json({ error: 'Error processing upload' });
@@ -193,7 +208,7 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   
     try {
       let userId: string;
-
+      
       if (process.env.NODE_ENV === 'development') {
         userId = process.env.SS_USER_ID as string;
       } else {
@@ -202,7 +217,7 @@ export const uploadFiles = async (request: express.Request, response: express.Re
         }
         userId = request.userId;
       }
-      
+
       const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
         name: file.originalFilename,
         path: file.filepath,
@@ -213,11 +228,11 @@ export const uploadFiles = async (request: express.Request, response: express.Re
         lastModifiedDate: file.lastModifiedDate,
         isUploaded: false
       }));
-      console.log(parsedFiles);
+      console.log("Files parsed in this batch", parsedFiles.length);
 
-      await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
+      await Promise.all(parsedFiles.map(file => retryOperation(() => writeUploadedFileReference(file), 3, 1000)));
+      
       response.status(200).json({ message: 'Files processed successfully' });
-
     } catch (error) {
       console.error(`Error uploading files: ${error}`);
       response.status(500).json({ error: 'Internal Server Error' });
@@ -262,6 +277,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   if (!fs.existsSync(uploadDirPath)) {
     fs.mkdirSync(uploadDirPath);
   }
+
   form.uploadDir = uploadDirPath;
   form.keepExtensions = true;
   form.options.maxFileSize = 2000 * 1024 * 1024;
@@ -329,12 +345,14 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
         lastModifiedDate: file.lastModifiedDate,
         isUploaded: false
       }));
+      console.log("Files parsed in last batch", parsedFiles.length);
   
       if (parsedFiles.length === 0) {
         return response.status(400).send('No files to upload.');
       }
 
-      await Promise.all(parsedFiles.map(file => writeUploadedFileReference(file)));
+      await Promise.all(parsedFiles.map(file => retryOperation(() => writeUploadedFileReference(file), 3, 1000)));
+
       const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
       const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, userId, fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
         console.log(`Progress callback received: ${progress}% || apiC`);
@@ -345,6 +363,7 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
             console.log(`No progress callback found for session ${fields.sessionID[0]}`);
           }
       });
+
       await Promise.all(processedFiles.map(file => deleteFile(file)));
       response.status(200).json({ message: 'Final files uploaded successfully!' });
     } catch (error) {
@@ -475,3 +494,15 @@ export const downloadFiles = async (request: express.Request, response: express.
     response.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+async function retryOperation(operation: () => Promise<void>, retries: number, delay: number) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await operation();
+      return;
+    } catch (error) {
+      if (attempt === retries) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}

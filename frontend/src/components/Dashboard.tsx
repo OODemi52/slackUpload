@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useCallback } from "react";
 import { Grid, GridItem, Box, useToast,  useMediaQuery } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
 import MainContent from "./MainContent";
-import AuthContext from "../context/AuthContext";
 import { useDeleteImages } from "../hooks/useDeleteImages";
-
+import { useImageUrls } from "../hooks/useImageUrls";
 
 interface FormState {
   files: FileList | null;
@@ -15,8 +14,16 @@ interface FormState {
   sessionID: string;
 }
 
+interface SelectedImage {
+  url: string;
+  fileID: string;
+  deleteFlag: string;
+  name: string;
+}
+
 const Dashboard: React.FC = () => {
   const deleteImagesMutation = useDeleteImages();
+  const { data: imageUrls, fetchNextPage, hasNextPage, isLoading: isImageUrlsLoading, isError:  isImageUrlsError, error:  imageUrlsError, refetch: refetchImageUrls } = useImageUrls();
   const [formState, setFormState] = useState<FormState>({
     files: null,
     channel: "",
@@ -30,19 +37,9 @@ const Dashboard: React.FC = () => {
   const [uploadAttempted, setUploadAttempted] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-  useState(false);
-  const [selectedImages, setSelectedImages] = useState<
-    { url: string; fileID: string; deleteFlag: string; name: string }[]
-  >([]);
-  const [pics, setPics] = useState<
-    { url: string; name: string; fileID: string }[]
-  >([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { accessToken } = useContext(AuthContext);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
+  const pics = imageUrls ? imageUrls.pages.flatMap(page => page.imageUrls) : [];
 
   const toast = useToast();
 
@@ -55,6 +52,7 @@ const Dashboard: React.FC = () => {
     setIsUploading(false);
     setUploadComplete(false);
     setUploadAttempted(false);
+    refetchImageUrls();
 
     toast({
       title: "Upload Complete",
@@ -64,7 +62,7 @@ const Dashboard: React.FC = () => {
       isClosable: true,
       position: "top",
     });
-  }, [toast]);
+  }, [toast, refetchImageUrls]);
 
   const handleUploadFail = useCallback(() => {
     setStartUpload(false);
@@ -87,99 +85,21 @@ const Dashboard: React.FC = () => {
     setSelectedImages([]);
   };
 
-  const fetchUrls = useCallback(
-    async (pageNum: number, limit: number = 16) => {
-      if (isLoading) return;
-      setIsLoading(true);
-      try {
-          const response = await fetch(
-            `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesUrls?page=${pageNum}&limit=${limit}`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const imageUrls: { url: string; name: string; fileID: string }[] = await response.json();
-  
-        setPics((prevPics) => {
-          const newPics = [...prevPics, ...imageUrls];
-          const uniquePics = newPics.filter(
-            (pic, index, self) =>
-              index === self.findIndex((t) => t.fileID === pic.fileID)
-          );
-          return uniquePics;
-        });
-  
-        if (imageUrls.length < limit) {
-          setHasMore(false);
-        }
-      } catch (error) {
-        console.error("Error fetching pics:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [accessToken]
-  );
-
-useEffect(() => {
-  if (uploadComplete) {
-    const timer = setTimeout(() => {
-      handleUploadComplete();
-      setPics([]);
-      setPage(1);
-      fetchUrls(1);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }
-}, [uploadComplete, handleUploadComplete, fetchUrls]);
-
-useEffect(() => {
-  if (accessToken && page === 1) {
-    fetchUrls(page);
-  }
-}, [accessToken, fetchUrls, page]);
-
-const handleLoadMore = useCallback(() => {
-  if (hasMore && !isLoading) {
-    setPage((prevPage) => prevPage + 1);
-  }
-}, [hasMore, isLoading]);
-
-useEffect(() => {
-  if (page > 1) {
-    fetchUrls(page);
-  }
-}, [page, fetchUrls]);
-
-const refreshImages = useCallback(() => {
-  setPics([]);
-  setPage(1);
-  setHasMore(true);
-  fetchUrls(1);
-}, [fetchUrls]);
-
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isImageUrlsLoading) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isImageUrlsLoading, fetchNextPage]);
 
   const handleConfirmDelete = async (deleteFlag: "a" | "b") => {
-    
-    const filesToDelete = selectedImages.map((image) => ({
-      id: image.fileID,
-      deleteFlag: deleteFlag,
-    }));
-
     try {
+      const filesToDelete = selectedImages.map((image) => ({
+        id: image.fileID,
+        deleteFlag: deleteFlag,
+      }));
+  
       const result = await deleteImagesMutation.mutateAsync(filesToDelete);
-
-      refreshImages();
-
+  
       toast({
         title: "Delete Complete",
         description: result.message,
@@ -188,16 +108,16 @@ const refreshImages = useCallback(() => {
         isClosable: true,
         position: !isLargerThan768 ? "bottom" : "top",
       });
-
+  
       setIsDeleteConfirmationOpen(false);
       setSelectedImages([]);
       setIsSelectMode(false);
-
+  
     } catch (error) {
       console.error("Error deleting files:", error);
       toast({
         title: "Deletion Failed",
-        description: "There was an error deleting the selected images.",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -267,7 +187,7 @@ const refreshImages = useCallback(() => {
               setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
               onConfirmDelete={handleConfirmDelete}
               pics={pics}
-              hasMore={hasMore}
+              hasMore={!!hasNextPage}
               onLoadMore={handleLoadMore}
             />
           </GridItem>

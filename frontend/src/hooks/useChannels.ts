@@ -19,9 +19,9 @@ const fetchChannels = async (accessToken: string | null) => {
         throw new Error(`Error: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const channels = await response.json();
 
-    return data.map((channel: APIChannelRepsonse) => ({
+    return channels.map((channel: APIChannelRepsonse) => ({
         value: channel.id,
         label: channel.name,
         isMember: channel.isMember,

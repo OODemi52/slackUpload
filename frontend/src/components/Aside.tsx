@@ -49,6 +49,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
 
   const checkFileSizes = useCallback((files: File[]) => {
+    console.log("checkFileSizes called")
     const uploadableFiles = files.filter(file => file.size <= MAX_FILE_BATCH_SIZE);
     const largeFiles = files.filter(file => file.size > MAX_FILE_BATCH_SIZE).map(file => file.name);
     return { uploadableFiles, largeFiles };
@@ -77,6 +78,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   },[]);
 
   const createFormData = useCallback( (files: File[], formState: FormState) => {
+    console.log("createFormData called")
     const formData = new FormData();
     formData.append("channel", formState.channel);
     formData.append("sessionID", formState.sessionID);
@@ -87,48 +89,74 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
     });
     return formData;
   }, []);
+  
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 1000;
+  const delay = (ms: number | undefined) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const uploadBatch = useCallback( async (files: File[]) => {
-
+  const uploadBatch = useCallback(async (files: File[]) => {
+    console.log("uploadBatch called");
+  
     const formData = createFormData(files, formState);
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
+          xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
   
-    return new Promise<{ abort: () => void }>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadFiles`, true);
-      xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
-
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          resolve({ abort: () => xhr.abort() });
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              const response = JSON.parse(xhr.responseText);
+              const uploadedFiles = response.uploadedFiles || [];
+  
+              const missingFiles = files.filter(file => !uploadedFiles.includes(file.name));
+              if (missingFiles.length === 0) {
+                resolve({ abort: () => xhr.abort() });
+              } else {
+                reject(new Error(`Missing files: ${missingFiles.map(f => f.name).join(", ")}`));
+              }
+            } else {
+              reject(new Error(xhr.responseText));
+            }
+          };
+  
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const progress = (event.loaded / event.total) * 100;
+              setMaxClientProgress(prevProgress => Math.max(prevProgress, progress));
+              setClientProgress(maxClientProgress);
+            }
+          };
+  
+          xhr.onerror = () => reject(new Error('Network error'));
+          xhr.send(formData);
+  
+          resolve({
+            abort: () => {
+              xhr.abort();
+              reject(new Error('Upload cancelled'));
+            }
+          });
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(`Attempt ${attempt} failed: ${error.message}`);
         } else {
-          reject(new Error(xhr.responseText));
+          console.error(`Attempt ${attempt} failed: ${String(error)}`);
         }
-      };
-  
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          setMaxClientProgress(prevProgress => Math.max(prevProgress, progress));
-          setClientProgress(maxClientProgress);
+        if (attempt < MAX_RETRIES) {
+          await delay(RETRY_DELAY_MS);
+        } else {
+          throw new Error(`Failed to upload batch after ${MAX_RETRIES} attempts`);
         }
-      };
-  
-      xhr.onerror = () => reject(new Error('Network error'));
-  
-      xhr.send(formData);
-  
-      resolve({
-        abort: () => {
-          xhr.abort();
-          reject(new Error('Upload cancelled'));
-        }
-      });
-
-  })
+      }
+    }
   }, [accessToken, createFormData, formState, maxClientProgress]);
 
   const uploadLastBatch = useCallback( async (files: File[]) => {
-    
+    console.log("uploadLastBatch called")
     const formData = createFormData(files, formState);
 
     try {
@@ -158,7 +186,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
           await uploadLastBatch(batches[i]);
         } else {
           const upload = await uploadBatch(batches[i]);
-          setCurrentUpload(upload);
+          setCurrentUpload(upload as { abort: () => void } | null);
         }
       } catch (error) {
         if (error instanceof Error && error.message === 'Upload cancelled') {
@@ -178,6 +206,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   }, [toast, uploadBatch, uploadLastBatch])
 
   const startProgressStream = useCallback(async (sessionID: string) => {
+    console.log("startProgressStream called")
     const response = await fetch(`${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/uploadProgress`, {
       method: 'POST',
       headers: {
@@ -235,7 +264,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   */
 
   const performUpload = useCallback(async () => {
-  
+    console.log("performUpload called")
     const filteredFiles = Array.from(formState.files ?? []).filter((file) =>
       file.name.toLowerCase().endsWith(selectedFileTypes.join(","))
     );

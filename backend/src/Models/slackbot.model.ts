@@ -83,8 +83,20 @@ export default class SlackBot {
       }));
   
       const privateUrlsAndFileIds = await this.uploadFilesToSlackChannel(files_upload, comment);
+
+      for (let i = 0; i < sortedFiles.length; i += messageBatchSize) {
+        for (const [index, fileInfo] of privateUrlsAndFileIds.entries()) {
+          const file = batchFiles[index];
+          console.log(`Updating file reference for file: ${file.name}`);
+          await updateUploadedFileReferenceWithSlackPrivateUrlAndFileId(userID, sessionID, file.name, fileInfo);
+          processedFiles.push(file);
+          processedCount++;
+          const progress = (processedCount / totalFiles) * 100;
+          progressCallback((processedCount / totalFiles) * 100);
+        }
+      }
   
-      await Promise.all(privateUrlsAndFileIds.map(async (fileInfo, index) => {
+      /*await Promise.all(privateUrlsAndFileIds.map(async (fileInfo, index) => {
         const file = batchFiles[index];
         console.log(`Updating file reference for file: ${file.name}`);
         await updateUploadedFileReferenceWithSlackPrivateUrlAndFileId(userID, sessionID, file.name, fileInfo);
@@ -93,7 +105,7 @@ export default class SlackBot {
         const progress = (processedCount / totalFiles) * 100;
         console.log(`File processed: ${processedCount}/${totalFiles}, Progress: ${progress.toFixed(2)}% || SlBt`);
         progressCallback((processedCount / totalFiles) * 100);
-      }));
+      }));*/
   
       console.log(`Processed batch ${i / messageBatchSize + 1} of ${Math.ceil(sortedFiles.length / messageBatchSize)}`);
     }
