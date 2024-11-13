@@ -8,7 +8,7 @@ console.log('Your JWT secret is:', secret);
 
 */
 
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { getParameterValue } from '../Config/awsParams.config';
 
 export const generateToken = async (userId: string, type: 'access' | 'refresh') => {

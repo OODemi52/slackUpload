@@ -35,6 +35,8 @@ interface MainContentProps {
   pics: { url: string; name: string; fileID: string }[];
   hasMore: boolean;
   onLoadMore: () => void;
+  gridSize: 'sm' | 'md' | 'lg';
+    setImagesPerPage: React.Dispatch<React.SetStateAction<number|null>>;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -53,6 +55,8 @@ const MainContent: React.FC<MainContentProps> = ({
   pics,
   hasMore,
   onLoadMore,
+    gridSize,
+    setImagesPerPage,
 }) => {
 
   useEffect(() => {
@@ -108,6 +112,8 @@ const MainContent: React.FC<MainContentProps> = ({
             isDeleteConfirmationOpen={isDeleteConfirmationOpen}
             setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
             onConfirmDelete={onConfirmDelete}
+            gridSize={gridSize}
+            setImagesPerPage={setImagesPerPage}
           />
         ) : (
           <Text

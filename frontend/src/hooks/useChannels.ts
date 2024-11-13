@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useContext } from "react";
 import AuthContext from "../context/AuthContext";
 
-type APIChannelRepsonse = { 
+type APIChannelResponse = {
     id: string; 
     name: string; 
     isMember: boolean; 
@@ -21,7 +21,7 @@ const fetchChannels = async (accessToken: string | null) => {
 
     const channels = await response.json();
 
-    return channels.map((channel: APIChannelRepsonse) => ({
+    return channels.map((channel: APIChannelResponse) => ({
         value: channel.id,
         label: channel.name,
         isMember: channel.isMember,

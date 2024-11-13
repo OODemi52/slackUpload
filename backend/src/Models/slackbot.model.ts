@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
-import { ParsedFile } from '../types/file';
-import { WebClient } from '@slack/web-api';
-import { updateUploadedFileReferenceWithSlackPrivateUrlAndFileId } from '../Utils/db.util';
+import {ParsedFile} from '../types/file';
+import {WebClient} from '@slack/web-api';
+import {updateUploadedFileReferenceWithSlackPrivateUrlAndFileId} from '../Utils/db.util';
 
 dotenv.config();
 
 export default class SlackBot {
-  private channel: string;
-  private clientPromise: Promise<WebClient>;
+  private readonly channel: string;
+  private readonly clientPromise: Promise<WebClient>;
 
   constructor(channel?: string, accessToken?: string) {
     this.channel = channel || '';
@@ -23,14 +23,13 @@ export default class SlackBot {
       const client = await this.clientPromise;
       const result = await client.conversations.list();
 
-      const channels = await Promise.all(result.channels?.map(async (channel) => {
+      return await Promise.all(result.channels?.map(async (channel) => {
         return {
           id: channel.id,
           name: channel.name,
           isMember: channel.is_member
         };
       }) ?? []);
-      return channels;
     } catch (error) {
       console.error(`Error fetching channels: ${error}`);
       return [];
@@ -84,28 +83,14 @@ export default class SlackBot {
   
       const privateUrlsAndFileIds = await this.uploadFilesToSlackChannel(files_upload, comment);
 
-      for (let i = 0; i < sortedFiles.length; i += messageBatchSize) {
         for (const [index, fileInfo] of privateUrlsAndFileIds.entries()) {
           const file = batchFiles[index];
           console.log(`Updating file reference for file: ${file.name}`);
           await updateUploadedFileReferenceWithSlackPrivateUrlAndFileId(userID, sessionID, file.name, fileInfo);
           processedFiles.push(file);
           processedCount++;
-          const progress = (processedCount / totalFiles) * 100;
           progressCallback((processedCount / totalFiles) * 100);
         }
-      }
-  
-      /*await Promise.all(privateUrlsAndFileIds.map(async (fileInfo, index) => {
-        const file = batchFiles[index];
-        console.log(`Updating file reference for file: ${file.name}`);
-        await updateUploadedFileReferenceWithSlackPrivateUrlAndFileId(userID, sessionID, file.name, fileInfo);
-        processedFiles.push(file);
-        processedCount++;
-        const progress = (processedCount / totalFiles) * 100;
-        console.log(`File processed: ${processedCount}/${totalFiles}, Progress: ${progress.toFixed(2)}% || SlBt`);
-        progressCallback((processedCount / totalFiles) * 100);
-      }));*/
   
       console.log(`Processed batch ${i / messageBatchSize + 1} of ${Math.ceil(sortedFiles.length / messageBatchSize)}`);
     }
@@ -135,14 +120,14 @@ export default class SlackBot {
         file_uploads: file_uploads,
       });
 
-      const privateUrlsWithFileIds = response.files.flatMap((fileGroup: { files: { id: string; url_private: string; }[] }) =>
-        fileGroup.files.map((file: { id: string; url_private: string; }) => ({
-          id: file.id,
-          url_private: file.url_private
-        }))
+      console.log(response.files[0])
+
+      return response.files.flatMap((fileGroup: { files: { id: string; url_private: string; }[] }) =>
+          fileGroup.files.map((file: { id: string; url_private: string; }) => ({
+            id: file.id,
+            url_private: file.url_private
+          }))
       );
-      
-      return privateUrlsWithFileIds;
 
     } catch (error: any) {
       console.error(`Error uploading files to Slack: ${error.message}`);

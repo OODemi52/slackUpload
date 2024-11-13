@@ -48,11 +48,17 @@ function App() {
           if (data.accessToken) {
             setAccessToken(data.accessToken);
           }
+
         } catch (error) {
           console.error(error);
         }
       };
-      refreshAccessToken();
+
+      refreshAccessToken().then(() => {
+          console.log("Access token refreshed successfully.");
+      }).catch((error) => {
+          console.error("Error refreshing access token:", error);
+      });
   }, []);
 
   return (

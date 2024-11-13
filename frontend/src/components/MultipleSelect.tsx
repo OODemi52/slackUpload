@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Tooltip } from "@chakra-ui/react";
 
 interface MultipleSelectProps {

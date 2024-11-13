@@ -1,5 +1,5 @@
-import { useState, useCallback, useContext } from "react";
-import { useToast } from "@chakra-ui/react";
+import React, {useState, useCallback, useContext } from "react";
+import { useToast, Link } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
 import {
   Heading,
@@ -21,6 +21,7 @@ import MultipleSelect from "./MultipleSelect";
 import DownloadManyButton from "./DownloadManyButton";
 import DeleteManyButton from "./DeleteManyButton";
 import DeletionConfirmation from "./DeletionConfirmation";
+import GridSizeToggle from "./GridSizeToggle.tsx";
 interface HeaderProps {
   onToggleSelectMode: () => void;
   isSelectMode: boolean;
@@ -34,6 +35,8 @@ interface HeaderProps {
   isDeleteConfirmationOpen: boolean;
   setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirmDelete: (deleteFlag: "a" | "b") => void;
+  gridSize: 'sm' | 'md' | 'lg';
+  setGridSize: (size: 'sm' | 'md' | 'lg') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -44,6 +47,8 @@ const Header: React.FC<HeaderProps> = ({
   isDeleteConfirmationOpen,
   setIsDeleteConfirmationOpen,
   onConfirmDelete,
+    gridSize,
+    setGridSize,
 }) => {
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -136,18 +141,24 @@ const Header: React.FC<HeaderProps> = ({
     >
       <Flex align="center" justify="space-between" wrap="wrap">
         <Flex align="center">
+          <Link href="/">
           <img src={logo} alt="Slack Shots Logo" width="50px" />
+          </Link>
           {isLargerThan768 && (
+              <Link href="/" textDecoration="none">
             <Heading
               as="h1"
               size="lg"
               letterSpacing={"tighter"}
               ml={4}
               color="white"
+              textDecoration="none"
             >
               SlackShots
             </Heading>
+              </Link>
           )}
+          <GridSizeToggle gridSize={gridSize} setGridSize={setGridSize} />
         </Flex>
         {isSelectMode && (
           <Text
@@ -203,7 +214,7 @@ const Header: React.FC<HeaderProps> = ({
                     color="white"
                     bg="transparent"
                     _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
-                    isDisabled={selectedImages.length > 0 ? false : true}
+                    isDisabled={selectedImages.length <= 0}
                     onClick={handleDownloadMany}
                   >
                     <DownloadManyButton
@@ -221,7 +232,7 @@ const Header: React.FC<HeaderProps> = ({
                     color="white"
                     bg="transparent"
                     _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
-                    isDisabled={selectedImages.length > 0 ? false : true}
+                    isDisabled={selectedImages.length <= 0}
                     onClick={handleDeleteMany}
                   >
                     <DeleteManyButton

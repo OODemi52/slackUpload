@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Grid, GridItem, Box, useToast,  useMediaQuery } from "@chakra-ui/react";
 import Aside from "./Aside";
 import Header from "./Header";
@@ -22,8 +22,6 @@ interface SelectedImage {
 }
 
 const Dashboard: React.FC = () => {
-  const deleteImagesMutation = useDeleteImages();
-  const { data: imageUrls, fetchNextPage, hasNextPage, isLoading: isImageUrlsLoading, isError:  isImageUrlsError, error:  imageUrlsError, refetch: refetchImageUrls } = useImageUrls();
   const [formState, setFormState] = useState<FormState>({
     files: null,
     channel: "",
@@ -39,34 +37,30 @@ const Dashboard: React.FC = () => {
   const [isLargerThan768] = useMediaQuery("(min-width: 768px)");
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
-  const pics = imageUrls ? imageUrls.pages.flatMap(page => page.imageUrls) : [];
+  const [gridSize, setGridSize] = useState<'sm' | 'md' | 'lg'>('lg');
+  const [imagesPerPage, setImagesPerPage] =  useState<number | null>(null);
 
   const toast = useToast();
+  const { data: imageUrls, fetchNextPage, hasNextPage, isLoading: isImageUrlsLoading } = useImageUrls(imagesPerPage);
+  const deleteImagesMutation = useDeleteImages();
 
-  console.log(isImageUrlsError, imageUrlsError, refetchImageUrls);
+  const pics = imageUrls ? imageUrls.pages.flatMap(page => page.imageUrls) : [];
+
+  useEffect(() => {
+    const savedGridSize = localStorage.getItem('gridSize');
+    if (savedGridSize) {
+      setGridSize(savedGridSize as 'sm' | 'md' | 'lg');
+    }
+  }, []);
+
+  const handleGridSizeChange = (size: 'sm' | 'md' | 'lg') => {
+    setGridSize(size);
+    localStorage.setItem('gridSize', size);
+  };
 
   const handleFormStateChange = useCallback((newState: Partial<FormState>) => {
     setFormState((prevState) => ({ ...prevState, ...newState }));
   }, []);
-
-  /*
-  const handleUploadComplete = useCallback(() => {
-    setStartUpload(false);
-    setIsUploading(false);
-    setUploadComplete(false);
-    setUploadAttempted(false);
-    refetchImageUrls();
-
-    toast({
-      title: "Upload Complete",
-      description: "Your files have been uploaded successfully.",
-      status: "success",
-      duration: 5000,
-      isClosable: true,
-      position: "top",
-    });
-  }, [toast, refetchImageUrls]);
-  */
 
   const handleUploadFail = useCallback(() => {
     setStartUpload(false);
@@ -91,7 +85,7 @@ const Dashboard: React.FC = () => {
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isImageUrlsLoading) {
-      fetchNextPage();
+      void fetchNextPage();
     }
   }, [hasNextPage, isImageUrlsLoading, fetchNextPage]);
 
@@ -165,6 +159,8 @@ const Dashboard: React.FC = () => {
               isDeleteConfirmationOpen={isDeleteConfirmationOpen}
               setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
               onConfirmDelete={handleConfirmDelete}
+              gridSize={gridSize}
+              setGridSize={handleGridSizeChange}
             />
           </GridItem>
 
@@ -191,8 +187,10 @@ const Dashboard: React.FC = () => {
               setIsDeleteConfirmationOpen={setIsDeleteConfirmationOpen}
               onConfirmDelete={handleConfirmDelete}
               pics={pics}
-              hasMore={!!hasNextPage}
+              hasMore={hasNextPage}
               onLoadMore={handleLoadMore}
+                gridSize={gridSize}
+              setImagesPerPage={setImagesPerPage}
             />
           </GridItem>
 

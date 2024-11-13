@@ -31,3 +31,6 @@ local-parameters.json
 
 # Ignore AWS EC2 PEM files
 *.pem
+
+# Qodana
+qodana.yaml

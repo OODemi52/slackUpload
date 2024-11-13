@@ -14,6 +14,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Skeleton,
   useOutsideClick,
 } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
@@ -29,9 +30,10 @@ interface ImageCardProps {
   onSelect: (fileID: string, url: string, name: string) => void;
   openMenuId: string | null;
   handleMenuToggle: (fileID: string | null) => void;
+    calculateVisibleImages: () => number | undefined;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({
+const ImageCard: React.FC<ImageCardProps> = React.memo(({
   url,
   name,
   fileID,
@@ -42,6 +44,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
   onSelect,
   openMenuId,
   handleMenuToggle,
+    calculateVisibleImages,
 }) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -51,7 +54,12 @@ const ImageCard: React.FC<ImageCardProps> = ({
 
   useOutsideClick({
     ref: menuRef,
-    handler: () => handleMenuToggle(null),
+    handler: () => {
+      if (isMenuOpen) {
+        handleMenuToggle(null);
+        setIsHovered(false);
+      }
+    }
   });
 
   const { accessToken } = useContext(AuthContext);
@@ -82,16 +90,20 @@ const ImageCard: React.FC<ImageCardProps> = ({
 
   const observer = useMemo(() => {
     return new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && !isLoaded) {
-          fetchImage(url);
-          observer.unobserve(imageRef.current!);
+        (entries) => {
+          const [entry] = entries;
+          if (entry.isIntersecting && !isLoaded) {
+            calculateVisibleImages();
+            void fetchImage(url);
+            observer.unobserve(imageRef.current!);
+          }
+        },
+        {
+          threshold: [0, 0.25, 0.5, 0.75, 1.0],
+          rootMargin: "100px"
         }
-      },
-      { threshold: 0.1 }
     );
-  }, [fetchImage, isLoaded, url]);
+  }, [fetchImage, isLoaded, url, calculateVisibleImages]);
 
   useEffect(() => {
     const currentImageRef = imageRef.current;
@@ -122,28 +134,19 @@ const ImageCard: React.FC<ImageCardProps> = ({
     handleMenuToggle(null);
   };
 
-  const handleMouseEnterButton = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeaveButton = () => {
-    isMenuOpen ? isHovered === false : isHovered;
-  };
-
   return (
     <Box
+        ref={imageRef}
       display="flex"
       position="relative"
-      w="100%"
-      h="auto"
       borderRadius="sm"
       overflow="hidden"
       shadow="lg"
+      mx="auto"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() =>
         isMenuOpen ? setIsHovered(true) : setIsHovered(false)
       }
-      ref={imageRef}
       bg="#282828"
       justifyContent="center"
       alignItems="center"
@@ -154,6 +157,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
       }
       onClick={() => isSelectMode && onSelect(fileID, url, name)}
       cursor={isSelectMode ? "pointer" : "default"}
+        transition="transform 0.3s ease-in-out"
     >
       {isSelectMode && (
         <Checkbox
@@ -164,7 +168,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
           pointerEvents="none"
         />
       )}
-      <Menu size="md" isOpen={isMenuOpen}>
+      {isLoaded && <Menu size="md" isOpen={isMenuOpen}>
         <MenuButton
           as="button"
           style={{
@@ -179,8 +183,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
             border: "none",
             cursor: "pointer",
           }}
-          onMouseEnter={handleMouseEnterButton}
-          onMouseLeave={handleMouseLeaveButton}
           onClick={() => handleMenuToggle(fileID)}
         >
           {isHovered && !isSelectMode && (
@@ -225,20 +227,23 @@ const ImageCard: React.FC<ImageCardProps> = ({
             Delete
           </MenuItem>
         </MenuList>
-      </Menu>
-      <Image
-        src={imageUrl}
-        alt={name}
-        objectFit="cover"
-        w="100%"
-        h="auto"
-        transition="opacity 0.2s ease-in-out"
-        opacity={isHovered ? 0.8 : 1}
-        loading="lazy"
-        onClick={onClick}
-      />
+      </Menu>}
+          <Skeleton width="100%" height="100%" isLoaded={isLoaded} fadeDuration={1} startColor='#282828' endColor='#484848' as="image">
+            <Image
+                src={imageUrl}
+                alt={name}
+                objectFit="cover"
+                w="100%"
+                h="100%"
+                opacity={isHovered ? 0.8 : 1}
+                loading="lazy"
+                onClick={onClick}
+                borderRadius="sm"
+                transition="transform 0.3s ease-in-out"
+            />
+          </Skeleton>
     </Box>
   );
-};
+});
 
 export default ImageCard;

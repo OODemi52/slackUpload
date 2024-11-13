@@ -91,7 +91,8 @@ export const paginateSlackPrivateUrls = async (userID: string, page: number = 1,
       })
       .sort({ updatedAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+        .lean();
     return slackPrivateFileUrls;
   } catch (error) {
     console.error('Error reading file references:', error);

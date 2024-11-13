@@ -40,6 +40,6 @@ app.use('/api', apiRouter);
 app.use('/auth', authRouter);
 app.use('/health', healthRouter);
 
-dbConnect();
+void dbConnect();
 
 export default app;

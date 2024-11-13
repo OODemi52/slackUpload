@@ -10,12 +10,13 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "moduleResolution": "node",
+    "allowJs": true,
     "checkJs": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitAny": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*"

@@ -191,53 +191,71 @@ export const uploadFiles = async (request: express.Request, response: express.Re
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
-  form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
-
-    if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
-      return response.status(404).send('No fields or files found');
-    }
-
-    if (err) {
-      console.error(`Error processing upload: ${err}`);
-      return response.status(500).json({ error: 'Error processing upload' });
-    }
-
-    if (!Array.isArray(files.files)) {
-      return response.status(400).send('Invalid files format.');
-    }
-  
-    try {
-      let userId: string;
-      
-      if (process.env.NODE_ENV === 'development') {
-        userId = process.env.SS_USER_ID as string;
-      } else {
-        if (!request.userId) {
-          return response.status(400).send('UserID is required');
+  const formPromise = new Promise((resolve, reject) => {
+    form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
+      try {
+        if (err) {
+          throw new Error(`Error processing upload: ${err}`);
         }
-        userId = request.userId;
+
+        if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
+          throw new Error('No fields or files found');
+        }
+
+        if (!Array.isArray(files.files)) {
+          throw new Error('Invalid files format.');
+        }
+
+        let userId: string;
+
+        if (process.env.NODE_ENV === 'development') {
+          userId = process.env.SS_USER_ID as string;
+        } else {
+          if (!request.userId) {
+            return response.status(400).send('UserID is required');
+          }
+          userId = request.userId;
+        }
+
+        const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
+          name: file.originalFilename,
+          path: file.filepath,
+          size: file.size,
+          sessionID: fields.sessionID[0], // is returned as array, so access the first element
+          userID: userId,
+          type: file.mimetype,
+          lastModifiedDate: file.lastModifiedDate,
+          isUploaded: true,
+        }));
+
+        console.log("Files parsed in this batch", parsedFiles.length);
+
+        for (const file of parsedFiles) {
+          console.log(`Attempting to write file reference for ${file.name}`);
+          await writeUploadedFileReference(file);
+          const fileRefs = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
+          const fileExists = fileRefs.some(ref => ref.name === file.name);
+          if (!fileExists) {
+            throw new Error(`File reference verification failed for ${file.name}`);
+          }
+        }
+
+        resolve({ success: true });
+      } catch (error) {
+        console.error(`Error uploading files: ${error}`);
+        reject(error);
       }
-
-      const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
-        name: file.originalFilename,
-        path: file.filepath,
-        size: file.size,
-        sessionID: fields.sessionID[0], // is returned as array, so access the first element
-        userID: userId,
-        type: file.mimetype,
-        lastModifiedDate: file.lastModifiedDate,
-        isUploaded: false
-      }));
-      console.log("Files parsed in this batch", parsedFiles.length);
-
-      await Promise.all(parsedFiles.map(file => retryOperation(() => writeUploadedFileReference(file), 3, 1000)));
-      
-      response.status(200).json({ message: 'Files processed successfully' });
-    } catch (error) {
-      console.error(`Error uploading files: ${error}`);
-      response.status(500).json({ error: 'Internal Server Error' });
-    }
+    });
   });
+
+  try {
+    await formPromise;
+    response.status(200).json({ message: 'Files processed successfully' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    const status = message === 'No fields or files found' ? 404 : 500;
+    response.status(status).json({ error: message });
+  }
 };
 
 export const uploadProgress = async(request: express.Request, response: express.Response) => {
@@ -262,7 +280,7 @@ export const uploadProgress = async(request: express.Request, response: express.
     progressCallbacks.delete(sessionID);
     response.end();
   });
-}
+};
 
 export const uploadFinalFiles = async (request: express.Request, response: express.Response) => {
   // This function is similar to the one above. The differences are that 1.) in this function, the user's
@@ -283,95 +301,127 @@ export const uploadFinalFiles = async (request: express.Request, response: expre
   form.options.maxFileSize = 2000 * 1024 * 1024;
   form.options.maxTotalFileSize = 2000 * 1024 * 1024;
 
-  form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
+  const formPromise = new Promise((resolve, reject) => {
+    form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
 
-    if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
-      return response.status(404).send('No fields or files found');
-    }
+      async function deleteFile(file: ParsedFile): Promise<void> {
+        if (!file.path) {
+          console.error(`No file path provided for file: ${file.name}`);
+          return;
+        }
 
-    if (err) {
-      console.error(`Error processing upload: ${err}`);
-      return response.status(500).json({ error: 'Error processing upload' });
-    }
+        try {
+          const exists = await fs.promises.access(file.path)
+              .then(() => true)
+              .catch(() => false);
 
-    async function deleteFile(file: ParsedFile): Promise<void> {
-      if (!file.path) {
-        console.error(`No file path provided for file: ${file.name}`);
-        return;
+          if (!exists) {
+            console.log(`File ${file.path} already deleted or doesn't exist`);
+            return;
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          await fs.promises.unlink(file.path);
+          console.log(`Successfully deleted file ${file.path}`);
+        } catch (unlinkErr) {
+          console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
+        }
       }
-      console.log(`Attempting to delete file: ${file.path}`);
+
       try {
-        await fs.promises.unlink(file.path);
-        console.log(`Successfully deleted file ${file.path}`);
-      } catch (unlinkErr) {
-        console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
-      }
-    }
 
-    try {
-      let userId: string;
-      let slackAccessToken: string;
-
-      if (process.env.NODE_ENV === 'development') {
-        userId = process.env.SS_USER_ID as string;
-        slackAccessToken = process.env.SS_SLACK_TOKEN as string;
-      } else {
-        if (!request.userId) {
-          return response.status(400).send('UserID is required');
+        if (err) {
+          throw new Error(`Error processing upload: ${err}`);
         }
 
-        userId = request.userId;
-        const user = await readUser(request.userId);
-        slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
-
-        if (!slackAccessToken) {
-          return response.status(500).send('Failed to retrieve Slack access token');
+        if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
+          throw new Error('No fields or files found');
         }
-      }
 
-      const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
+        if (!Array.isArray(files.files)) {
+          throw new Error('Invalid files format.');
+        }
 
-      if (!Array.isArray(files.files)) {
-        return response.status(400).send('Invalid files format.');
-      }
-      
-      const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
-        name: file.originalFilename,
-        path: file.filepath,
-        size: file.size,
-        sessionID: fields.sessionID[0], // is returned as array, so access the first element
-        userID: userId,
-        type: file.mimetype,
-        lastModifiedDate: file.lastModifiedDate,
-        isUploaded: false
-      }));
-      console.log("Files parsed in last batch", parsedFiles.length);
-  
-      if (parsedFiles.length === 0) {
-        return response.status(400).send('No files to upload.');
-      }
+        let userId: string;
+        let slackAccessToken: string;
 
-      await Promise.all(parsedFiles.map(file => retryOperation(() => writeUploadedFileReference(file), 3, 1000)));
+        if (process.env.NODE_ENV === 'development') {
+          userId = process.env.SS_USER_ID as string;
+          slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+        } else {
+          if (!request.userId) {
+            return response.status(400).send('UserID is required');
+          }
 
-      const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-      const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, userId, fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
-        console.log(`Progress callback received: ${progress}% || apiC`);
-        const sendProgress = progressCallbacks.get(fields.sessionID[0]);
+          userId = request.userId;
+          const user = await readUser(request.userId);
+          slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+
+          if (!slackAccessToken) {
+            return response.status(500).send('Failed to retrieve Slack access token');
+          }
+        }
+
+        const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
+
+        if (!Array.isArray(files.files)) {
+          return response.status(400).send('Invalid files format.');
+        }
+
+        const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
+          name: file.originalFilename,
+          path: file.filepath,
+          size: file.size,
+          sessionID: fields.sessionID[0], // is returned as array, so access the first element
+          userID: userId,
+          type: file.mimetype,
+          lastModifiedDate: file.lastModifiedDate,
+          isUploaded: true,
+        }));
+        console.log("Files parsed in last batch", parsedFiles.length);
+
+        if (parsedFiles.length === 0) {
+          return response.status(400).send('No files to upload.');
+        }
+
+        await Promise.all(parsedFiles.map(async (file) => { await writeUploadedFileReference(file) }));
+
+        const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
+
+        const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, userId, fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
+          const sendProgress = progressCallbacks.get(fields.sessionID[0]);
           if (sendProgress) {
             sendProgress(progress);
           } else {
-            console.log(`No progress callback found for session ${fields.sessionID[0]}`);
           }
-      });
+        });
 
-      await Promise.all(processedFiles.map(file => deleteFile(file)));
-      response.status(200).json({ message: 'Final files uploaded successfully!' });
-    } catch (error) {
-      console.trace(`Error uploading files: ${error}`);
-      response.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
-}
+        for (const file of processedFiles) {
+          try {
+            await deleteFile(file);
+          } catch (error) {
+            console.error(`Failed to delete file ${file.name}:`, error);
+          }
+        }
+
+        resolve({ success: true });
+      } catch (error) {
+        console.trace(`Error uploading files: ${error}`);
+        reject(error);
+      }
+    });
+    })
+
+  try {
+    await formPromise;
+    response.status(200).json({ message: 'Files processed successfully' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    const status = message === 'No fields or files found' ? 404 : 500;
+    response.status(status).json({ error: message });
+  }
+};
 
 export const deleteFiles = async (request: express.Request, response: express.Response) => {
   
@@ -494,15 +544,3 @@ export const downloadFiles = async (request: express.Request, response: express.
     response.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-async function retryOperation(operation: () => Promise<void>, retries: number, delay: number) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      await operation();
-      return;
-    } catch (error) {
-      if (attempt === retries) throw error;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
