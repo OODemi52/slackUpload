@@ -92,15 +92,7 @@ const MainContent: React.FC<MainContentProps> = ({
         onScroll={handleScroll}
       >
         {isUploading ? (
-          <Text
-            color="#404040"
-            fontSize="xxx-large"
-            textAlign="center"
-            mt="auto"
-            mb="auto"
-          >
             <LogoAnimation />
-          </Text>
         ) : pics.length ? (
           <UploadGrid
             pics={pics}

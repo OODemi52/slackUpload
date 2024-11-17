@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import sharp from "sharp";
 import axios from 'axios';
 import express from 'express';
 import archiver from 'archiver';
@@ -148,23 +149,40 @@ export const getImagesProxy = async (request: express.Request, response: express
       }
     }
 
-    const { imageUrl } = request.query;
+    const { imageUrl, size } = request.query;
     
     if (!imageUrl) {
       return response.status(400).send('Image URL is required');
     }
 
+    const sizeParam = size === 'thumb' ? '?w=75&h=75' : '?w=360';
+
     const axiosResponse = await axios.get(decodeURIComponent(imageUrl.toString()), {
-      responseType: 'stream',
+      responseType: 'arraybuffer',
       headers: {
         Authorization: `Bearer ${slackAccessToken}`,
       },
     });
 
-    axiosResponse.headers['content-type'] = 'image/jpg';
-    axiosResponse.headers['cross-origin-resource-policy'] = 'cross-origin';
+    const resizedImage = await sharp(axiosResponse.data)
+        .resize(size === 'thumb' ? 75 : 360, size === 'thumb' ? 75 : undefined, {
+          fit: size === 'thumb' ? 'cover' : 'inside',
+          withoutEnlargement: true
+        })
+        .webp({
+          quality: size === 'thumb' ? 80 : 90,
+          effort: 4
+        })
+        .toBuffer();
 
-    axiosResponse.data.pipe(response);
+    response.set({
+      'content-type': 'image/webp',
+      'cross-origin-resource-policy': 'cross-origin',
+      'cache-control': 'public, max-age=31536000'
+    });
+
+    response.send(resizedImage);
+
   } catch (error) {
     console.error('Error fetching image:', error);
     response.status(500).send('Error fetching image');

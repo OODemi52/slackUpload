@@ -1,7 +1,8 @@
 import React, {useState, useCallback, useContext } from "react";
-import { useToast, Link } from "@chakra-ui/react";
 import AuthContext from "../context/AuthContext";
 import {
+  useToast,
+  Link,
   Heading,
   Flex,
   Box,

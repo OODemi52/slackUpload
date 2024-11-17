@@ -39,6 +39,7 @@
     "mongodb": "^6.3.0",
     "mongoose": "^8.1.1",
     "path": "^0.12.7",
+    "sharp": "^0.33.5",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

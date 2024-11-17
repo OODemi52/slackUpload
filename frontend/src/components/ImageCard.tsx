@@ -44,7 +44,7 @@ const ImageCard: React.FC<ImageCardProps> = React.memo(({
   onSelect,
   openMenuId,
   handleMenuToggle,
-    calculateVisibleImages,
+  calculateVisibleImages,
 }) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -67,41 +67,43 @@ const ImageCard: React.FC<ImageCardProps> = React.memo(({
   const isMenuOpen = !isSelectMode && openMenuId === fileID;
 
   const fetchImage = useCallback(async (permalink: string) => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERPROTOCOL}://${
+          import.meta.env.VITE_SERVERHOST
+        }/api/getImagesProxy?imageUrl=${encodeURIComponent(permalink)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        setImageUrl(imageUrl);
-        setIsLoaded(true);
-      } catch (error) {
-        console.error('Error fetching image:', error);
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const blob = await response.blob();
+      const imageUrl = URL.createObjectURL(blob);
+      setImageUrl(imageUrl);
+      setIsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching image:', error);
+    }
   }, [accessToken]);
 
   const observer = useMemo(() => {
     return new IntersectionObserver(
-        (entries) => {
-          const [entry] = entries;
-          if (entry.isIntersecting && !isLoaded) {
-            calculateVisibleImages();
-            void fetchImage(url);
-            observer.unobserve(imageRef.current!);
-          }
-        },
-        {
-          threshold: [0, 0.25, 0.5, 0.75, 1.0],
-          rootMargin: "100px"
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoaded) {
+          calculateVisibleImages();
+          void fetchImage(url);
+          observer.unobserve(imageRef.current!);
         }
+      },
+      {
+        threshold: [0, 0.25, 0.5, 0.75, 1.0],
+        rootMargin: "100px"
+      }
     );
   }, [fetchImage, isLoaded, url, calculateVisibleImages]);
 
@@ -136,7 +138,7 @@ const ImageCard: React.FC<ImageCardProps> = React.memo(({
 
   return (
     <Box
-        ref={imageRef}
+      ref={imageRef}
       display="flex"
       position="relative"
       borderRadius="sm"
@@ -157,7 +159,7 @@ const ImageCard: React.FC<ImageCardProps> = React.memo(({
       }
       onClick={() => isSelectMode && onSelect(fileID, url, name)}
       cursor={isSelectMode ? "pointer" : "default"}
-        transition="transform 0.3s ease-in-out"
+      transition="transform 0.3s ease-in-out"  
     >
       {isSelectMode && (
         <Checkbox
@@ -228,20 +230,30 @@ const ImageCard: React.FC<ImageCardProps> = React.memo(({
           </MenuItem>
         </MenuList>
       </Menu>}
-          <Skeleton width="100%" height="100%" isLoaded={isLoaded} fadeDuration={1} startColor='#282828' endColor='#484848' as="image">
-            <Image
-                src={imageUrl}
-                alt={name}
-                objectFit="cover"
-                w="100%"
-                h="100%"
-                opacity={isHovered ? 0.8 : 1}
-                loading="lazy"
-                onClick={onClick}
-                borderRadius="sm"
-                transition="transform 0.3s ease-in-out"
-            />
-          </Skeleton>
+      {useMemo(() => (
+        <Skeleton
+          width="100%"
+          height="100%"
+          isLoaded={isLoaded}
+          fadeDuration={1}
+          startColor='#282828'
+          endColor='#484848'
+          as="image"
+        >
+          <Image
+            src={imageUrl}
+            alt={name}
+            objectFit="cover"
+            w="100%"
+            h="100%"
+            opacity={isHovered ? 0.8 : 1}
+            loading="lazy"
+            onClick={onClick}
+            borderRadius="sm"
+            transition="transform 0.3s ease-in-out"
+          />
+        </Skeleton>
+      ), [isLoaded, imageUrl, name, isHovered, onClick])}
     </Box>
   );
 });

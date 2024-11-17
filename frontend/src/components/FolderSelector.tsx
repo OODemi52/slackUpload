@@ -23,7 +23,7 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({
   const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
 
-    if (files && files.length) {
+    if (files?.length) {
       const immediateFiles = Array.from(files).filter((file) => {
         const pathParts = file.webkitRelativePath.split("/");
         return (
@@ -53,7 +53,7 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({
 
   const handleFilesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files && files.length) {
+    if (files?.length) {
       returnFileSelection(`${files.length} selected`);
       onFileChange(files);
     } else {
