@@ -48,7 +48,6 @@ app.all(
   '/files*', 
   process.env.NODE_ENV !== 'development' ? verifyJWT : (_request, _response, next) => next(), 
   (request, response) => {
-    console.log(`Endpoint /files* hit with method ${request.method} at ${new Date().toISOString()}`);
     tusServer.handle(request, response); 
   }
 );

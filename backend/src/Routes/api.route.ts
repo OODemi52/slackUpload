@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { verifyJWT } from '../Middleware/jwt.middleware';
-import { api, getChannels, uploadFiles, uploadFinalFiles, getImagesUrls, getImagesProxy, deleteFiles, downloadFiles, addBotToChannel, uploadProgress } from '../Controllers/api.controller';
+import { api, getChannels, uploadFinalFiles, getImagesUrls, getImagesProxy, deleteFiles, downloadFiles, addBotToChannel, uploadProgress, finalizeUpload } from '../Controllers/api.controller';
 
 const router: Router = express.Router();
 
@@ -8,7 +8,7 @@ router.get('/', api);
 
 if (process.env.NODE_ENV !== 'development') {
     router.get('/getChannels', verifyJWT, getChannels);
-    router.post('/uploadFiles', verifyJWT, uploadFiles);
+    router.post('/finalizeUpload', verifyJWT, finalizeUpload);
     router.post('/uploadFinalFiles', verifyJWT, uploadFinalFiles);
     router.get('/getImagesUrls', verifyJWT, getImagesUrls);
     router.get('/getImagesProxy', verifyJWT, getImagesProxy);
@@ -18,7 +18,7 @@ if (process.env.NODE_ENV !== 'development') {
     router.post('/uploadProgress', verifyJWT, uploadProgress);
   } else {
     router.get('/getChannels', getChannels);
-    router.post('/uploadFiles', uploadFiles);
+    router.post('/finalizeUpload', finalizeUpload);
     router.post('/uploadFinalFiles', uploadFinalFiles);
     router.get('/getImagesUrls', getImagesUrls);
     router.get('/getImagesProxy', getImagesProxy);

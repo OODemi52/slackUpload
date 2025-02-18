@@ -32,7 +32,7 @@ interface AsideProps {
 
 const MAX_FILE_BATCH_SIZE = 9 * 1024 * 1024; // 9 MB
 
-const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, setUploadComplete, setUploadAttempted }) => {
+const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, /*setUploadComplete,*/ setUploadAttempted }) => {
   const { data: channels, /*isLoading: channelsLoading, error: channelsError, refetch: refetchChannels*/} = useChannels();
   const addBotMutation = useAddBot();
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([".jpg"]);
@@ -75,55 +75,78 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   }, [toast]);
 
   const performUploads = useCallback((files: File[], sessionID: string) => {
+    const { uploadableFiles } = checkFileSizes(files);
 
-    const { uploadableFiles } = checkFileSizes(files)
-
-    uploadableFiles.forEach((file) => {
-      const upload = new Upload(file, {
-      endpoint: `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/files/`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      metadata: {
-        filename: file.name,
-        filetype: file.type,
-        sessionID,
-        channel: formState.channel,
-        comment: formState.uploadComment,
-        messageBatchSize: formState.messageBatchSize.toString(),
-      },
-      retryDelays: [0, 1000, 3000, 5000],
-      onError: (error) => {
-        console.error("Tus upload error:", error);
-        toast({
-        title: "Upload Failed",
-        description: `Error: ${error.message || JSON.stringify(error)}`,
-        status: "error",
-        isClosable: true,
+    const uploadPromises = uploadableFiles.map((file) => {
+      return new Promise<void>((resolve, reject) => {
+        const upload = new Upload(file, {
+          endpoint: `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/files/`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          metadata: {
+            filename: file.name,
+            filetype: file.type,
+            sessionID,
+            channel: formState.channel,
+            comment: formState.uploadComment,
+            messageBatchSize: formState.messageBatchSize.toString(),
+          },
+          retryDelays: [0, 1000, 3000, 5000],
+          onError: (error) => {
+            console.error("Tus upload error:", error);
+            toast({
+              title: "Upload Failed",
+              description: `Error: ${error.message || JSON.stringify(error)}`,
+              status: "error",
+              isClosable: true,
+            });
+            setIsUploading(false);
+            reject(error);
+          },
+          onProgress: (bytesUploaded, bytesTotal) => {
+            const progress = (bytesUploaded / bytesTotal) * 100;
+            setClientProgress(progress);
+          },
+          onSuccess: () => {
+            toast({
+              title: "Upload Successful",
+              description: `File "${file.name}" uploaded successfully.`,
+              status: "success",
+              isClosable: true,
+            });
+            resolve();
+          },
         });
-        setIsUploading(false);
-      },
-      onProgress: (bytesUploaded, bytesTotal) => {
-        const progress = (bytesUploaded / bytesTotal) * 100;
-        setClientProgress(progress);
-      },
-      onSuccess: () => {
-        console.log("Upload complete, file available at: " + upload.url);
-        toast({
-        title: "Upload Successful",
-        description: `File "${file.name}" uploaded successfully.`,
-        status: "success",
-        isClosable: true,
-        });
-        setUploadComplete(true);
-        setIsUploading(false);
-      },
+        setCurrentUpload(upload);
+        upload.start();
       });
-      setCurrentUpload(upload);
-      upload.start();
     });
-  }, [checkFileSizes, formState.channel, formState.uploadComment, formState.messageBatchSize, toast, setIsUploading, setUploadComplete, accessToken]);
 
+    Promise.all(uploadPromises)
+      .then(async () => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/api/finalizeUpload`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ sessionID }),
+            }
+          );
+          const data = await response.json();
+          console.log("Finalize upload response:", data);
+        } catch (error) {
+          console.error("Error finalizing upload:", error);
+        }
+      })
+      .catch((error) => {
+        console.error("One or more file uploads failed.", error);
+      });
+  }, [checkFileSizes, formState.channel, formState.uploadComment, formState.messageBatchSize, toast, setIsUploading, accessToken]);
 
   const handleFolderSelection = (files: FileList | null): void => {
     setFormState({ files });
