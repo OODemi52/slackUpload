@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
 import * as uuid from "uuid";
-import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast, Progress } from "@chakra-ui/react";
-import ChannelSelector from "./ChannelSelector";
-import FolderSelector from "./FolderSelector";
-import MessageBatchSize from "./MessageBatchSize";
-import FileTypesSelector from "./FileTypesSelector";
-import UploadComment from "./UploadComment";
 import UploadButton from "./UploadButton";
-import AuthContext from "../context/AuthContext";
-import { useChannels } from "../hooks/useChannels";
+import UploadComment from "./UploadComment";
+import FolderSelector from "./FolderSelector";
 import { useAddBot } from "../hooks/useAddBot";
+import ChannelSelector from "./ChannelSelector";
+import AuthContext from "../context/AuthContext";
+import MessageBatchSize from "./MessageBatchSize";
+import { useChannels } from "../hooks/useChannels";
+import FileTypesSelector from "./FileTypesSelector";
+import React, { useState, useEffect, useContext, useCallback } from "react";
+import { Stack, VStack, Spacer, Box, Button, Text, Divider, SimpleGrid, Popover, PopoverTrigger, PopoverContent, PopoverBody, HStack, PopoverHeader, useToast, Progress } from "@chakra-ui/react";
 
 interface FormState {
   files: FileList | null;
