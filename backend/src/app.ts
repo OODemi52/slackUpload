@@ -9,6 +9,8 @@ import apiRouter from './Routes/api.route';
 import authRouter from './Routes/auth.route';
 import healthRouter from './Routes/health.route';
 import dbConnect from "./Config/dbConnect.config";
+import { verifyJWT } from './Middleware/jwt.middleware';
+
 
 export const app: express.Application = express();
 
@@ -41,10 +43,14 @@ app.use('/api', apiRouter);
 app.use('/auth', authRouter);
 app.use('/health', healthRouter);
 
-// Mounting TUS server
-app.all('/files/*', (request, response) => {
-  tusServer.handle(request, response);
-});
+// Mount TUS server
+app.all(
+  '/files/*', 
+  process.env.NODE_ENV !== 'development' ? verifyJWT : (_request, _response, next) => next(), 
+  (request, response) => {
+     tusServer.handle(request, response); 
+  }
+);
 
 // Start DB connection
 void dbConnect();
