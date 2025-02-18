@@ -1,4 +1,5 @@
-import * as uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
+import { Upload } from "tus-js-client";
 import UploadButton from "./UploadButton";
 import UploadComment from "./UploadComment";
 import FolderSelector from "./FolderSelector";
@@ -46,6 +47,42 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const { accessToken } = useContext(AuthContext);
 
   const toast = useToast();
+
+  const performTusUploads = useCallback((files: File[]) => {
+    files.forEach((file) => {
+      const upload = new Upload(file, {
+        endpoint: `${import.meta.env.VITE_SERVERPROTOCOL}://${import.meta.env.VITE_SERVERHOST}/files/`,
+        metadata: {
+          filename: file.name,
+          filetype: file.type,
+          sessionID: formState.sessionID,
+        },
+        retryDelays: [0, 1000, 3000, 5000],
+        onError: (error) => {
+          console.error("Tus upload error:", error);
+          toast({
+            title: "Upload Failed",
+            description: `Error: ${error}`,
+            status: "error",
+            isClosable: true,
+          });
+          setIsUploading(false);
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          const progress = (bytesUploaded / bytesTotal) * 100;
+          setClientProgress(progress);
+        },
+        onSuccess: () => {
+          console.log("Upload complete, file available at: " + upload.url);
+          // Optionally, check if all files are done then mark complete.
+          setUploadComplete(true);
+          setIsUploading(false);
+        },
+      });
+      upload.start();
+    });
+  }, [formState.sessionID, toast, setClientProgress, setIsUploading, setUploadComplete]);
+
 
   const checkFileSizes = useCallback((files: File[]) => {
     const uploadableFiles = files.filter(file => file.size <= MAX_FILE_BATCH_SIZE);
@@ -316,11 +353,29 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
   const handleFileUpload = useCallback(() => {
     setIsUploading(true);
     setUploadAttempted(true);
-    const newSessionID = uuid.v4();
+    const newSessionID = uuidv4();
     setFormState({ sessionID: newSessionID });
     setStartUpload(true);
     startProgressStream(newSessionID);
   }, [setIsUploading, setUploadAttempted, setFormState, setStartUpload, startProgressStream]);
+
+  const handleFileTusUpload = useCallback(() => {
+    setIsUploading(true);
+    setUploadAttempted(true);
+    const newSessionID = uuidv4();
+    setFormState({ sessionID: newSessionID });
+
+    // Assuming formState.files contains the files to upload.
+    const filesArray = Array.from(formState.files ?? []);
+    // If you want to retain batching logic, you could keep createBatches here.
+    // For a simple example, we upload each file individually:
+    performTusUploads(filesArray);
+    // Optionally start SSE progress stream if using it.
+    startProgressStream(newSessionID);
+  }, [formState.files, setFormState, setIsUploading, setUploadAttempted, startProgressStream, performTusUploads]);
+
+  const _ = handleFileUpload;
+  console.log(_);
 
   if (currentUpload) {
     console.log("Current Upload")
@@ -579,7 +634,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         <UploadButton
           loading={isUploading}
           disabled={!formState.files || !formState.channel}
-          onUpload={handleFileUpload}
+          onUpload={handleFileTusUpload}
         />
       </Box>
     </Stack>
