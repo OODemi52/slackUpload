@@ -42,8 +42,8 @@ app.use('/auth', authRouter);
 app.use('/health', healthRouter);
 
 // Mounting TUS server
-app.all('/files/*', (req, res) => {
-  tusServer.handle(req, res);
+app.all('/files/*', (request, response) => {
+  tusServer.handle(request, response);
 });
 
 // Start DB connection
