@@ -5,6 +5,8 @@ import axios from 'axios';
 import express from 'express';
 import archiver from 'archiver';
 import { IncomingForm } from 'formidable';
+import { FileStore } from '@tus/file-store';
+import { Server, EVENTS } from '@tus/server';
 import SlackBot from '../Models/slackbot.model';
 import { UploadedFile, ParsedFile } from '../types/file';
 import { getParameterValue } from '../Config/awsParams.config';
