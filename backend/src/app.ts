@@ -1,13 +1,14 @@
-import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import express from 'express';
+import tusServer from './tusServer'
+import bodyParser from 'body-parser';
 import timeout from 'connect-timeout';
-import dbConnect from "./Config/dbConnect.config";
+import cookieParser from 'cookie-parser';
 import apiRouter from './Routes/api.route';
 import authRouter from './Routes/auth.route';
 import healthRouter from './Routes/health.route';
+import dbConnect from "./Config/dbConnect.config";
 
 export const app: express.Application = express();
 
@@ -40,6 +41,12 @@ app.use('/api', apiRouter);
 app.use('/auth', authRouter);
 app.use('/health', healthRouter);
 
+// Mounting TUS server
+app.all('/files/*', (req, res) => {
+  tusServer.handle(req, res);
+});
+
+// Start DB connection
 void dbConnect();
 
 export default app;
