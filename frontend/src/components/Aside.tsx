@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import * as uuid from "uuid";
 import { Upload } from "tus-js-client";
 import UploadButton from "./UploadButton";
 import UploadComment from "./UploadComment";
@@ -349,33 +349,16 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
 
     }
   };
-  
+
   const handleFileUpload = useCallback(() => {
     setIsUploading(true);
     setUploadAttempted(true);
-    const newSessionID = uuidv4();
+    const newSessionID = uuid.v4();
     setFormState({ sessionID: newSessionID });
-    setStartUpload(true);
-    startProgressStream(newSessionID);
-  }, [setIsUploading, setUploadAttempted, setFormState, setStartUpload, startProgressStream]);
-
-  const handleFileTusUpload = useCallback(() => {
-    setIsUploading(true);
-    setUploadAttempted(true);
-    const newSessionID = uuidv4();
-    setFormState({ sessionID: newSessionID });
-
-    // Assuming formState.files contains the files to upload.
     const filesArray = Array.from(formState.files ?? []);
-    // If you want to retain batching logic, you could keep createBatches here.
-    // For a simple example, we upload each file individually:
     performTusUploads(filesArray);
-    // Optionally start SSE progress stream if using it.
     startProgressStream(newSessionID);
   }, [formState.files, setFormState, setIsUploading, setUploadAttempted, startProgressStream, performTusUploads]);
-
-  const _ = handleFileUpload;
-  console.log(_);
 
   if (currentUpload) {
     console.log("Current Upload")
@@ -634,7 +617,7 @@ const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, set
         <UploadButton
           loading={isUploading}
           disabled={!formState.files || !formState.channel}
-          onUpload={handleFileTusUpload}
+          onUpload={handleFileUpload}
         />
       </Box>
     </Stack>
