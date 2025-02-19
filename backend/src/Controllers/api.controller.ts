@@ -18,6 +18,21 @@ interface FormFields {
   messageBatchSize: string[];
 }
 
+interface TusUploadMetadataJsonFile {
+  id: string;
+  size: number;
+  offset: number;
+  metadata: {
+    filename: string;
+    filetype: string;
+    sessionID: string;
+    channel: string;
+    comment: string | null;
+    messageBatchSize: string;
+  };
+  creation_date: string;
+}
+
 const progressCallbacks = new Map<string, (progress: number) => void>();
 
 export const api = async (request: express.Request, response: express.Response) => {
@@ -29,7 +44,9 @@ export const getChannels = async (request: express.Request, response: express.Re
   let slackAccessToken: string;
 
   if (process.env.NODE_ENV === 'development') {
+
     slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+
   } else {
     if (!request.userId) {
       return response.status(400).send('UserID is required');
@@ -189,93 +206,6 @@ export const getImagesProxy = async (request: express.Request, response: express
   }
 };
 
-export const uploadFiles = async (request: express.Request, response: express.Response) => {
-  // Files are uploaded to my server in batches. This function takes the files,
-  // formats the metadata, and writes the metadata to the database with a reference
-  // to the file path on the server. 
-
-  const form = new IncomingForm() as any;
-
-  form.multiples = true;
-
-  const uploadDirPath = path.join(__dirname, '../../uploads');
-
-  if (!fs.existsSync(uploadDirPath)) {
-    fs.mkdirSync(uploadDirPath);
-  }
-
-  form.uploadDir = uploadDirPath;
-  form.keepExtensions = true;
-  form.options.maxFileSize = 2000 * 1024 * 1024;
-  form.options.maxTotalFileSize = 2000 * 1024 * 1024;
-
-  const formPromise = new Promise((resolve, reject) => {
-    form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
-      try {
-        if (err) {
-          throw new Error(`Error processing upload: ${err}`);
-        }
-
-        if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
-          throw new Error('No fields or files found');
-        }
-
-        if (!Array.isArray(files.files)) {
-          throw new Error('Invalid files format.');
-        }
-
-        let userId: string;
-
-        if (process.env.NODE_ENV === 'development') {
-          userId = process.env.SS_USER_ID as string;
-        } else {
-          if (!request.userId) {
-            return response.status(400).send('UserID is required');
-          }
-          userId = request.userId;
-        }
-
-        const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
-          name: file.originalFilename,
-          path: file.filepath,
-          size: file.size,
-          sessionID: fields.sessionID[0], // is returned as array, so access the first element
-          userID: userId,
-          type: file.mimetype,
-          lastModifiedDate: file.lastModifiedDate,
-          isUploaded: true,
-        }));
-
-        console.log("Files parsed in this batch", parsedFiles.length);
-
-        for (const file of parsedFiles) {
-          console.log(`Attempting to write file reference for ${file.name}`);
-          await writeUploadedFileReference(file);
-          const fileRefs = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-          const fileExists = fileRefs.some(ref => ref.name === file.name);
-          if (!fileExists) {
-            throw new Error(`File reference verification failed for ${file.name}`);
-          }
-        }
-
-        resolve({ success: true });
-      } catch (error) {
-        console.error(`Error uploading files: ${error}`);
-        reject(error);
-      }
-    });
-  });
-
-  try {
-    await formPromise;
-    response.status(200).json({ message: 'Files processed successfully' });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    const status = message === 'No fields or files found' ? 404 : 500;
-    response.status(status).json({ error: message });
-  }
-};
-
 export const uploadProgress = async(request: express.Request, response: express.Response) => {
   
   const { sessionID } = request.body
@@ -300,146 +230,116 @@ export const uploadProgress = async(request: express.Request, response: express.
   });
 };
 
-export const uploadFinalFiles = async (request: express.Request, response: express.Response) => {
-  // This function is similar to the one above. The differences are that 1.) in this function, the user's
-  // info is used to get their Slack access token, and 2.) it then gets all the file references from the database
-  // which are then passed to the slackbot to be uploaded to the specified channel.
 
-  const form = new IncomingForm() as any;
+export const finalizeUpload = async (request: express.Request, response: express.Response) => {
 
-  form.multiples = true;
+  // Error checking
 
-  const uploadDirPath = path.join(__dirname, '../../uploads');
-  if (!fs.existsSync(uploadDirPath)) {
-    fs.mkdirSync(uploadDirPath);
-  }
+  // Transaction db write to uploadedFiles table
+  // Delete files from uploads folder if fail, also implement retry logic (1x)
+  //Get all files from uploadedFiles table with sessionID
+  // Upload files to slack
+  // Delete files from uploads folder
 
-  form.uploadDir = uploadDirPath;
-  form.keepExtensions = true;
-  form.options.maxFileSize = 2000 * 1024 * 1024;
-  form.options.maxTotalFileSize = 2000 * 1024 * 1024;
+  let slackAccessToken: string;
+  let userID: string;
+   
+  const getUploadJsonDataBySessionId = async (sessionId: string): Promise<TusUploadMetadataJsonFile[]> => {
+    //TODO - Optimize the search for JSON files so that we don't have to read all files in the directory
+    if (!sessionId) {
+      throw new Error('Session ID is required');
+    }
+    
+    try {
+      const uploadDirPath = path.join(__dirname, '../../uploads');
+      const files = await fs.promises.readdir(uploadDirPath);
+      const jsonFiles = files.filter(file => file.endsWith('.json'));
 
-  const formPromise = new Promise((resolve, reject) => {
-    form.parse(request, async (err: Error, fields: FormFields, files: { [key: string]: UploadedFile }) => {
+      const jsonDataArray: TusUploadMetadataJsonFile[] = [];
 
-      async function deleteFile(file: ParsedFile): Promise<void> {
-        if (!file.path) {
-          console.error(`No file path provided for file: ${file.name}`);
-          return;
-        }
+      for (const jsonFile of jsonFiles) {
+        
+        const filePath = path.join(uploadDirPath, jsonFile);
+        const fileContent = await fs.promises.readFile(filePath, 'utf8');
+        const jsonData = JSON.parse(fileContent);
 
-        try {
-          const exists = await fs.promises.access(file.path)
-              .then(() => true)
-              .catch(() => false);
-
-          if (!exists) {
-            console.log(`File ${file.path} already deleted or doesn't exist`);
-            return;
-          }
-
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-          await fs.promises.unlink(file.path);
-          console.log(`Successfully deleted file ${file.path}`);
-        } catch (unlinkErr) {
-          console.error(`Error deleting file ${file.path}: ${unlinkErr}`);
+        if (jsonData.metadata.sessionID === sessionId) {
+          jsonDataArray.push(jsonData);
         }
       }
 
-      try {
-
-        if (err) {
-          throw new Error(`Error processing upload: ${err}`);
-        }
-
-        if (Object.keys(fields).length === 0 && Object.keys(files).length === 0) {
-          throw new Error('No fields or files found');
-        }
-
-        if (!Array.isArray(files.files)) {
-          throw new Error('Invalid files format.');
-        }
-
-        let userId: string;
-        let slackAccessToken: string;
-
-        if (process.env.NODE_ENV === 'development') {
-          userId = process.env.SS_USER_ID as string;
-          slackAccessToken = process.env.SS_SLACK_TOKEN as string;
-        } else {
-          if (!request.userId) {
-            return response.status(400).send('UserID is required');
-          }
-
-          userId = request.userId;
-          const user = await readUser(request.userId);
-          slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
-
-          if (!slackAccessToken) {
-            return response.status(500).send('Failed to retrieve Slack access token');
-          }
-        }
-
-        const slackbot = new SlackBot(fields.channel[0], slackAccessToken);
-
-        if (!Array.isArray(files.files)) {
-          return response.status(400).send('Invalid files format.');
-        }
-
-        const parsedFiles: ParsedFile[] = files.files.map((file: UploadedFile) => ({
-          name: file.originalFilename,
-          path: file.filepath,
-          size: file.size,
-          sessionID: fields.sessionID[0], // is returned as array, so access the first element
-          userID: userId,
-          type: file.mimetype,
-          lastModifiedDate: file.lastModifiedDate,
-          isUploaded: true,
-        }));
-        console.log("Files parsed in last batch", parsedFiles.length);
-
-        if (parsedFiles.length === 0) {
-          return response.status(400).send('No files to upload.');
-        }
-
-        await Promise.all(parsedFiles.map(async (file) => { await writeUploadedFileReference(file) }));
-
-        const filesToUpload = await readAllUploadedFileReferencesBySession(fields.sessionID[0]);
-
-        const processedFiles = await slackbot.batchAndUploadFiles(filesToUpload, userId, fields.sessionID[0], parseInt(fields.messageBatchSize[0]), fields.comment[0], (progress) => {
-          const sendProgress = progressCallbacks.get(fields.sessionID[0]);
-          if (sendProgress) {
-            sendProgress(progress);
-          } else {
-          }
-        });
-
-        for (const file of processedFiles) {
-          try {
-            await deleteFile(file);
-          } catch (error) {
-            console.error(`Failed to delete file ${file.name}:`, error);
-          }
-        }
-
-        resolve({ success: true });
-      } catch (error) {
-        console.trace(`Error uploading files: ${error}`);
-        reject(error);
+      if (jsonDataArray.length === 0) {
+        throw new Error(`No JSON files found for session ID: ${sessionId}`);
       }
-    });
-    })
+
+      return jsonDataArray;
+
+    } catch (error) {
+      console.error(`Error reading JSON files for session ID ${sessionId}:`, error);
+      throw error;
+    }
+  };
 
   try {
-    await formPromise;
-    response.status(200).json({ message: 'Files processed successfully' });
+
+    if (process.env.NODE_ENV === 'development') {
+      slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+      userID = process.env.SS_USER_ID as string;
+    } else {
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+      userID = request.userId;
+      const user = await readUser(userID);
+      slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+      if (!slackAccessToken) {
+        return response.status(500).send('Failed to retrieve Slack access token');
+      }
+    }
+
+    const { sessionID } = request.body;
+
+    if (!sessionID) {
+      return response.status(400).send('Missing Session ID');
+    }
+
+    const sessionFilesMetadata = await getUploadJsonDataBySessionId(sessionID);
+
+    const slackbot = new SlackBot(sessionFilesMetadata[0].metadata.channel, slackAccessToken);
+
+    const parsedFiles: ParsedFile[] = sessionFilesMetadata.map((jsonData) => ({
+      name: jsonData.metadata.filename,
+      path: path.join(__dirname, '../../uploads', jsonData.id),
+      size: jsonData.size,
+      sessionID: jsonData.metadata.sessionID,
+      userID,
+      type: jsonData.metadata.filetype,
+      lastModifiedDate: new Date(jsonData.creation_date),
+      isUploaded: true,
+    }));
+
+    if (parsedFiles.length === 0) {
+      return response.status(400).send('No files to upload.');
+    }
+
+    await Promise.all(parsedFiles.map(async (file) => { await writeUploadedFileReference(file) }));
+
+    const filesToUpload = await readAllUploadedFileReferencesBySession(sessionID);
+
+    await slackbot.batchAndUploadFiles(filesToUpload, userID, sessionID, parseInt(sessionFilesMetadata[0].metadata.messageBatchSize), sessionFilesMetadata[0].metadata.comment ?? '', (progress) => {
+      const sendProgress = progressCallbacks.get(sessionID);
+      if (sendProgress) {
+      sendProgress(progress);
+      }
+    });
+    
+    response.status(200).json({ message: 'Files processed successfully', data: sessionFilesMetadata });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    const status = message === 'No fields or files found' ? 404 : 500;
-    response.status(status).json({ error: message });
-  }
-};
+    
+    console.error('Error finalizing upload:', error);
+    response.status(500).json({ error: 'Internal Server Error' });   
+  } 
+}
 
 export const deleteFiles = async (request: express.Request, response: express.Response) => {
   

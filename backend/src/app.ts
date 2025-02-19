@@ -1,13 +1,16 @@
-import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import express from 'express';
+import tusServer from './tusServer'
+import bodyParser from 'body-parser';
 import timeout from 'connect-timeout';
-import dbConnect from "./Config/dbConnect.config";
+import cookieParser from 'cookie-parser';
 import apiRouter from './Routes/api.route';
 import authRouter from './Routes/auth.route';
 import healthRouter from './Routes/health.route';
+import dbConnect from "./Config/dbConnect.config";
+import { verifyJWT } from './Middleware/jwt.middleware';
+
 
 export const app: express.Application = express();
 
@@ -24,7 +27,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Tus-Resumable', 'Upload-Length', 'Upload-Metadata', 'Upload-Offset'],
 }));
 
 app.use(timeout('420s'));
@@ -40,6 +43,16 @@ app.use('/api', apiRouter);
 app.use('/auth', authRouter);
 app.use('/health', healthRouter);
 
+// Mount TUS server
+app.all(
+  '/files*', 
+  process.env.NODE_ENV !== 'development' ? verifyJWT : (_request, _response, next) => next(), 
+  (request, response) => {
+    tusServer.handle(request, response); 
+  }
+);
+
+// Start DB connection
 void dbConnect();
 
 export default app;
