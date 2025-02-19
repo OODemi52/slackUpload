@@ -233,19 +233,13 @@ export const finalizeUpload = async (request: express.Request, response: express
 
   // Error checking
 
-  // Create parsedFiles array from userID and info json file
   // Transaction db write to uploadedFiles table
   // Delete files from uploads folder if fail, also implement retry logic (1x)
   //Get all files from uploadedFiles table with sessionID
   // Upload files to slack
   // Delete files from uploads folder
 
-  let userId: string;
   let slackAccessToken: string;
-
-  if (!request.userId) {
-    return response.status(400).send('UserID is required');
-  }
    
   const getUploadJsonDataBySessionId = async (sessionId: string): Promise<TusUploadMetadataJsonFile[]> => {
     //TODO - Optimize the search for JSON files so that we don't have to read all files in the directory
@@ -326,7 +320,7 @@ export const finalizeUpload = async (request: express.Request, response: express
 
     const filesToUpload = await readAllUploadedFileReferencesBySession(sessionID);
 
-    await slackbot.batchAndUploadFiles(filesToUpload, request.userId, sessionID, parseInt(sessionFilesMetadata[0].metadata.messageBatchSize), sessionFilesMetadata[0].metadata.comment ?? '', (progress) => {
+    await slackbot.batchAndUploadFiles(filesToUpload, request.userId as string, sessionID, parseInt(sessionFilesMetadata[0].metadata.messageBatchSize), sessionFilesMetadata[0].metadata.comment ?? '', (progress) => {
       const sendProgress = progressCallbacks.get(sessionID);
       if (sendProgress) {
       sendProgress(progress);
