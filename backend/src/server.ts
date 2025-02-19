@@ -43,5 +43,5 @@ server.on('listening', () => {
 });
 
 server.listen(port, () => {
-  console.log('Server started on port ' + port);
+  console.log('Server started on port (testing github action)' + port);
 });
