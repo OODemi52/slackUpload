@@ -1,0 +1,22 @@
+name: Deploy Backend to EC2
+
+on:
+  workflow_dispatch:  # This makes the action manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Use Ubuntu for the GitHub Actions runner, because the EC2 instance isn't Ubuntu
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull latest code on EC2 and install dependencies
+        run: |
+          ssh ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          cd /home/ec2-user/slackUpload/backend
+          git pull origin main
+          npm install
+          npm run build
+          pm2 restart all
+          EOF
