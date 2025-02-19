@@ -74,21 +74,21 @@ export const callback = async (request: express.Request, response: express.Respo
         scope: scope,
         botUserId: bot_user_id,
         appId: app_id,
-        team: team ? { name: team.name || undefined, id: team.id || undefined } : undefined,
+        team: team ? { name: team.name ?? undefined, id: team.id ?? undefined } : undefined,
         enterprise: enterprise ? { name: enterprise.name, id: enterprise.id } : undefined,
         authedUser: authed_user ? {
-          id: authed_user.id || undefined,
-          scope: authed_user.scope || undefined,
-          token_type: authed_user.token_type || undefined,
+          id: authed_user.id ?? undefined,
+          scope: authed_user.scope ?? undefined,
+          token_type: authed_user.token_type ?? undefined,
         } : undefined,
       };
 
       const userDoc = await writeUser(userAuthData);
 
-      const accessToken = await generateToken(userDoc._id.toString(), 'access');
-      const refreshToken = await generateToken(userDoc._id.toString(), 'refresh');
+      const accessToken = await generateToken(userDoc._id as string, 'access');
+      const refreshToken = await generateToken(userDoc._id as string, 'refresh');
 
-      await updateWithRefreshToken(userDoc._id.toString(), refreshToken);
+      await updateWithRefreshToken(userDoc._id as string, refreshToken);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
