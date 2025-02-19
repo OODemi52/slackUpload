@@ -332,6 +332,8 @@ export const finalizeUpload = async (request: express.Request, response: express
       sendProgress(progress);
       }
     });
+
+    //TODO - Delete files from uploads folder
     
     response.status(200).json({ message: 'Files processed successfully', data: sessionFilesMetadata });
   } catch (error) {

@@ -7,6 +7,7 @@ const tusServer = new Server({
   datastore: new FileStore({
     directory: path.join(__dirname, '../uploads'),
   }),
+  respectForwardedHeaders: true,
 });
 
 export default tusServer; 
