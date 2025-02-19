@@ -44,7 +44,9 @@ export const getChannels = async (request: express.Request, response: express.Re
   let slackAccessToken: string;
 
   if (process.env.NODE_ENV === 'development') {
+
     slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+
   } else {
     if (!request.userId) {
       return response.status(400).send('UserID is required');
@@ -240,6 +242,7 @@ export const finalizeUpload = async (request: express.Request, response: express
   // Delete files from uploads folder
 
   let slackAccessToken: string;
+  let userID: string;
    
   const getUploadJsonDataBySessionId = async (sessionId: string): Promise<TusUploadMetadataJsonFile[]> => {
     //TODO - Optimize the search for JSON files so that we don't have to read all files in the directory
@@ -278,6 +281,22 @@ export const finalizeUpload = async (request: express.Request, response: express
   };
 
   try {
+
+    if (process.env.NODE_ENV === 'development') {
+      slackAccessToken = process.env.SS_SLACK_TOKEN as string;
+      userID = process.env.SS_USER_ID as string;
+    } else {
+      if (!request.userId) {
+        return response.status(400).send('UserID is required');
+      }
+      userID = request.userId;
+      const user = await readUser(userID);
+      slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
+      if (!slackAccessToken) {
+        return response.status(500).send('Failed to retrieve Slack access token');
+      }
+    }
+
     const { sessionID } = request.body;
 
     if (!sessionID) {
@@ -286,19 +305,6 @@ export const finalizeUpload = async (request: express.Request, response: express
 
     const sessionFilesMetadata = await getUploadJsonDataBySessionId(sessionID);
 
-    if (process.env.NODE_ENV === 'development') {
-      slackAccessToken = process.env.SS_SLACK_TOKEN as string;
-    } else {
-      if (!request.userId) {
-        return response.status(400).send('UserID is required');
-      }
-      const user = await readUser(request.userId);
-      slackAccessToken = await getParameterValue(`SLA_IDAU${user.userData.authedUser?.id}IDT${user.userData.team?.id}`);
-      if (!slackAccessToken) {
-        return response.status(500).send('Failed to retrieve Slack access token');
-      }
-    }
-
     const slackbot = new SlackBot(sessionFilesMetadata[0].metadata.channel, slackAccessToken);
 
     const parsedFiles: ParsedFile[] = sessionFilesMetadata.map((jsonData) => ({
@@ -306,7 +312,7 @@ export const finalizeUpload = async (request: express.Request, response: express
       path: path.join(__dirname, '../../uploads', jsonData.id),
       size: jsonData.size,
       sessionID: jsonData.metadata.sessionID,
-      userID: request.userId as string,
+      userID,
       type: jsonData.metadata.filetype,
       lastModifiedDate: new Date(jsonData.creation_date),
       isUploaded: true,
@@ -320,7 +326,7 @@ export const finalizeUpload = async (request: express.Request, response: express
 
     const filesToUpload = await readAllUploadedFileReferencesBySession(sessionID);
 
-    await slackbot.batchAndUploadFiles(filesToUpload, request.userId as string, sessionID, parseInt(sessionFilesMetadata[0].metadata.messageBatchSize), sessionFilesMetadata[0].metadata.comment ?? '', (progress) => {
+    await slackbot.batchAndUploadFiles(filesToUpload, userID, sessionID, parseInt(sessionFilesMetadata[0].metadata.messageBatchSize), sessionFilesMetadata[0].metadata.comment ?? '', (progress) => {
       const sendProgress = progressCallbacks.get(sessionID);
       if (sendProgress) {
       sendProgress(progress);
