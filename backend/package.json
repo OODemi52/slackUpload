@@ -1,7 +1,7 @@
 {
   "name": "slackupload",
   "version": "1.0.0",
-  "description": "Automatically uploads jpg images to Slack.",
+  "description": "SlackShots is a powerful tool designed to streamline the process of uploading large number of images to Slack channels efficiently and effortlessly. Instead of manually uploading images one by one, SlackShots allows users to select, organize, and send multiple images at once to their desired Slack channel",
   "main": "src/server",
   "scripts": {
     "test": "test",
@@ -16,9 +16,10 @@
   "keywords": [
     "file",
     "upload",
-    "slack"
+    "slack",
+    "images"
   ],
-  "author": "Oluwademilade Daniel-Akanle",
+  "author": "Demi Daniel-Akanle",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.529.1",
