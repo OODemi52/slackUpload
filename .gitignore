@@ -34,3 +34,9 @@ local-parameters.json
 
 # Qodana
 qodana.yaml
+
+#vscode counter
+.VSCodeCounter/
+
+#Refactor guide
+refactor-guide/

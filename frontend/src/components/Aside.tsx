@@ -30,7 +30,7 @@ interface AsideProps {
   setUploadAttempted: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const MAX_FILE_BATCH_SIZE = 9 * 1024 * 1024; // 9 MB
+const MAX_FILE_BATCH_SIZE = 50 * 1024 * 1024; // 50 MB
 
 const Aside: React.FC<AsideProps> = ({ formState, setFormState, isUploading, setIsUploading, startUpload, setStartUpload, /*setUploadComplete,*/ setUploadAttempted }) => {
   const { data: channels, /*isLoading: channelsLoading, error: channelsError, refetch: refetchChannels*/} = useChannels();
