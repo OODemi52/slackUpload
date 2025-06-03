@@ -1,33 +1,38 @@
-# Project Name: SlackShots (🚧 Under Construction 🚧)
+# [ARCHIVED] SlackShots (Fullstack Monorepo)
 
-## Description
-Slackshots allows user to send images to a desired Slack channel in their Slack workspace in a more easier and more user-friendly way than is possible in the native slack application!
+> This repository has been **archived** and is no longer actively maintained.  
+> The codebase has been split into focused, standalone services for better structure, scalability, and maintainability.
 
-## Technologies Used
-- Language: Typescript
-- Client React.js with Vite and React Native
-- Server: Node.js and Express.js
-- Database: MongoDB
-- Hosting: AWS EC2
-- Additional: Slack Web API
+---
 
-## Features:
-🚧 Coming Soon! 🚧
+##  SlacksShots - Legacy Structure
 
-## Contributing
-Contributions are welcome! I am working hard on this project, and am soon approaching a v1.0.0 of the application, but there are still many improvements I want to make. And even after that, I plan to add more features that make the app ever more easier to use and customizable, so contribution is always welcome! If you would like to contribute to this project, please follow these steps:
-1. Fork the repository.
-2. Create a new branch: ```git checkout -b feature/your-feature-name```.
-3. Make your changes and commit them: ```git commit -m "Add some feature"```.
-4. Push to the branch: ```git push origin feature/your-feature-name```.
-5. Submit a pull request.
+This monorepo previously contained:
 
-## License
-This project is licensed under the MIT License.
+- `frontend/` – a SlackShots frontend written in Typescript with React+Vite
+- `backend/` – a SlackShots backend written in Typescript with Node
 
-## Contact
-For any inquiries or suggestions, please contact the project maintainer:
-- Name: Demilade Daniel-Akanle
-- Email: demidaniel98@gmail.com
+Both folders have been preserved for historical reference but are no longer updated.
 
-Feel free to reach out with any questions or feedback. Thank you for using the Slack Upload project!
+---
+
+## Migration Details
+
+The application is now structured across multiple dedicated repositories:
+
+- **Frontend (Next.js)** → [`TBD`](https://github.com/OODemi52)
+- **Backend -  Go Implementation** → [`TBD`](https://github.com/OODemi52)
+- **Backend - Node Implementation** → [`TBDo`](https://github.com/OODemi52)
+
+---
+
+## Why the Split?
+
+This monorepo grew to include multiple technologies and responsibilities, making it hard to maintain, test, and deploy independently. Splitting it allows for:
+
+- Isolated deployments & CI/CD
+- Better service ownership and versioning
+- Cleaner code organization
+- Improved performance on both backend and frontend
+
+The backend is also being written in Golang due to the relatively high memory usage of running the server via Node, especially since parts of the application can be a bit computationally heavy and Node frequently proved be a bottleneck.
